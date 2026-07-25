@@ -28,7 +28,12 @@ console.log("Exists:", fsSync.existsSync(outputPath));
     // Launch browser
     const browser = await puppeteer.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    executablePath: puppeteer.executablePath(),
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage"
+    ]
 });
 
     const page = await browser.newPage();
