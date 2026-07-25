@@ -11,7 +11,14 @@ dotenv.config();
 
 const app = express();
 connectDB()
-app.use(cors());
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        "https://sdwa-registration-portal.vercel.app"
+    ],
+    credentials: true,
+}));
+
 app.use(express.json());
 
 app.use("/api", publicRoutes);
