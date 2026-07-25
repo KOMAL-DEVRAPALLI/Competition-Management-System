@@ -56,9 +56,10 @@ await page.evaluate(async () => {
         })
     );
 });
-
-    // Generate PDF
-   await page.pdf({
+console.log("Output path:", outputPath);
+console.log("Directory exists:", fsSync.existsSync(path.dirname(outputPath)));
+try{
+      await page.pdf({
     path: outputPath,
     format: "A4",
     printBackground: true,
@@ -66,11 +67,22 @@ await page.evaluate(async () => {
         top: "10mm",
         right: "10mm",
         bottom: "10mm",
-        left: "10mm"
-    }
+        left: "10mm",
+    },
 });
 
+console.log("After page.pdf()");
+console.log("Exists:", fsSync.existsSync(outputPath));
+
+if (fsSync.existsSync(outputPath)) {
+    console.log("Size:", fsSync.statSync(outputPath).size);
+}
+
     await browser.close();
+}
+ catch(err){console.log("error",err);
+    throw err
+ }
 
 };
 
