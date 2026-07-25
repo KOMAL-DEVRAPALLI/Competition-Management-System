@@ -191,9 +191,15 @@ const RegistrationForm = () => {
           [name]: value,
         },
       }));
-    } catch (err) {
-      console.error(err);
+    }catch (error) {
+    console.error("Registration Error:", error);
+
+    if (error.response) {
+        alert(error.response.data.message || JSON.stringify(error.response.data));
+    } else {
+        alert(error.message);
     }
+}
   };
 
   const handleParticipationChange = (e) => {
@@ -316,11 +322,17 @@ for (const document of documentFields) {
         state: response.data,
       });
       console.log(response);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+    console.error("Registration Error:", error);
+
+    if (error.response) {
+        alert(error.response.data.message || JSON.stringify(error.response.data));
+    } else {
+        alert(error.message);
     }
+} finally {
+    setIsSubmitting(false);
+}
   };
   return (
     <div className= "registration-page">
