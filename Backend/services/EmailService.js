@@ -3,9 +3,21 @@ const transporter = nodemailer.createTransport({
     host: "smtp-relay.brevo.com",
     port: 587,
     secure: false,
+
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
+    },
+
+    logger: true,
+    debug: true,
+
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+
+    tls: {
+        rejectUnauthorized: false,
     },
 });
 const sendRegistrationEmail = async (
@@ -120,7 +132,10 @@ Your registration has been successfully received for the
     ],
 };
 try {
+    console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("Connecting to Brevo SMTP...");
     await transporter.verify();
+    console.log("SMTP verified");
     console.log("SMTP connection successful");
 
     const info = await transporter.sendMail(mailOptions);
