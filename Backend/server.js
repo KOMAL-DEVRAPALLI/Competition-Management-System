@@ -4,7 +4,9 @@ import cors from "cors";
 import publicRoutes from "./routes/publicRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import connectDB from "./config/db.js";
+import dns from "dns";
 
+dns.setDefaultResultOrder("ipv4first");
 dotenv.config();
 
 const app = express();
