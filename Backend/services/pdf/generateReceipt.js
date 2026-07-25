@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import puppeteer from "puppeteer";
 import handlebars from "handlebars";
-
+import fsSync from "fs";
 
 
 import receiptData from "./helpers/receiptData.js";
