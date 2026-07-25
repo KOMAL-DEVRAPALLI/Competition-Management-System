@@ -110,7 +110,7 @@ const sendRegistrationEmail = async (athlete, pdfPath) => {
 `;
 
     try {
-
+        console.log("Sender:", process.env.EMAIL_USER);
         const response = await apiInstance.sendTransacEmail({
 
             sender: {
