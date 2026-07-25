@@ -37,7 +37,7 @@ console.log("Exists:", fsSync.existsSync(outputPath));
     const page = await browser.newPage();
 
 await page.setContent(html, {
-    waitUntil: "networkidle0"
+    waitUntil: "domcontentloaded"
 });
 
 await page.waitForSelector(".receipt");
