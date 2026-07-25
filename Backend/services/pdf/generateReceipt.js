@@ -29,6 +29,7 @@ console.log("Exists:", fsSync.existsSync(outputPath));
    const executablePath = await puppeteer.executablePath();
 
 console.log("Executable Path:", executablePath);
+console.log("Chrome Exists:", fsSync.existsSync(executablePath));
 
 const browser = await puppeteer.launch({
     headless: true,
