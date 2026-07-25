@@ -1,6 +1,6 @@
 import express from "express";
 import registerAthleteController from "../controllers/registrationController.js";
-import registrationValidator from "../validators/registrationValidator.js";
+import registrationValidator from "../validators/RegistrationValidator.js";
 import eligibilityController from "../controllers/ElibilityController.js";
 import weightCategories from "../controllers/WeightCategoryController.js";
 import upload from "../middleware/uploadMiddleware.js";
