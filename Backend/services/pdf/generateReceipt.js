@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import puppeteer from "puppeteer";
 import handlebars from "handlebars";
-import fsSync from "fs";
+
 
 
 import receiptData from "./helpers/receiptData.js";
@@ -25,22 +25,15 @@ console.log("Exists:", fsSync.existsSync(outputPath));
 
     const html = template(data);
 
-    // Launch browser
-   const executablePath = await puppeteer.executablePath();
-
-console.log("Executable Path:", executablePath);
-console.log("Chrome Exists:", fsSync.existsSync(executablePath));
-
-const browser = await puppeteer.launch({
+   const browser = await puppeteer.launch({
     headless: true,
-    executablePath,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage"
     ]
 });
-
     const page = await browser.newPage();
 
 await page.setContent(html, {
