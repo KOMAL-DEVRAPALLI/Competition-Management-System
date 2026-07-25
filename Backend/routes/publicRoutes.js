@@ -1,5 +1,5 @@
 import express from "express";
-import registerAthleteController from "../controllers/registrationController.js";
+import registerAthleteController from "../controllers/RegistrationController.js";
 import registrationValidator from "../validators/RegistrationValidator.js";
 import eligibilityController from "../controllers/ElibilityController.js";
 import weightCategories from "../controllers/WeightCategoryController.js";
