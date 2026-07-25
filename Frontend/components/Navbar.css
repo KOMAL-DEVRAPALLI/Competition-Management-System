@@ -1,0 +1,154 @@
+/* ===========================
+   Navbar
+=========================== */
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 16px 70px;
+
+    background: #ffffff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ===========================
+   Left Section
+=========================== */
+
+.navbar__left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    flex: 1;
+}
+
+.navbar__logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.navbar__brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar__title{
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+    color:#0B2545;
+    line-height:1.2;
+}
+/* ===========================
+   Center Section
+=========================== */
+
+.navbar__center {
+    flex: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 40px;
+}
+
+.navbar__center a {
+    text-decoration: none;
+
+    color: #222;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    transition: 0.3s;
+}
+
+.navbar__center a:hover {
+    color: #D9480F;
+}
+
+/* ===========================
+   Right Section
+=========================== */
+
+.navbar__right {
+    flex: 1;
+
+    display: flex;
+    justify-content: flex-end;
+}
+
+.register-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 170px;
+
+    padding: 14px 28px;
+
+    background: #D9480F;
+
+    color: white;
+
+    text-decoration: none;
+
+    border-radius: 8px;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    transition: 0.3s;
+}
+
+.register-btn:hover {
+    background: #b53b0d;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width: 992px) {
+
+    .navbar {
+        padding: 15px 25px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .navbar__left,
+    .navbar__center,
+    .navbar__right {
+        flex: 100%;
+        justify-content: center;
+    }
+
+    .navbar__left {
+        text-align: center;
+    }
+
+    .navbar__brand {
+        align-items: center;
+    }
+
+    .navbar__title {
+        font-size: 22px;
+    }
+
+    .navbar__center {
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+}

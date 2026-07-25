@@ -1,0 +1,89 @@
+.hero{
+    min-height:90vh;
+
+    background:
+        linear-gradient(rgba(11,37,69,.75),
+        rgba(11,37,69,.75)),
+        url("../assets/hero-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.hero__overlay{
+    width:100%;
+    display:flex;
+    justify-content:center;
+}
+
+.hero__content{
+    max-width:900px;
+    text-align:center;
+    color:white;
+}
+
+.hero__affiliation{
+    font-size:18px;
+    letter-spacing:1px;
+    margin-bottom:20px;
+}
+
+.hero__title{
+    font-size:58px;
+    font-weight:800;
+    line-height:1.15;
+    margin-bottom:20px;
+}
+
+.hero__competition{
+    color:#ffb703;
+    font-size:34px;
+    margin-bottom:15px;
+}
+
+.hero__subtitle{
+    font-size:22px;
+    margin-bottom:35px;
+}
+
+.hero__info{
+    display:flex;
+    justify-content:center;
+    gap:35px;
+    margin-bottom:40px;
+    font-size:20px;
+}
+
+.hero__buttons{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+}
+
+.hero__primary,
+.hero__secondary{
+
+    padding:15px 35px;
+
+    border-radius:8px;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    font-size:18px;
+}
+
+.hero__primary{
+    background:#D9480F;
+    color:white;
+}
+
+.hero__secondary{
+    border:2px solid white;
+    color:white;
+}

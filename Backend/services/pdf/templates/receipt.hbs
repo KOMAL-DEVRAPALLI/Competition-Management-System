@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registration Receipt</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+
+            font-family: Arial, Helvetica, sans-serif;
+            background: white;
+        }
+
+        .receipt {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 10mm;
+        }
+
+        .header {
+
+            display: flex;
+
+            align-items: center;
+
+            border-bottom: 2px solid #000;
+
+            padding-bottom: 8px;
+
+            margin-bottom: 8px;
+        }
+
+        .logo img {
+
+            width: 120px;
+        }
+
+        .title {
+
+            flex: 1;
+
+            text-align: center;
+        }
+
+        .title h1 {
+
+            font-size: 24px;
+        }
+
+        .title h2 {
+
+            margin-top: 8px;
+
+            font-size: 18px;
+        }
+
+        .registration-card {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            border: 2px solid black;
+
+            margin-bottom: 12px;
+        }
+
+        .registration-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 20px;
+        }
+
+        .registration-details {
+
+            flex: 1;
+
+            padding: 8px 12px;
+        }
+
+        section {
+            border: ;
+        }
+
+        .section-title {
+
+            background: black;
+
+            color: white;
+
+            font-weight: bold;
+
+            font-size: 16px;
+            padding: 6px 10px;
+            margin: -8px -8px 8px;
+        }
+
+        .registration-details table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+        }
+
+        .registration-details td {
+
+            padding: 8px 12px;
+
+            font-size: 15px;
+
+            vertical-align: top;
+        }
+
+        .registration-details td:first-child {
+
+            width: 180px;
+
+            font-weight: bold;
+        }
+
+        .athlete-photo {
+
+            width: 140px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-left: 2px solid black;
+        }
+
+        .athlete-photo img {
+
+            width: 110px;
+
+            height: 140px;
+
+            object-fit: cover;
+
+            border: 1px solid #000;
+        }
+
+        .card {
+
+            border: 2px solid #000;
+
+            margin-bottom: 8px;
+        }
+
+        .info-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 10px 20px;
+
+            padding: 8px 12px;
+        }
+
+        .info-item {
+
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        .info-item label {
+
+            font-size: 13px;
+
+            color: #555;
+
+            margin-bottom: 2px;
+
+            font-weight: bold;
+        }
+
+        .info-item span {
+
+            border-bottom: 1px solid #999;
+
+            font-size: 15px;
+
+            min-height: 18px;
+            padding-bottom: 2px;
+        }
+
+        .participation-content {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 10px;
+
+            padding: 8px 12px;
+        }
+
+        .category-group h4 {
+
+            margin-bottom: 8px;
+
+            font-size: 16px;
+        }
+
+        .checkbox-list {
+
+                display:flex;
+    flex-wrap:wrap;
+    gap:12px 20px;
+
+        }
+
+        .checkbox-item {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+             margin:0;
+        }
+
+        .box {
+
+            width: 18px;
+
+            height: 18px;
+
+            border: 2px solid black;
+
+            display: inline-block;
+        }
+
+        .box.checked {
+
+            background: black;
+        }
+
+        .weight-tags {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+        }
+
+        .tag {
+
+            border: 1px solid black;
+
+            padding: 6px 14px;
+
+            border-radius: 4px;
+
+            font-size: 14px;
+        }
+
+        .signature-row {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: flex-end;
+
+            padding: 0 20px 20px;
+        }
+
+        .signature-line {
+
+            width: 180px;
+
+            border-bottom: 2px solid black;
+
+            margin-bottom: 6px;
+        }
+
+        .official-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 12px 20px;
+
+            padding: 8px 12px;
+        }
+
+        .field {
+
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        .field label {
+
+            font-weight: bold;
+
+            margin-bottom: 3px;
+
+            font-size: 14px;
+        }
+
+        .line {
+
+            border-bottom: 1px solid #000;
+
+            min-height: 18px;
+        }
+
+        .checkbox-field {
+
+            flex-direction: row;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+        .checkbox {
+
+            width: 18px;
+
+            height: 18px;
+
+            border: 2px solid #000;
+        }
+
+        .instructions {
+
+            padding: 8px 12px;
+        }
+
+        .instructions ol {
+
+            padding-left: 24px;
+        }
+
+        .instructions li {
+
+            margin-bottom: 2px;
+            line-height: 1.2;
+
+            font-size: 14px;
+        }
+
+        .footer {
+
+            margin-top: 8px;
+
+            padding-bottom: 8px;
+        }
+
+        .footer-divider {
+
+            border-top: 2px solid black;
+
+            margin-bottom: 15px;
+        }
+
+        .footer-content {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            font-size: 13px;
+
+            color: #555;
+        }
+
+        .contact {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 2px;
+        }
+
+        .generated {
+
+            text-align: right;
+        }
+
+        .registration-badge {
+            background: #000;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 180px;
+        }
+
+        .badge-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .badge-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+        .weight-boxes{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.weight-box{
+    width:45px;
+    border-bottom:1px solid #000;
+    height:18px;
+}
+    </style>
+</head>
+
+<body>
+
+    <div class="receipt">
+
+        <!-- Header -->
+        <header class="header">
+
+            <div class="logo">
+                <img src={{logo}} alt="Logo">
+            </div>
+
+            <div class="title">
+                <h1>Surat District Weightlifting Association</h1>
+                <h2>Registration Receipt</h2>
+            </div>
+
+        </header>
+
+        <!-- Registration Details -->
+        <section class="registration-card">
+
+            <div class="registration-details">
+
+                <div class="section-title">
+                    Registration Details
+                </div>
+
+                <div class="registration-grid">
+                    <div class="registration-badge">
+                        <div class="badge-label">Registration No.</div>
+                        <div class="badge-value">{{registrationNo}}</div>
+                    </div>
+                    <div><strong>Registration Date</strong><br>{{registrationDate}}</div>
+                    <div><strong>Competition</strong><br>{{competitionName}}</div>
+                    <div><strong>Venue</strong><br>{{venue}}</div>
+                    <div><strong>Competition Dates</strong><br>{{competitionDates}}</div>
+                </div>
+
+            </div>
+
+            <div class="athlete-photo">
+                <img src="{{photo}}" alt="Athlete Photo">
+            </div>
+
+        </section>
+
+        <!-- Athlete Information -->
+        <section class="card">
+
+            <div class="section-title">
+                Athlete Information
+            </div>
+
+            <div class="info-grid">
+
+                <div class="info-item">
+                    <label>Full Name</label>
+                    <span>{{fullName}}</span>
+                </div>
+
+                <div class="info-item">
+                    <label>Gender</label>
+                    <span>{{gender}}</span>
+                </div>
+
+                <div class="info-item">
+                    <label>Date of Birth</label>
+                    <span>{{dob}}</span>
+                </div>
+
+                <div class="info-item">
+                    <label>Mobile Number</label>
+                    <span>{{mobile}}</span>
+                </div>
+
+                <div class="info-item">
+                    <label>Email Address</label>
+                    <span>{{email}}</span>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Participation Details -->
+        <section class="card">
+
+            <div class="section-title">
+                Participation Details
+            </div>
+
+            <div class="participation-content">
+
+                <div class="category-group">
+
+                    <h4>Participation Categories</h4>
+
+                    <div class="checkbox-list">
+
+                        {{#each participations}}
+
+                        <div class="checkbox-item">
+
+                            <span class="box checked"></span>
+
+                            <span>
+                                {{category}}
+                            </span>
+
+                        </div>
+
+                        {{/each}}
+
+                    </div>
+                        <div class="signature-row">
+
+                <div class="signature-line"></div>
+
+                <p>Athlete Signature</p>
+
+            </div>x
+                </div>
+
+            </div>
+
+            
+
+        </section>
+
+       <div class="official-grid">
+
+    <div class="field">
+        <label>Body Weight</label>
+        <div class="line"></div>
+    </div>
+
+    <div class="field">
+        <label>Opening Snatch</label>
+        <div class="line"></div>
+    </div>
+
+    <div class="field">
+        <label>Weight Category</label>
+
+        <div class="weight-boxes">
+            {{#each participations}}
+                <span class="weight-box"></span>
+            {{/each}}
+        </div>
+    </div>
+
+    <div class="field">
+        <label>Opening Clean &amp; Jerk</label>
+        <div class="line"></div>
+    </div>
+
+    <div class="field">
+        <label>Participation Fee</label>
+        <span>₹{{registrationFee}}</span>
+    </div>
+
+    <div class="field">
+        <label>Entry Total</label>
+        <div class="line"></div>
+    </div>
+
+    <div class="field checkbox-field">
+        <label>Payment Received</label>
+        <div class="checkbox"></div>
+    </div>
+
+    <div class="field">
+        <label>Official Signature</label>
+        <div class="line"></div>
+    </div>
+
+</div>
+
+    <!-- Instructions -->
+    <section class="card">
+
+        <div class="section-title">
+            Instructions
+        </div>
+
+        <div class="instructions">
+
+            <ol>
+
+                <li>Athlete must carry this registration receipt during weigh-in.</li>
+
+                <li>Bring the original and one photocopy of Aadhaar Card and Birth Certificate.</li>
+
+                <li>Bring <strong>{{requiredPhotos}}</strong> recent passport-size photographs.</li>
+
+                <li>Carry the IWLF Registration Card (if available).</li>
+
+                <li>Report to the venue at least 60 minutes before the scheduled weigh-in.</li>
+
+            </ol>
+
+        </div>
+
+    </section>
+
+    <!-- Footer -->
+   
+
+    </div>
+
+</body>
+
+</html>

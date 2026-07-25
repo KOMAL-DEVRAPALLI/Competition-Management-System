@@ -1,0 +1,42 @@
+.eligibility{
+    padding:90px 8%;
+    background:#f8fafc;
+}
+
+.eligibility__cards{
+    max-width:1200px;
+    margin:60px auto 0;
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:25px;
+}
+
+.eligibility__card{
+    background:#fff;
+    padding:30px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.eligibility__card:hover{
+    transform:translateY(-6px);
+}
+
+.eligibility__icon{
+    font-size:40px;
+    color:#D9480F;
+    margin-bottom:18px;
+}
+
+.eligibility__card h3{
+    color:#0B2545;
+    margin-bottom:12px;
+}
+
+.eligibility__card p{
+    color:#555;
+    line-height:1.6;
+}

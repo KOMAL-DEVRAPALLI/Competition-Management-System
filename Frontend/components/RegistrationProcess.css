@@ -1,0 +1,77 @@
+.registration-process{
+    padding:90px 8%;
+    background:#ffffff;
+}
+
+.process-grid{
+    max-width:1200px;
+    margin:60px auto 0;
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:30px;
+}
+
+.process-card{
+    position:relative;
+
+    background:#f8fafc;
+
+    padding:35px 25px;
+
+    text-align:center;
+
+    border-radius:14px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+    transition:.3s;
+}
+
+.process-card:hover{
+    transform:translateY(-8px);
+}
+
+.step-number{
+    position:absolute;
+
+    top:-15px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    width:36px;
+    height:36px;
+
+    border-radius:50%;
+
+    background:#D9480F;
+
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-weight:700;
+}
+
+.process-icon{
+    font-size:42px;
+
+    color:#D9480F;
+
+    margin:20px 0;
+}
+
+.process-card h3{
+    color:#0B2545;
+
+    margin-bottom:12px;
+}
+
+.process-card p{
+    color:#555;
+
+    line-height:1.6;
+}

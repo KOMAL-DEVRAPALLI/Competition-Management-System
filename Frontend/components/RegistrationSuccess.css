@@ -1,0 +1,157 @@
+.success-page{
+    min-height:100vh;
+    background:#f5f7fb;
+    padding:60px 8%;
+}
+
+.success-card,
+.details-card{
+    max-width:900px;
+    margin:0 auto 30px;
+    background:#fff;
+    border-radius:16px;
+    padding:35px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.success-card{
+    text-align:center;
+}
+
+.success-icon{
+    font-size:70px;
+    color:#16A34A;
+    margin-bottom:20px;
+}
+
+.success-card h1{
+    color:#0B2545;
+    margin-bottom:10px;
+}
+
+.success-card p{
+    color:#666;
+    font-size:16px;
+}
+
+.details-card h2{
+    color:#0B2545;
+    margin-bottom:25px;
+    padding-bottom:12px;
+    border-bottom:2px solid #f1f1f1;
+}
+.detail-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 0;
+    border-bottom:1px solid #eee;
+}
+
+.detail-row:last-child{
+    border-bottom:none;
+}
+
+.detail-row span{
+    color:#666;
+}
+
+.detail-row strong{
+    color:#0B2545;
+}
+.action-buttons{
+    max-width:900px;
+    margin:0 auto 30px;
+
+    display:flex;
+    gap:20px;
+}
+.download-btn,
+.home-btn{
+
+    flex:1;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+.download-btn{
+
+    background:#0B2545;
+
+    color:white;
+}
+
+.download-btn:hover{
+
+    background:#15406f;
+}
+.home-btn{
+
+    background:#D9480F;
+
+    color:white;
+}
+
+.home-btn:hover{
+
+    background:#b83d0c;
+}
+.details-card ul{
+
+    padding-left:20px;
+
+    line-height:2;
+}
+
+.details-card li{
+
+    color:#555;
+}
+@media(max-width:768px){
+
+    .success-page{
+
+        padding:30px 5%;
+    }
+
+    .action-buttons{
+
+        flex-direction:column;
+    }
+
+    .detail-row{
+
+        flex-direction:column;
+        align-items:flex-start;
+        gap:6px;
+    }
+
+    .success-icon{
+
+        font-size:55px;
+    }
+
+    .success-card h1{
+
+        font-size:30px;
+    }
+
+}
+.download-btn,
+.home-btn{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+}
