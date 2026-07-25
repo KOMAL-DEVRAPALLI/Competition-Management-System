@@ -8,7 +8,6 @@
     "dev": "nodemon server.js",
     "seed": "node ./seed/seedCompetition.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-     "postinstall": "npx puppeteer browsers install chrome"
   },
   "keywords": [],
   "author": "",

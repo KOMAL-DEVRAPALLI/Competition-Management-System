@@ -1,8 +1,8 @@
 FROM node:22-slim
 
-# Install Chromium and required libraries
 RUN apt-get update && apt-get install -y \
     chromium \
+    unzip \
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -22,15 +22,16 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# IMPORTANT: Set this BEFORE npm install
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 COPY package*.json ./
 
 RUN npm install
 
 COPY . .
 
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
 EXPOSE 5000
 
-CMD ["npm", "start
+CMD ["npm", "start"]
