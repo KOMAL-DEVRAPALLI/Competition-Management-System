@@ -291,3 +291,41 @@ fieldset{
 .loading-box small{
     color:#777;
 }
+.document-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:0;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.upload-card{
+    background:#fff;
+    position:relative;
+}
+
+/* Vertical line */
+.upload-card:nth-child(odd){
+    border-right:1px solid #e5e7eb;
+}
+
+/* Horizontal line */
+.upload-card:nth-child(-n+2){
+    border-bottom:1px solid #e5e7eb;
+}
+
+@media (max-width:768px){
+    .document-grid{
+        grid-template-columns:1fr;
+    }
+
+    .upload-card{
+        border-right:none;
+        border-bottom:1px solid #e5e7eb;
+    }
+
+    .upload-card:last-child{
+        border-bottom:none;
+    }
+}
