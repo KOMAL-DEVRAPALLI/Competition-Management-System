@@ -371,7 +371,23 @@
 
             margin-bottom: 15px;
         }
+    .official-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
 
+.label {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.fill-line {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    height: 0;
+}
         .footer-content {
 
             display: flex;
@@ -576,15 +592,10 @@
         <div class="line"></div>
     </div>
 
-    <div class="field">
-        <label>Weight Category</label>
-
-        <div class="weight-boxes">
-            {{#each participations}}
-                <span class="weight-box"></span>
-            {{/each}}
-        </div>
-    </div>
+    <div class="official-field">
+    <span class="label">Weight Category</span>
+    <span class="fill-line"></span>
+</div>
 
     <div class="field">
         <label>Opening Clean &amp; Jerk</label>
