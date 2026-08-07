@@ -23,19 +23,25 @@
         competitionResults,
     } = liveCompetition || {};
 
-        useEffect(() => {
+       useEffect(() => {
 
-        loadLiveCompetition();
+    loadLiveCompetition();
 
-        const interval = setInterval(
-            loadLiveCompetition,
-            3000
-        );
+    if (editingEntryId) {
+        return;
+    }
 
-        return () => clearInterval(interval);
+    const interval = setInterval(
+        loadLiveCompetition,
+        3000
+    );
 
-    }, []);
+    return () => clearInterval(interval);
 
+}, [editingEntryId]);
+
+    return () => clearInterval(interval);
+}, [editingEntryId]);
         useEffect(() => {
 
             if (!currentAthlete) return;
@@ -109,25 +115,28 @@
 
         try {
 
-            await updateQueueDeclaration({
+    await updateQueueDeclaration({
 
-                entryId: athlete.entryId,
+        entryId: athlete.entryId,
 
-                competitionId,
+        competitionId,
 
-                gender,
+        gender,
 
-                declaredWeight: weight,
+        declaredWeight: weight,
 
-            });
+    });
 
-            await loadLiveCompetition();
+    // Editing is finished
+    setEditingEntryId(null);
 
-        } catch (error) {
+    await loadLiveCompetition();
 
-            console.log(error);
+} catch (error) {
 
-        }
+    console.log(error);
+
+}
 
     };
         const loadLiveCompetition = async () => {
