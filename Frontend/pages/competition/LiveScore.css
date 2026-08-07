@@ -1,0 +1,110 @@
+.live-score-page {
+    min-height: 100vh;
+    background: #f4f6f9;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.live-header {
+    background: #0b4f8a;
+    color: white;
+    padding: 18px 24px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.live-header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.live-header p {
+    margin-top: 6px;
+}
+
+.live-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.live-middle {
+    margin-bottom: 20px;
+}
+.current-athlete-panel p {
+    font-size: 18px;
+    margin: 8px 0;
+}
+
+.queue-panel ol {
+    margin: 0;
+    padding-left: 22px;
+}
+
+.queue-panel li {
+    margin-bottom: 8px;
+    font-size: 17px;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.control-buttons button {
+    flex: 1;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+}
+.panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.panel h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #0b4f8a;
+}
+
+.entries-panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.entries-panel table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.entries-panel th {
+    background: #0b4f8a;
+    color: white;
+    padding: 10px;
+}
+
+.entries-panel td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.live-footer {
+    margin-top: 20px;
+    background: #0b4f8a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+}

@@ -1,8 +1,7 @@
-import calculateEligibility from "../services/EligibilityService.js"
+import calculateEligibility from "../services/eligibility/EligibilityService.js"
 
 const eligibilityController = async (req,res)=>{
    try{
-    console.log(req.body);
     
      const {dob } = req.body
   

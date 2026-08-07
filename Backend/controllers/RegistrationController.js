@@ -1,8 +1,6 @@
-import registerAthlete from "../services/RegistrationService.js";
+import registerAthlete from "../services/registration/RegistrationService.js";
 
 const registerAthleteController = async (req, res) => {
-    console.log(req.body);
-    console.log(req.files);
     try {
         const athlete = await registerAthlete(req.body,req.files)
         res.status(201).json({

@@ -1,0 +1,134 @@
+/* ===========================
+   Page
+=========================== */
+
+.competition-athlete-page{
+    max-width:1400px;
+    margin:40px auto;
+    padding:0 30px 40px;
+    background:#f1f5f9;
+    min-height:100vh;
+}
+
+/* ===========================
+   Header
+=========================== */
+.header-actions{
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+.start-list-btn{
+
+    padding:12px 20px;
+
+    background:#16a34a;
+
+    color:#ffffff;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-size:15px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:all .25s ease;
+}
+
+.start-list-btn:hover{
+
+    background:#15803d;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 6px 14px rgba(22,163,74,.25);
+}
+
+@media(max-width:768px){
+
+    .header-actions{
+
+        width:100%;
+
+        flex-direction:column;
+    }
+
+    .prepare-btn,
+    .start-list-btn{
+
+        width:100%;
+    }
+
+}
+.competition-athlete-header{
+    background:#ffffff;
+    border-radius:14px;
+    padding:28px 35px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+
+/* ===========================
+   Titles
+=========================== */
+
+.page-title{
+    font-size:34px;
+    font-weight:700;
+    color:#0f172a;
+    margin-bottom:8px;
+}
+
+.page-subtitle{
+    color:#64748b;
+    font-size:15px;
+}
+
+/* ===========================
+   Button
+=========================== */
+
+.prepare-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 26px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.prepare-btn:hover{
+    background:#1d4ed8;
+}
+
+/* ===========================
+   Content
+=========================== */
+
+.competition-athlete-content{
+    background:#ffffff;
+    border-radius:14px;
+    padding:25px;
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+
+/* ===========================
+   Empty State
+=========================== */
+
+.empty-state{
+    text-align:center;
+    padding:80px;
+    color:#64748b;
+    font-size:18px;
+}

@@ -1,0 +1,40 @@
+.warning-header{
+    background:#f59e0b;
+}
+
+.warning-btn{
+
+    padding:12px 24px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#f59e0b;
+
+    color:#ffffff;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:all .25s ease;
+}
+
+.warning-btn:hover:not(:disabled){
+
+    background:#d97706;
+
+    transform:translateY(-2px);
+
+}
+
+.warning-btn:disabled{
+
+    opacity:.6;
+
+    cursor:not-allowed;
+
+}

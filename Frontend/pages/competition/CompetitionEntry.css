@@ -1,0 +1,115 @@
+.competition-entry-page{
+    min-height:100vh;
+    padding:30px;
+    background:#f5f7fb;
+}
+
+.competition-entry-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    background:#ffffff;
+
+    padding:24px 30px;
+
+    border-radius:14px;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+
+    margin-bottom:25px;
+}
+.page-title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.page-subtitle {
+    margin-top: 0.4rem;
+    margin-bottom: 0;
+    font-size: 0.95rem;
+    color: #6b7280;
+    font-weight: 400;
+}
+.page-title{
+    margin:0;
+
+    font-size:30px;
+    font-weight:700;
+
+    color:#1e293b;
+}
+
+.page-subtitle{
+    margin-top:8px;
+
+    font-size:15px;
+
+    color:#64748b;
+}
+
+.registration-badge{
+
+    background:#2563eb;
+
+    color:#ffffff;
+
+    padding:12px 24px;
+
+    border-radius:10px;
+
+    font-size:18px;
+    font-weight:700;
+
+    letter-spacing:1px;
+
+    box-shadow:0 2px 8px rgba(37,99,235,.25);
+}
+
+.competition-entry-content{
+
+    display:flex;
+    flex-direction:column;
+
+    gap:24px;
+}
+
+.loading-page,
+.error-page{
+
+    min-height:70vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:22px;
+    font-weight:600;
+
+    color:#64748b;
+}
+
+@media(max-width:768px){
+
+    .competition-entry-page{
+        padding:20px;
+    }
+
+    .competition-entry-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:20px;
+    }
+
+    .registration-badge{
+        width:100%;
+        text-align:center;
+    }
+
+}

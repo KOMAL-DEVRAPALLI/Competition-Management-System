@@ -4,7 +4,14 @@ import registrationValidator from "../validators/registrationValidator.js";
 import eligibilityController from "../controllers/EligibilityController.js";
 import weightCategories from "../controllers/WeightCategoryController.js";
 import upload from "../middleware/uploadMiddleware.js";
+import { downloadReceiptController } from "../controllers/publicController.js";
+
+
 const router = express.Router();
+router.get(
+    "/download-receipt/:registrationNo",
+    downloadReceiptController
+);
 router.post(
     "/register",
     upload.fields([

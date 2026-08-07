@@ -1,10 +1,9 @@
-import express from "express";
-const router = express.Router()
+import { dashboardController } from "../controllers/admin/dashboardController.js";
+import e from "express";
+const router = e.Router();
 
-router.get("/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Competition Management System API is running"
-    });
-});
-export default router;
+router.get(
+    "/dashboard",
+    dashboardController
+);
+export default router

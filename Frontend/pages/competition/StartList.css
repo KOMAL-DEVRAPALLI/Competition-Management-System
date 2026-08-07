@@ -1,0 +1,129 @@
+.start-list-page{
+    min-height:100vh;
+    padding:30px;
+    background:#f5f7fb;
+}
+
+.start-list-header{
+    background:#ffffff;
+    padding:24px 30px;
+    border-radius:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    margin-bottom:25px;
+}
+.start-list-actions{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:16px;
+
+    margin:20px 0;
+
+}
+
+.print-btn,
+.pdf-btn{
+
+    padding:12px 22px;
+
+    border:none;
+
+    border-radius:8px;
+
+    color:#fff;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.print-btn{
+
+    background:#475569;
+
+}
+
+.print-btn:hover{
+
+    background:#334155;
+
+}
+
+.pdf-btn{
+
+    background:#dc2626;
+
+}
+
+.pdf-btn:hover{
+
+    background:#b91c1c;
+
+}
+.page-title{
+    margin:0;
+    font-size:30px;
+    font-weight:700;
+    color:#1e293b;
+}
+
+.page-subtitle{
+    margin-top:8px;
+    color:#64748b;
+}
+
+.table-wrapper{
+    background:#ffffff;
+    border-radius:14px;
+    overflow:auto;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.start-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:1100px;
+}
+
+.start-table th{
+    background:#2563eb;
+    color:#ffffff;
+    padding:14px;
+    text-align:left;
+    font-size:14px;
+}
+
+.start-table td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.start-table tbody tr:hover{
+    background:#f8fafc;
+}
+
+.status-badge{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:20px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:13px;
+    font-weight:600;
+}
+
+.loading-page{
+    min-height:70vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:22px;
+    font-weight:600;
+    color:#64748b;
+}

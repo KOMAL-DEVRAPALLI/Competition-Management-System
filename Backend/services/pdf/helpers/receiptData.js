@@ -9,9 +9,8 @@ const formatDate = (date) =>
         month: "long",
         year: "numeric",
     }).format(new Date(date));
-    const logoPath = path.resolve("services/pdf/assets/logo.png");
+    const logoPath = path.resolve("services/pdf/assets/new-logo.png");
 
-const logoBase64 = fs.readFileSync(logoPath).toString("base64");
     return {
 
         logo: `data:image/png;base64,${logoBase64}`,

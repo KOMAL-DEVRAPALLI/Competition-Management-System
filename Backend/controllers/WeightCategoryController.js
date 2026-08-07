@@ -1,8 +1,8 @@
-import getWeightCategories from "../services/WeightCategoryService.js"
+import getWeightCategories from "../services/WeightCategory/WeightCategoryService.js"
 
 const weightCategories = async (req,res)=>{
     try{
-        console.log(req.body);
+        
         const {gender , category} = req.body
     const weightCategories = await getWeightCategories(gender,category)
     res.status(200).json({
