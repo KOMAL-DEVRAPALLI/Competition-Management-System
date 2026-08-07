@@ -138,6 +138,21 @@ const LiveScore = () => {
             );
 
             setLiveCompetition(response.data);
+
+setNextWeights((previous) => {
+    const updated = { ...previous };
+
+    response.data.competitionResults.forEach((athlete) => {
+        if (!(athlete.entryId in updated)) {
+            updated[athlete.entryId] =
+                athlete.currentAttempt?.declaredWeight ??
+                athlete.currentAttempt?.previousDeclaredWeight ??
+                "";
+        }
+    });
+
+    return updated;
+});
         } catch (error) {
             console.log(error);
         } finally {
