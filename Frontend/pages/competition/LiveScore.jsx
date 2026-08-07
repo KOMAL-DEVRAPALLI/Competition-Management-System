@@ -144,10 +144,7 @@
                 );
 
                 setLiveCompetition(response.data);
-                console.log(
-    "Competition Results:",
-    response.data.competitionResults
-);
+
     setNextWeights((previous) => {
     const updated = { ...previous };
 
@@ -195,6 +192,7 @@
         }
         const isFirstAttempt =
             currentAthlete?.currentAttempt?.attemptNo === 1;
+            console.log("nextWeights:", nextWeights);
         return (
 
         <div className="live-score-page">
@@ -382,12 +380,8 @@
     value={nextWeights[athlete.entryId] ?? ""}
     onFocus={() => setEditingEntryId(athlete.entryId)}
     onBlur={() => setEditingEntryId(null)}
-   onChange={(e) => {
-    console.log(
-        "Typing:",
-        athlete.entryId,
-        e.target.value
-    );
+    onChange={(e) => {
+    console.log("Typing:", e.target.value);
 
     setNextWeights((prev) => ({
         ...prev,
