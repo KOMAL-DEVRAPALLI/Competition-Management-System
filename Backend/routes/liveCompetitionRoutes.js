@@ -12,8 +12,10 @@ router.get(
     "/:competitionId/:gender",
     getLiveCompetitionController
 );
-router.post("/start", startLiveCompetitionController);
-
+router.post(
+    "/start/:competitionId/:gender",
+    startLiveCompetitionController
+);
 router.post("/process-lift", processLiftController);
 
 router.patch("/declared-weight", saveDeclaredWeightController);
