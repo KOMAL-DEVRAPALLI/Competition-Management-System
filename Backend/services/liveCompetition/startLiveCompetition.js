@@ -11,22 +11,41 @@ const startLiveCompetition = async ({
 }) => {
 
     let entries = await buildWorkingSheetData(
-        competitionId,
-        gender,
-        true
+    competitionId,
+    gender,
+    true
+);
+
+console.log(
+    "Selected Categories:",
+    selectedWeightCategories
+);
+
+console.log(
+    "Before Filter:",
+    entries.map((athlete) => ({
+        name: athlete.name,
+        category: athlete.weightCategory,
+    }))
+);
+
+if (selectedWeightCategories.length > 0) {
+
+    entries = entries.filter((athlete) =>
+        selectedWeightCategories.includes(
+            athlete.weightCategory
+        )
     );
 
-    // Filter by selected weight categories.
-    // Empty array means include all categories.
-    if (selectedWeightCategories.length > 0) {
+}
 
-        entries = entries.filter((athlete) =>
-            selectedWeightCategories.includes(
-                athlete.weightCategory
-            )
-        );
-
-    }
+console.log(
+    "After Filter:",
+    entries.map((athlete) => ({
+        name: athlete.name,
+        category: athlete.weightCategory,
+    }))
+);
 
     if (!entries.length) {
         throw new Error(
