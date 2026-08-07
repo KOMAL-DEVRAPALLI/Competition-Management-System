@@ -11,26 +11,7 @@ const saveDeclaration = async ({
         throw new Error("Invalid declared weight.");
     }
 
-   await competitionEntry.populate("athleteId");
-
-const gender =
-    competitionEntry.athleteId?.personalInfo?.gender;
-
-if (!gender) {
-    throw new Error(
-        "Athlete gender is missing."
-    );
-}
-console.log("Competition ID:", competitionEntry.competitionId.toString());
-
-console.log(
-    "Athlete Gender:",
-    competitionEntry.athleteId.personalInfo.gender
-);
-await updateCurrentPlatformAthlete(
-    competitionEntry.competitionId,
-    gender.toLowerCase()
-);
+    const competitionEntry = await CompetitionEntry.findById(entryId);
 
     if (!competitionEntry) {
         throw new Error("Competition entry not found.");
@@ -62,11 +43,25 @@ await updateCurrentPlatformAthlete(
     await competitionEntry.save();
 
     await competitionEntry.populate("athleteId");
-    
+
+    const gender =
+        competitionEntry.athleteId?.personalInfo?.gender;
+
+    if (!gender) {
+        throw new Error("Athlete gender is missing.");
+    }
+
+    console.log("===== SAVE DECLARATION =====");
+    console.log(
+        "Competition ID:",
+        competitionEntry.competitionId.toString()
+    );
+    console.log("Gender:", gender);
+
     await updateCurrentPlatformAthlete(
-    competitionEntry.competitionId,
-    competitionEntry.athleteId.personalInfo.gender.toLowerCase()
-);
+        competitionEntry.competitionId,
+        gender.toLowerCase()
+    );
 
     return await CompetitionEntry.findById(entryId);
 
