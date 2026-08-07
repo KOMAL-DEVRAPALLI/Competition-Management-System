@@ -1,6 +1,6 @@
 /* =====================================
-   LIVE SCOREBOARD CARD
-====================================== */
+   LIVE SCOREBOARD
+===================================== */
 
 .scoreboard{
 
@@ -12,19 +12,21 @@
 
     box-shadow:0 8px 25px rgba(0,0,0,.08);
 
+    overflow-x:auto;
+
 }
 
 /* =====================================
    HEADER
-====================================== */
+===================================== */
 
 .scoreboard-header{
 
     border-bottom:3px solid #2563eb;
 
-    padding-bottom:14px;
+    padding-bottom:16px;
 
-    margin-bottom:20px;
+    margin-bottom:24px;
 
 }
 
@@ -32,7 +34,7 @@
 
     margin:0;
 
-    font-size:30px;
+    font-size:28px;
 
     font-weight:700;
 
@@ -42,7 +44,7 @@
 
 /* =====================================
    TABLE
-====================================== */
+===================================== */
 
 .scoreboard-table{
 
@@ -50,11 +52,13 @@
 
     border-collapse:collapse;
 
+    min-width:1150px;
+
 }
 
 /* =====================================
-   TABLE HEADER
-====================================== */
+   HEADER
+===================================== */
 
 .scoreboard-table thead th{
 
@@ -62,7 +66,7 @@
 
     color:white;
 
-    padding:16px;
+    padding:14px;
 
     text-align:center;
 
@@ -70,17 +74,13 @@
 
     font-weight:700;
 
-    position:sticky;
-
-    top:0;
-
-    z-index:1;
+    white-space:nowrap;
 
 }
 
 /* =====================================
-   TABLE BODY
-====================================== */
+   BODY
+===================================== */
 
 .scoreboard-table tbody tr{
 
@@ -96,15 +96,21 @@
 
 .scoreboard-table td{
 
-    padding:14px 12px;
-
-    text-align:center;
+    padding:14px;
 
     border-bottom:1px solid #e5e7eb;
+
+    text-align:center;
 
     font-size:15px;
 
     color:#374151;
+
+}
+
+.scoreboard-table td:first-child{
+
+    font-weight:700;
 
 }
 
@@ -116,27 +122,23 @@
 
     color:#111827;
 
-}
-
-.scoreboard-table td:first-child{
-
-    font-weight:700;
+    min-width:220px;
 
 }
 
 /* =====================================
    ATTEMPTS
-====================================== */
+===================================== */
 
 .attempt-good{
 
     display:inline-block;
 
-    min-width:48px;
+    min-width:52px;
 
-    padding:4px 8px;
+    padding:6px 10px;
 
-    border-radius:6px;
+    border-radius:8px;
 
     background:#dcfce7;
 
@@ -150,11 +152,11 @@
 
     display:inline-block;
 
-    min-width:48px;
+    min-width:52px;
 
-    padding:4px 8px;
+    padding:6px 10px;
 
-    border-radius:6px;
+    border-radius:8px;
 
     background:#fee2e2;
 
@@ -168,11 +170,11 @@
 
     display:inline-block;
 
-    min-width:48px;
+    min-width:52px;
 
-    padding:4px 8px;
+    padding:6px 10px;
 
-    border-radius:6px;
+    border-radius:8px;
 
     background:#f3f4f6;
 
@@ -184,7 +186,7 @@
 
 /* =====================================
    BEST LIFTS
-====================================== */
+===================================== */
 
 .scoreboard-table td:nth-child(9),
 .scoreboard-table td:nth-child(10),
@@ -198,35 +200,35 @@
 
 /* =====================================
    CURRENT ATHLETE
-====================================== */
+===================================== */
 
-.current-athlete-row{
+.scoreboard-current-row td{
 
-    background:#dcfce7 !important;
+    background:#dcfce7;
 
     font-weight:700;
+
+}
+
+.scoreboard-current-row td:first-child{
 
     border-left:6px solid #16a34a;
 
 }
 
-/* =====================================
-   NEXT ATHLETE
-====================================== */
+.scoreboard-next-row td{
 
-.next-athlete-row{
+    background:#dbeafe;
 
-    background:#dbeafe !important;
+}
+
+.scoreboard-next-row td:first-child{
 
     border-left:6px solid #2563eb;
 
 }
 
-/* =====================================
-   COMPLETED
-====================================== */
-
-.completed-athlete-row{
+.scoreboard-completed-row td{
 
     opacity:.65;
 
@@ -234,19 +236,19 @@
 
 /* =====================================
    RESPONSIVE
-====================================== */
+===================================== */
 
-@media (max-width:1400px){
+@media(max-width:1200px){
 
     .scoreboard{
 
-        overflow-x:auto;
+        padding:18px;
 
     }
 
     .scoreboard-table{
 
-        min-width:1200px;
+        min-width:1100px;
 
     }
 

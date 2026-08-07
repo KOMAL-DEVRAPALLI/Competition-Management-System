@@ -13,6 +13,7 @@ export const apiRequest = async (url, method, body = null) => {
     } catch (error) {
     if (error.response) {
         alert("Response Error:\n" + JSON.stringify(error.response.data, null, 2));
+        console.log(error.response?.data);
     } else if (error.request) {
         alert("No response received from server.");
     } else {

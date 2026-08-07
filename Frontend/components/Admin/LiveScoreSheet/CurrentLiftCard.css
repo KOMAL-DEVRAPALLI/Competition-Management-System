@@ -1,16 +1,24 @@
 /* =====================================
-   DECLARATION QUEUE CARD
+   CURRENT LIFT CARD
 ====================================== */
 
-.declaration-queue-card{
+.current-athlete-card {
 
-    background:#ffffff;
+    background: #ffffff;
 
-    border-radius:16px;
+    border-radius: 16px;
 
-    padding:28px;
+    padding: 28px;
 
-    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 24px;
+
+    height: 100%;
 
 }
 
@@ -18,173 +26,187 @@
    HEADER
 ====================================== */
 
-.declaration-queue-header{
+.current-athlete-header {
 
-    border-bottom:3px solid #2563eb;
+    border-bottom: 3px solid #2563eb;
 
-    padding-bottom:14px;
-
-    margin-bottom:20px;
+    padding-bottom: 14px;
 
 }
 
-.declaration-queue-header h2{
+.current-athlete-header h2 {
 
-    margin:0;
+    margin: 0;
 
-    font-size:30px;
+    font-size: 28px;
 
-    font-weight:700;
+    font-weight: 700;
 
-    color:#111827;
-
-}
-
-/* =====================================
-   TABLE
-====================================== */
-
-.declaration-queue-table{
-
-    width:100%;
-
-    border-collapse:collapse;
+    color: #111827;
 
 }
 
 /* =====================================
-   HEADER ROW
+   DETAILS
 ====================================== */
 
-.declaration-queue-table thead th{
+.current-athlete-details {
 
-    background:#2563eb;
+    display: flex;
 
-    color:white;
+    flex-direction: column;
 
-    padding:16px;
-
-    font-size:15px;
-
-    font-weight:700;
-
-    text-align:center;
-
-    position:sticky;
-
-    top:0;
+    gap: 14px;
 
 }
 
 /* =====================================
-   BODY ROWS
+   ROW
 ====================================== */
 
-.declaration-queue-table tbody tr{
+.current-athlete-row {
 
-    transition:.2s;
+    display: grid;
 
-}
+    grid-template-columns: 180px 1fr;
 
-.declaration-queue-table tbody tr:hover{
+    align-items: center;
 
-    background:#f8fafc;
+    border: 1px solid #e5e7eb;
 
-}
+    border-radius: 10px;
 
-.declaration-queue-table td{
+    overflow: hidden;
 
-    padding:16px 12px;
-
-    text-align:center;
-
-    border-bottom:1px solid #e5e7eb;
-
-    font-size:15px;
-
-    color:#374151;
+    background: #f9fafb;
 
 }
 
-.declaration-queue-table td:first-child{
+/* Label */
 
-    font-weight:700;
+.current-athlete-row span {
+
+    background: #eff6ff;
+
+    color: #1d4ed8;
+
+    padding: 14px 18px;
+
+    font-size: 15px;
+
+    font-weight: 600;
 
 }
 
-.declaration-queue-table td:nth-child(2){
+/* Value */
 
-    font-weight:600;
+.current-athlete-row strong {
 
-    color:#111827;
+    padding: 14px 18px;
+
+    text-align: right;
+
+    color: #111827;
+
+    font-size: 17px;
+
+    font-weight: 700;
 
 }
 
 /* =====================================
-   INPUT
+   WEIGHT ON BAR
 ====================================== */
 
-.queue-weight-input{
+.current-athlete-row:last-child {
 
-    width:90px;
+    background: #ecfdf5;
 
-    height:42px;
-
-    border:1px solid #d1d5db;
-
-    border-radius:8px;
-
-    text-align:center;
-
-    font-size:16px;
-
-    outline:none;
-
-    transition:.2s;
+    border: 2px solid #16a34a;
 
 }
 
-.queue-weight-input:focus{
+.current-athlete-row:last-child span {
 
-    border-color:#2563eb;
+    background: #16a34a;
 
-    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+    color: #ffffff;
+
+}
+
+.current-athlete-row:last-child strong {
+
+    font-size: 30px;
+
+    color: #15803d;
+
+    font-weight: 800;
 
 }
 
 /* =====================================
-   SAVE BUTTON
+   ACTION BUTTONS
 ====================================== */
 
-.queue-save-btn{
+.current-athlete-actions {
 
-    min-width:90px;
+    display: grid;
 
-    height:42px;
+    grid-template-columns: 1fr 1fr;
 
-    border:none;
+    gap: 18px;
 
-    border-radius:8px;
-
-    background:#16a34a;
-
-    color:white;
-
-    font-size:15px;
-
-    font-weight:600;
-
-    cursor:pointer;
-
-    transition:.2s;
+    margin-top: auto;
 
 }
 
-.queue-save-btn:hover{
+.current-athlete-actions button {
 
-    background:#15803d;
+    height: 60px;
 
-    transform:translateY(-2px);
+    border: none;
+
+    border-radius: 12px;
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+
+}
+
+.good-lift-btn {
+
+    background: #16a34a;
+
+    color: white;
+
+}
+
+.good-lift-btn:hover {
+
+    background: #15803d;
+
+    transform: translateY(-2px);
+
+}
+
+.no-lift-btn {
+
+    background: #dc2626;
+
+    color: white;
+
+}
+
+.no-lift-btn:hover {
+
+    background: #b91c1c;
+
+    transform: translateY(-2px);
 
 }
 
@@ -192,21 +214,21 @@
    EMPTY STATE
 ====================================== */
 
-.declaration-queue-empty{
+.current-athlete-card.no-athlete {
 
-    height:180px;
+    display: flex;
 
-    display:flex;
+    justify-content: center;
 
-    justify-content:center;
+    align-items: center;
 
-    align-items:center;
+    min-height: 400px;
 
-    font-size:22px;
+    font-size: 22px;
 
-    font-weight:600;
+    font-weight: 700;
 
-    color:#6b7280;
+    color: #6b7280;
 
 }
 
@@ -214,17 +236,41 @@
    RESPONSIVE
 ====================================== */
 
-@media (max-width:1200px){
+@media (max-width: 768px) {
 
-    .declaration-queue-card{
+    .current-athlete-card {
 
-        overflow-x:auto;
+        padding: 20px;
 
     }
 
-    .declaration-queue-table{
+    .current-athlete-header h2 {
 
-        min-width:900px;
+        font-size: 24px;
+
+    }
+
+    .current-athlete-row {
+
+        grid-template-columns: 140px 1fr;
+
+    }
+
+    .current-athlete-row strong {
+
+        font-size: 16px;
+
+    }
+
+    .current-athlete-row:last-child strong {
+
+        font-size: 24px;
+
+    }
+
+    .current-athlete-actions {
+
+        grid-template-columns: 1fr;
 
     }
 

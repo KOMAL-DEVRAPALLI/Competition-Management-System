@@ -37,20 +37,21 @@ const getLiveCompetition = async (
             session.currentEntryId?.toString()
     );
 
-    const eligibleEntries = entries.filter((entry) => {
+   const eligibleEntries = entries.filter((entry) => {
 
-        const attempt = getCurrentAttempt(
-            entry.competitionEntry
-        );
+    const attempt = getCurrentAttempt(
+        entry.competitionEntry
+    );
 
-        return (
-            !attempt.completed &&
-            attempt.phase === session.currentPhase &&
-            entry.entryId.toString() !==
-                session.currentEntryId?.toString()
-        );
+    return (
+        !attempt.completed &&
+        attempt.phase === session.currentPhase &&
+        attempt.declaredWeight != null &&
+        entry.entryId.toString() !==
+            session.currentEntryId?.toString()
+    );
 
-    });
+});
 
     const nextEntry = selectNextAthlete(
         eligibleEntries,

@@ -73,9 +73,12 @@ const LiveScore = () => {
 
         } catch (error) {
 
-            console.log(error);
+    console.log(error);
 
-        } finally {
+    console.log("Backend Response:");
+    console.log(error.response?.data);
+
+} finally {
 
             setLoading(false);
 

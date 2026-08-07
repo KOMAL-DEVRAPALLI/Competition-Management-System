@@ -98,18 +98,18 @@ const ScoreboardTable = ({
 
                     {competitionResults.map((athlete) => (
 
-                        <tr
-                            key={athlete.entryId}
-                            className={
-                                athlete.status === "ON_PLATFORM"
-                                    ? "current-athlete-row"
-                                    : athlete.status === "NEXT"
-                                    ? "next-athlete-row"
-                                    : athlete.status === "COMPLETED"
-                                    ? "completed-athlete-row"
-                                    : ""
-                            }
-                        >
+                       <tr
+    key={athlete.entryId}
+    className={
+        athlete.status === "ON_PLATFORM"
+            ? "scoreboard-current-row"
+            : athlete.status === "NEXT"
+            ? "scoreboard-next-row"
+            : athlete.status === "COMPLETED"
+            ? "scoreboard-completed-row"
+            : ""
+    }
+>
 
                             <td>{athlete.lotNumber}</td>
 

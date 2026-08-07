@@ -1,4 +1,5 @@
-import "./CurrentLiftCard.css"
+import "./CurrentLiftCard.css";
+
 const CurrentAthleteCard = ({
     currentAthlete,
     onGoodLift,
@@ -6,12 +7,26 @@ const CurrentAthleteCard = ({
 }) => {
 
     if (!currentAthlete) {
+
         return (
-            <div className="current-athlete-card">
+            <div className="current-athlete-card no-athlete">
                 No Athlete On Platform
             </div>
         );
+
     }
+
+    const weightOnBar =
+        currentAthlete.currentAttempt.declaredWeight ??
+        (
+            currentAthlete.currentAttempt.attemptNo === 1
+                ? (
+                    currentAthlete.currentAttempt.phase === "SNATCH"
+                        ? currentAthlete.openingSnatch
+                        : currentAthlete.openingCleanJerk
+                )
+                : "Waiting for Declaration"
+        );
 
     return (
 
@@ -19,39 +34,52 @@ const CurrentAthleteCard = ({
 
             <div className="current-athlete-header">
 
-                <h2>
-                    Current Lift
-                </h2>
+                <h2>Current Lift</h2>
 
             </div>
 
             <div className="current-athlete-details">
 
                 <div className="current-athlete-row">
+
                     <span>Lot Number</span>
+
                     <strong>{currentAthlete.lotNumber}</strong>
+
                 </div>
 
                 <div className="current-athlete-row">
+
                     <span>Name</span>
+
                     <strong>{currentAthlete.name}</strong>
+
                 </div>
 
                 <div className="current-athlete-row">
-                    <span>Phase</span>
-                    <strong>{currentAthlete.currentAttempt.phase}</strong>
-                </div>
 
-                <div className="current-athlete-row">
-                    <span>Attempt</span>
-                    <strong>{currentAthlete.currentAttempt.attemptNo}</strong>
-                </div>
+                    <span>Current Attempt</span>
 
-                <div className="current-athlete-row">
-                    <span>Weight On Bar</span>
                     <strong>
-                        {currentAthlete.currentAttempt.declaredWeight} kg
+                        {currentAthlete.currentAttempt.phase}
+                        {" "}
+                        {currentAthlete.currentAttempt.attemptNo}
                     </strong>
+
+                </div>
+
+                <div className="current-athlete-row">
+
+                    <span>Weight On Bar</span>
+
+                    <strong>
+
+                        {typeof weightOnBar === "number"
+                            ? `${weightOnBar} kg`
+                            : weightOnBar}
+
+                    </strong>
+
                 </div>
 
             </div>
@@ -62,14 +90,18 @@ const CurrentAthleteCard = ({
                     className="good-lift-btn"
                     onClick={onGoodLift}
                 >
+
                     GOOD LIFT
+
                 </button>
 
                 <button
                     className="no-lift-btn"
                     onClick={onNoLift}
                 >
+
                     NO LIFT
+
                 </button>
 
             </div>
