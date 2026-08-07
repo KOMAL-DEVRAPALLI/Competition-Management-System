@@ -260,7 +260,15 @@ const LiveScore = () => {
 </button>
 
                        <button
-   className="no-lift-btn"
+    style={{
+        background: "#dc3545",
+        color: "white",
+        fontSize: "22px",
+        padding: "18px 35px",
+        borderRadius: "8px",
+        border: "none",
+        cursor: "pointer",
+    }}
     disabled={!currentAthlete}
     onClick={() => handleProcessLift("NO_LIFT")}
 >
@@ -309,7 +317,7 @@ const LiveScore = () => {
 
         </thead>
 
-      <tbody>
+       <tbody>
     {competitionResults?.map((athlete) => (
         <tr key={athlete.entryId}>
 
@@ -332,11 +340,44 @@ const LiveScore = () => {
             <td>{athlete.total}</td>
 
             <td>
-                ...
+                {athlete.currentAttempt?.completed ? (
+                    <span className="completed">
+                        COMPLETED
+                    </span>
+                ) : athlete.entryId === currentAthlete?.entryId ? (
+                    "ON PLATFORM"
+                ) : (
+                    <input
+                        className="declared-weight-input"
+                        type="number"
+                        value={
+                            nextWeights[athlete.entryId] ??
+                            athlete.currentAttempt?.declaredWeight ??
+                            athlete.currentAttempt?.previousDeclaredWeight ??
+                            ""
+                        }
+                        onChange={(e) =>
+                            setNextWeights({
+                                ...nextWeights,
+                                [athlete.entryId]: e.target.value,
+                            })
+                        }
+                    />
+                )}
             </td>
 
             <td>
-                ...
+                {athlete.entryId === currentAthlete?.entryId ? (
+                    "-"
+                ) : (
+                    <button
+                        onClick={() =>
+                            handleQueueDeclaration(athlete)
+                        }
+                    >
+                        Save
+                    </button>
+                )}
             </td>
 
         </tr>
