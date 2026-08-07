@@ -2,7 +2,7 @@ import express from "express";
 
 import {
     getCompetitionByIdController,
-} from "../controllers/competitionController.js";
+} from "../controllers/CompetitionController.js";
 
 const router = express.Router();
 
