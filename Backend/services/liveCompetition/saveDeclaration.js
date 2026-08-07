@@ -48,7 +48,15 @@ const saveDeclaration = async ({
     attempt.declaredAt = new Date();
 
     await competitionEntry.save();
+const check = await CompetitionEntry.findById(entryId);
 
+console.log(
+    check.snatchAttempts.map(a => ({
+        no: a.attemptNo,
+        weight: a.declaredWeight,
+        result: a.result
+    }))
+);
 
     return await CompetitionEntry.findById(entryId);
 
