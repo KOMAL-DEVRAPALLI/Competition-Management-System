@@ -23,7 +23,7 @@
         competitionResults,
     } = liveCompetition || {};
 
-       useEffect(() => {
+      useEffect(() => {
 
     loadLiveCompetition();
 
@@ -38,9 +38,6 @@
 
     return () => clearInterval(interval);
 
-}, [editingEntryId]);
-
-    return () => clearInterval(interval);
 }, [editingEntryId]);
         useEffect(() => {
 
