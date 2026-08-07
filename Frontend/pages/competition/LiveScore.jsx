@@ -192,7 +192,6 @@
         }
         const isFirstAttempt =
             currentAthlete?.currentAttempt?.attemptNo === 1;
-            console.log("nextWeights:", nextWeights);
         return (
 
         <div className="live-score-page">
@@ -380,13 +379,19 @@
     value={nextWeights[athlete.entryId] ?? ""}
     onFocus={() => setEditingEntryId(athlete.entryId)}
     onBlur={() => setEditingEntryId(null)}
-    onChange={(e) => {
+  onChange={(e) => {
     console.log("Typing:", e.target.value);
 
-    setNextWeights((prev) => ({
-        ...prev,
-        [athlete.entryId]: e.target.value,
-    }));
+    setNextWeights((prev) => {
+        const updated = {
+            ...prev,
+            [athlete.entryId]: e.target.value,
+        };
+
+        console.log("Updated state:", updated);
+
+        return updated;
+    });
 }}
 />
 
