@@ -1,6 +1,7 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
 import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
+import selectNextAthlete from "./selectNextAthlete.js";
 
 const getLiveCompetition = async (
     competitionId,
@@ -23,13 +24,15 @@ const getLiveCompetition = async (
         gender,
         true
     );
-console.log(
-    entries.map((athlete) => ({
-        lot: athlete.lotNumber,
-        weight: athlete.weightCategory,
-        display: athlete.displayWeightCategory,
-    }))
-);
+
+    console.log(
+        entries.map((athlete) => ({
+            lot: athlete.lotNumber,
+            weight: athlete.weightCategory,
+            display: athlete.displayWeightCategory,
+        }))
+    );
+
     if (!entries.length) {
         throw new Error(
             "No athletes found for this session."
@@ -99,35 +102,59 @@ console.log(
             session.currentEntryId.toString()
     );
 
-   const competitionResults = entries
-    .map(mapAthlete)
-    .sort((a, b) => {
+    // -----------------------------
+    // Find Next Lifter
+    // -----------------------------
+    const eligibleEntries = entries.filter((entry) => {
 
-        const weightA = parseFloat(
-            a.weightCategory.replace("+", "")
+        const attempt = getCurrentAttempt(
+            entry.competitionEntry
         );
 
-        const weightB = parseFloat(
-            b.weightCategory.replace("+", "")
+        return (
+            !attempt.completed &&
+            attempt.phase === session.currentPhase &&
+            entry.entryId.toString() !==
+                session.currentEntryId.toString()
         );
-
-        if (weightA !== weightB) {
-            return weightA - weightB;
-        }
-
-        const isPlusA =
-            a.weightCategory.startsWith("+");
-
-        const isPlusB =
-            b.weightCategory.startsWith("+");
-
-        if (isPlusA !== isPlusB) {
-            return isPlusA ? 1 : -1;
-        }
-
-        return a.lotNumber - b.lotNumber;
 
     });
+
+    const nextLifter = selectNextAthlete(
+        eligibleEntries,
+        session.currentEntryId
+    );
+
+    const competitionResults = entries
+        .map(mapAthlete)
+        .sort((a, b) => {
+
+            const weightA = parseFloat(
+                a.weightCategory.replace("+", "")
+            );
+
+            const weightB = parseFloat(
+                b.weightCategory.replace("+", "")
+            );
+
+            if (weightA !== weightB) {
+                return weightA - weightB;
+            }
+
+            const isPlusA =
+                a.weightCategory.startsWith("+");
+
+            const isPlusB =
+                b.weightCategory.startsWith("+");
+
+            if (isPlusA !== isPlusB) {
+                return isPlusA ? 1 : -1;
+            }
+
+            return a.lotNumber - b.lotNumber;
+
+        });
+
     const pendingDeclarations = entries
         .filter((athlete) => {
 
@@ -149,24 +176,35 @@ console.log(
 
         })
         .map(mapAthlete);
-
+        console.log(
+    "Next Lifter:",
+    nextLifter?.name
+);
     return {
+
         session,
 
         currentAthlete: currentAthlete
             ? mapAthlete(currentAthlete)
             : null,
 
+        // Existing functionality (unchanged)
         nextAthlete:
             pendingDeclarations.length > 0
                 ? pendingDeclarations[0]
                 : null,
+
+        // New field for UI
+        nextLifter: nextLifter
+            ? mapAthlete(nextLifter)
+            : null,
 
         pendingDeclarations,
 
         competitionResults,
 
         totalAthletes: entries.length,
+
     };
 
 };

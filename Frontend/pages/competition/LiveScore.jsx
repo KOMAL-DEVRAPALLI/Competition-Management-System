@@ -16,8 +16,9 @@ const LiveScore = () => {
     const [declaredWeight, setDeclaredWeight] = useState("");
     const [nextWeights, setNextWeights] = useState({});
 
-   const {
+ const {
     currentAthlete,
+    nextLifter,
     pendingDeclarations,
     competitionResults,
 } = liveCompetition || {};
@@ -339,46 +340,64 @@ const LiveScore = () => {
 
             <td>{athlete.total}</td>
 
-            <td>
-                {athlete.currentAttempt?.completed ? (
-                    <span className="completed">
-                        COMPLETED
-                    </span>
-                ) : athlete.entryId === currentAthlete?.entryId ? (
-                    "ON PLATFORM"
-                ) : (
-                    <input
-                        className="declared-weight-input"
-                        type="number"
-                        value={
-                            nextWeights[athlete.entryId] ??
-                            athlete.currentAttempt?.declaredWeight ??
-                            athlete.currentAttempt?.previousDeclaredWeight ??
-                            ""
-                        }
-                        onChange={(e) =>
-                            setNextWeights({
-                                ...nextWeights,
-                                [athlete.entryId]: e.target.value,
-                            })
-                        }
-                    />
-                )}
-            </td>
+           <td>
+    {athlete.currentAttempt?.completed ? (
+        <span className="completed">
+            COMPLETED
+        </span>
+    ) : athlete.entryId?.toString() ===
+      currentAthlete?.entryId?.toString() ? (
+        <span className="on-platform">
+            ON PLATFORM
+        </span>
+    ) : athlete.entryId?.toString() ===
+      nextLifter?.entryId?.toString() ? (
+        <span
+            style={{
+                color: "#f59e0b",
+                fontWeight: "bold",
+            }}
+        >
+            NEXT
+        </span>
+    ) : (
+        <input
+            className="declared-weight-input"
+            type="number"
+            value={
+                nextWeights[athlete.entryId] ??
+                athlete.currentAttempt?.declaredWeight ??
+                athlete.currentAttempt?.previousDeclaredWeight ??
+                ""
+            }
+            onChange={(e) =>
+                setNextWeights({
+                    ...nextWeights,
+                    [athlete.entryId]: e.target.value,
+                })
+            }
+        />
+    )}
+</td>
 
-            <td>
-                {athlete.entryId === currentAthlete?.entryId ? (
-                    "-"
-                ) : (
-                    <button
-                        onClick={() =>
-                            handleQueueDeclaration(athlete)
-                        }
-                    >
-                        Save
-                    </button>
-                )}
-            </td>
+<td>
+    {athlete.entryId?.toString() ===
+    currentAthlete?.entryId?.toString() ? (
+        "-"
+    ) : (
+        <button
+            onClick={() =>
+                handleQueueDeclaration(athlete)
+            }
+        >
+            Save
+        </button>
+    )}
+</td>
+
+
+
+           
 
         </tr>
     ))}
