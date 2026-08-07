@@ -22,7 +22,8 @@ const getLiveCompetition = async (
     const entries = await buildWorkingSheetData(
         competitionId,
         gender,
-        true
+        true,
+        session.selectedWeightCategories
     );
 
     if (!entries.length) {
@@ -84,9 +85,11 @@ const getLiveCompetition = async (
             registrationNo:
                 athlete.registrationNo,
 
-            lotNumber: athlete.lotNumber,
+            lotNumber:
+                athlete.lotNumber,
 
-            bodyWeight: athlete.bodyWeight,
+            bodyWeight:
+                athlete.bodyWeight,
 
             weightCategory:
                 athlete.weightCategory,
@@ -103,11 +106,14 @@ const getLiveCompetition = async (
             bestCleanJerk:
                 athlete.bestCleanJerk,
 
-            total: athlete.total,
+            total:
+                athlete.total,
 
-            place: athlete.place,
+            place:
+                athlete.place,
 
-            currentAttempt: attempt,
+            currentAttempt:
+                attempt,
 
             snatchAttempts:
                 athlete.competitionEntry
@@ -179,11 +185,19 @@ const getLiveCompetition = async (
             );
 
         })
-        .map((entry) => mapAthlete(entry));
+        .map((entry) =>
+            mapAthlete(entry)
+        );
 
     return {
 
         status: session.status,
+
+        sessionName:
+            session.sessionName,
+
+        selectedWeightCategories:
+            session.selectedWeightCategories,
 
         currentPhase:
             session.currentPhase,

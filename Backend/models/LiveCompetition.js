@@ -14,23 +14,26 @@ const liveCompetitionSchema = new mongoose.Schema(
             required: true,
         },
 
-        currentEntryId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "CompetitionEntry",
-            default: null,
-        },
-        gender: {
+        // Session Information
+        sessionName: {
             type: String,
-            enum: ["male", "female"],
-            required: true,
+            trim: true,
+            default: "",
         },
 
+        selectedWeightCategories: {
+            type: [String],
+            default: [],
+        },
+
+        // Current Platform Athlete
         currentEntryId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "CompetitionEntry",
             default: null,
         },
 
+        // Athlete waiting to declare next attempt
         prepareEntryId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "CompetitionEntry",

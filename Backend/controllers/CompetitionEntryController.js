@@ -46,22 +46,43 @@ export const startLiveCompetitionController = async (
 
         const { competitionId, gender } = req.params;
 
-        const result = await startLiveCompetition(
-            competitionId,
-            gender
-        );
+        const {
+            sessionName = "",
+            selectedWeightCategories = [],
+        } = req.body;
+
+        const result =
+            await startLiveCompetition({
+
+                competitionId,
+
+                gender,
+
+                sessionName,
+
+                selectedWeightCategories,
+
+            });
 
         return res.status(200).json({
+
             success: true,
-            message: "Live competition started successfully.",
+
+            message:
+                "Live competition started successfully.",
+
             data: result,
+
         });
 
     } catch (error) {
 
         return res.status(400).json({
+
             success: false,
+
             message: error.message,
+
         });
 
     }

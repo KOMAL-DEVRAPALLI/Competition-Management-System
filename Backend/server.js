@@ -11,7 +11,7 @@ import workingSheetRoutes from "./routes/workingSheetRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js"
 import athleteWeighInRoutes from "./routes/athleteWeighInRoutes.js"
 import liveCompetitionRoutes from "./routes/liveCompetitionRoutes.js";
-
+import competitionRoutes from "./routes/competitionRoutes.js";
 dns.setDefaultResultOrder("ipv4first");
 dotenv.config();
 
@@ -33,6 +33,10 @@ app.use("/api/working-sheet", workingSheetRoutes);
 app.use("/api/live-competition", liveCompetitionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/athlete-weighin", athleteWeighInRoutes);
+app.use(
+    "/api/competition",
+    competitionRoutes
+);
 
 const PORT = process.env.PORT || 5000;
 

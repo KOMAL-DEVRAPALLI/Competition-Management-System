@@ -4,20 +4,36 @@ import AthleteTable from "../../components/Admin/AthleteTable.jsx";
 import { apiRequest } from "../../api/axios.js";
 import SearchBar from "../../components/Admin/SearchBar.jsx";
 import FilterBar from "../../components/Admin/FilterBar.jsx";
+import useCompetition from "../../hooks/useCompetition.js";
+import StartCompetitionModal from "../../components/Admin/Competition/StartCompetitionModal.jsx";
 import "./CompetitionAthlete.css"
 
 const CompetitionAthleteList = () => {
     const { competitionId, gender: sessionGender } = useParams();
     const location = useLocation()
     const { entries, loading } = useCompetitionEntries(competitionId);
-
+    const {
+        competition,
+        loading: competitionLoading,
+    } = useCompetition(
+        competitionId
+    );
     const navigate = useNavigate();
 
     const [search, setSearch] = useState("");
 
     const [category, setCategory] = useState("");
     const [status, setStatus] = useState("");
+    const [showStartModal, setShowStartModal] =
+        useState(false);
 
+    const [sessionName, setSessionName] =
+        useState("");
+
+    const [
+        selectedWeightCategories,
+        setSelectedWeightCategories,
+    ] = useState([]);
     const filteredEntries = entries.filter((entry) => {
         const registrationNo =
             entry.athleteId?.registrationNo?.toLowerCase() || "";
@@ -105,17 +121,19 @@ const CompetitionAthleteList = () => {
         try {
 
             await apiRequest(
-    "/live-competition/start",
-    "POST",
-    {
-        competitionId,
-        gender: sessionGender,
-    }
-);
+                `/live-competition/start/${competitionId}/${sessionGender}`,
+                "POST",
+                {
+                    sessionName,
+                    selectedWeightCategories,
+                }
+            );
 
-navigate(
-    `/admin/live-score/${competitionId}/${sessionGender}`
-);
+            setShowStartModal(false);
+
+            navigate(
+                `/admin/live-score/${competitionId}/${sessionGender}`
+            );
 
         } catch (error) {
 
@@ -181,7 +199,12 @@ navigate(
                     >
                         Official Screen
                     </button>
-                    <button className="pdf-btn" onClick={handleStartCompetition}>
+                    <button
+                        className="pdf-btn"
+                        onClick={() =>
+                            setShowStartModal(true)
+                        }
+                    >
                         Start Competition
                     </button>
                     <button
@@ -226,7 +249,24 @@ navigate(
                 )}
 
             </div>
-
+            <StartCompetitionModal
+                open={showStartModal}
+                sessionName={sessionName}
+                setSessionName={setSessionName}
+                availableWeightCategories={
+                    availableWeightCategories
+                }
+                selectedWeightCategories={
+                    selectedWeightCategories
+                }
+                setSelectedWeightCategories={
+                    setSelectedWeightCategories
+                }
+                onClose={() =>
+                    setShowStartModal(false)
+                }
+                onStart={handleStartCompetition}
+            />
         </div>
 
     );

@@ -32,7 +32,8 @@ const updateCurrentPlatformAthlete = async (
     const entries = await buildWorkingSheetData(
         competitionId,
         gender,
-        true
+        true,
+        session.selectedWeightCategories
     );
 
     const eligibleEntries = entries.filter((entry) => {

@@ -26,7 +26,8 @@ const advanceCompetition = async (
     const entries = await buildWorkingSheetData(
         competitionId,
         gender,
-        true
+        true,
+        session.selectedWeightCategories
     );
 
     if (!entries.length) {
