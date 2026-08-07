@@ -12,7 +12,7 @@ import {
     getCompetitionEntriesController,
     prepareCompetitionController,
     startLiveCompetitionController
-} from "../controllers/competitionEntryController.js";
+} from "../controllers/CompetitionEntryController.js";
 import weighInValidator from "../validators/weighInValidator.js"
 const router = express.Router();
 
