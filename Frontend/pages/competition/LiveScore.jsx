@@ -98,7 +98,7 @@ const LiveScore = () => {
     ) => {
 
         const weight =
-    Number(editingWeight);
+            Number(editingWeight);
 
         if (!weight || weight <= 0) {
             alert("Enter a valid weight.");
@@ -119,13 +119,17 @@ const LiveScore = () => {
 
             });
 
-            // Editing is finished
-            setEditingEntryId(null);
-            setNextWeights((prev) => ({
-                ...prev,
-                [athlete.entryId]: weight,
-            }));
-            await loadLiveCompetition();
+           await updateQueueDeclaration({
+    entryId: athlete.entryId,
+    competitionId,
+    gender,
+    declaredWeight: weight,
+});
+
+setEditingEntryId(null);
+setEditingWeight("");
+
+await loadLiveCompetition();
 
         } catch (error) {
 
@@ -367,31 +371,33 @@ const LiveScore = () => {
                                             <input
                                                 className="declared-weight-input"
                                                 type="number"
-                                                value={
-                                                    editingEntryId === athlete.entryId
-                                                        ? editingWeight
-                                                        : athlete.currentAttempt?.declaredWeight ??
-                                                        athlete.currentAttempt?.previousDeclaredWeight ??
-                                                        ""
-                                                }
-                                                onFocus={() => {
+                                               await updateQueueDeclaration({
+    entryId: athlete.entryId,
+    competitionId,
+    gender,
+    declaredWeight: weight,
+});
 
+setEditingEntryId(null);
+setEditingWeight("");
+
+await loadLiveCompetition();
+                                                onFocus={() => {
                                                     setEditingEntryId(athlete.entryId);
 
                                                     setEditingWeight(
-
                                                         athlete.currentAttempt?.declaredWeight ??
-
                                                         athlete.currentAttempt?.previousDeclaredWeight ??
-
                                                         ""
-
                                                     );
-
-                                                }} onBlur={() => setEditingEntryId(null)}
+                                                }}
+                                                onBlur={() => {
+                                                    setEditingEntryId(null);
+                                                    setEditingWeight("");
+                                                }}
                                                 onChange={(e) =>
-    setEditingWeight(e.target.value)
-}
+                                                    setEditingWeight(e.target.value)
+                                                }
                                             />
 
                                             {athlete.entryId?.toString() ===
