@@ -1,4 +1,4 @@
-import "./FilterBar.css";
+import "./filterBar.css";
 
 const FilterBar = (props) => {
     
