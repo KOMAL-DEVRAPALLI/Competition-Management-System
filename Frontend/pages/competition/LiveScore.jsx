@@ -23,8 +23,17 @@ const LiveScore = () => {
 } = liveCompetition || {};
 
     useEffect(() => {
-        loadLiveCompetition();
-    }, []);
+
+    loadLiveCompetition();
+
+    const interval = setInterval(
+        loadLiveCompetition,
+        3000
+    );
+
+    return () => clearInterval(interval);
+
+}, []);
 
     useEffect(() => {
 
@@ -244,32 +253,14 @@ const LiveScore = () => {
 
                     <div className="control-buttons">
 
-                       <button
-    style={{
-        background: "#28a745",
-        color: "white",
-        fontSize: "22px",
-        padding: "18px 35px",
-        borderRadius: "8px",
-        border: "none",
-        cursor: "pointer",
-    }}
-    disabled={!currentAthlete}
-    onClick={() => handleProcessLift("GOOD")}
+                       <button className="good-btn"
+     onClick={() => handleProcessLift("GOOD")}
 >
     GOOD LIFT
 </button>
 
                        <button
-    style={{
-        background: "#dc3545",
-        color: "white",
-        fontSize: "22px",
-        padding: "18px 35px",
-        borderRadius: "8px",
-        border: "none",
-        cursor: "pointer",
-    }}
+   className="no-lift-btn"
     disabled={!currentAthlete}
     onClick={() => handleProcessLift("NO_LIFT")}
 >
@@ -318,114 +309,38 @@ const LiveScore = () => {
 
         </thead>
 
-       <tbody>
+      <tbody>
+    {competitionResults?.map((athlete) => (
+        <tr key={athlete.entryId}>
 
-    {competitionResults?.map((athlete) => {
-        return(
-<tr
-    key={athlete.entryId}
-    style={{
-        backgroundColor:
-            athlete.entryId === currentAthlete?.entryId
-                ? "#fff3cd"
-                : "white",
-        fontWeight:
-            athlete.entryId === currentAthlete?.entryId
-                ? "bold"
-                : "normal",
-    }}
->
-           <td style={{ textAlign: "center" }}>
-    {athlete.lotNumber}
-</td>
+            <td>{athlete.lotNumber}</td>
 
-            <td style={{ textAlign: "center" }}>{athlete.name}</td>
+            <td>{athlete.name}</td>
 
-            <td style={{ textAlign: "center" }}>
-    {athlete.bestSnatch > 0
-        ? athlete.bestSnatch
-        : athlete.openingSnatch}
-</td>
+            <td>
+                {athlete.bestSnatch > 0
+                    ? athlete.bestSnatch
+                    : athlete.openingSnatch}
+            </td>
 
-          <td style={{ textAlign: "center" }}>
-    {athlete.bestCleanJerk > 0
-        ? athlete.bestCleanJerk
-        : athlete.openingCleanJerk}
-</td>
-            <td style={{ textAlign: "center" }}>
-    {(athlete.bestSnatch > 0
-        ? athlete.bestSnatch
-        : athlete.openingSnatch) +
-    (athlete.bestCleanJerk > 0
-        ? athlete.bestCleanJerk
-        : athlete.openingCleanJerk)}
-</td>
-<td style={{ textAlign: "center" }}>
+            <td>
+                {athlete.bestCleanJerk > 0
+                    ? athlete.bestCleanJerk
+                    : athlete.openingCleanJerk}
+            </td>
 
-  {athlete.currentAttempt?.completed ? (
-    <span
-        style={{
-            color: "green",
-            fontWeight: "bold",
-        }}
-    >
-        COMPLETED
-    </span>
-) : athlete.entryId === currentAthlete?.entryId ? (
-    "ON PLATFORM"
-) : (
-    <input
-    style={{
-        width: "120px",
-        fontSize: "20px",
-        padding: "8px",
-        textAlign: "center",
-    }}
-    type="number"
-    value={
-        nextWeights[athlete.entryId] ??
-        athlete.currentAttempt?.declaredWeight ??
-        athlete.currentAttempt?.previousDeclaredWeight ??
-        ""
-    }
-    onChange={(e) =>
-        setNextWeights({
-            ...nextWeights,
-            [athlete.entryId]: e.target.value,
-        })
-    }
-/>
-)}
+            <td>{athlete.total}</td>
 
-</td>
-<td style={{ textAlign: "center" }}>
+            <td>
+                ...
+            </td>
 
-    {athlete.entryId === currentAthlete?.entryId ? (
-
-        "-"
-
-    ) : (
-
-        <button
-            onClick={() =>
-                handleQueueDeclaration(
-                    athlete
-                )
-            }
-        >
-            Save
-        </button>
-
-    )}
-
-</td>
+            <td>
+                ...
+            </td>
 
         </tr>
-        )
-        }
-
-    )}
-
+    ))}
 </tbody>
 
     </table>
