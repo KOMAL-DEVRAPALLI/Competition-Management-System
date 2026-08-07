@@ -318,7 +318,7 @@ const LiveScore = () => {
 
         </thead>
 
-       <tbody>
+      <tbody>
     {competitionResults?.map((athlete) => (
         <tr key={athlete.entryId}>
 
@@ -340,64 +340,69 @@ const LiveScore = () => {
 
             <td>{athlete.total}</td>
 
-           <td>
-    {athlete.currentAttempt?.completed ? (
-        <span className="completed">
-            COMPLETED
-        </span>
-    ) : athlete.entryId?.toString() ===
-      currentAthlete?.entryId?.toString() ? (
-        <span className="on-platform">
-            ON PLATFORM
-        </span>
-    ) : athlete.entryId?.toString() ===
-      nextLifter?.entryId?.toString() ? (
-        <span
-            style={{
-                color: "#f59e0b",
-                fontWeight: "bold",
-            }}
-        >
-            NEXT
-        </span>
-    ) : (
-        <input
-            className="declared-weight-input"
-            type="number"
-            value={
-                nextWeights[athlete.entryId] ??
-                athlete.currentAttempt?.declaredWeight ??
-                athlete.currentAttempt?.previousDeclaredWeight ??
-                ""
-            }
-            onChange={(e) =>
-                setNextWeights({
-                    ...nextWeights,
-                    [athlete.entryId]: e.target.value,
-                })
-            }
-        />
-    )}
-</td>
+            <td>
+                {athlete.currentAttempt?.completed ? (
+                    <span className="completed">
+                        COMPLETED
+                    </span>
+                ) : athlete.entryId?.toString() ===
+                  currentAthlete?.entryId?.toString() ? (
+                    <span className="on-platform">
+                        ON PLATFORM
+                    </span>
+                ) : (
+                    <>
+                        <input
+                            className="declared-weight-input"
+                            type="number"
+                            value={
+                                nextWeights[athlete.entryId] ??
+                                athlete.currentAttempt?.declaredWeight ??
+                                athlete.currentAttempt?.previousDeclaredWeight ??
+                                ""
+                            }
+                            onChange={(e) =>
+                                setNextWeights({
+                                    ...nextWeights,
+                                    [athlete.entryId]:
+                                        e.target.value,
+                                })
+                            }
+                        />
 
-<td>
-    {athlete.entryId?.toString() ===
-    currentAthlete?.entryId?.toString() ? (
-        "-"
-    ) : (
-        <button
-            onClick={() =>
-                handleQueueDeclaration(athlete)
-            }
-        >
-            Save
-        </button>
-    )}
-</td>
+                        {athlete.entryId?.toString() ===
+                            nextLifter?.entryId?.toString() && (
+                            <div
+                                style={{
+                                    color: "#f59e0b",
+                                    fontWeight: "bold",
+                                    marginTop: "6px",
+                                    textAlign: "center",
+                                }}
+                            >
+                                NEXT
+                            </div>
+                        )}
+                    </>
+                )}
+            </td>
 
-
-
-           
+            <td>
+                {athlete.entryId?.toString() ===
+                currentAthlete?.entryId?.toString() ? (
+                    "-"
+                ) : (
+                    <button
+                        onClick={() =>
+                            handleQueueDeclaration(
+                                athlete
+                            )
+                        }
+                    >
+                        Save
+                    </button>
+                )}
+            </td>
 
         </tr>
     ))}
