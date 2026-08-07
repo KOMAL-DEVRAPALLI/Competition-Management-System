@@ -8,7 +8,10 @@ const saveDeclaration = async ({
     gender,
     declaredWeight,
 }) => {
-
+     console.log("saveDeclaration called", {
+        entryId,
+        declaredWeight,
+    });
     if (
         declaredWeight === null ||
         declaredWeight === undefined ||

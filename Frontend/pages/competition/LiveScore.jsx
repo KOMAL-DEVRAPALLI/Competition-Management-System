@@ -71,7 +71,7 @@ const LiveScore = () => {
         if (!currentAthlete) return;
 
         const weight = Number(declaredWeight);
-
+          console.log("Saving weight:", weight);
         if (!weight || weight <= 0) {
             alert("Enter a valid declared weight.");
             return;
@@ -85,7 +85,7 @@ const LiveScore = () => {
                 gender,
                 declaredWeight: weight,
             });
-
+console.log("API Response:", response);
             await loadLiveCompetition();
 
         } catch (error) {

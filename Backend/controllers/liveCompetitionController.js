@@ -135,7 +135,7 @@ export const saveDeclaredWeightController = async (
     req,
     res
 ) => {
-
+    console.log("PATCH /declared-weight", req.body);
     try {
 
         const result = await saveDeclaration(req.body);
