@@ -12,6 +12,8 @@ const LiveScore = () => {
     const { competitionId, gender } = useParams();
     const [liveCompetition, setLiveCompetition] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    
     const [editingCurrentWeight, setEditingCurrentWeight] = useState(false);
     const [declaredWeight, setDeclaredWeight] = useState("");
     const [editingEntryId, setEditingEntryId] = useState(null);
@@ -106,18 +108,6 @@ const LiveScore = () => {
         }
 
         try {
-
-            await updateQueueDeclaration({
-
-                entryId: athlete.entryId,
-
-                competitionId,
-
-                gender,
-
-                declaredWeight: weight,
-
-            });
 
            await updateQueueDeclaration({
     entryId: athlete.entryId,
