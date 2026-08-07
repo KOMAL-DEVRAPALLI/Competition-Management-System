@@ -148,29 +148,7 @@ const Dashboard = () => {
             >
                 Women's Start List
             </button>
-                 {/* Live Scoreboard */}
 
-        <button
-            onClick={() =>
-                window.open(
-                    `/admin/score-board/${dashboard.recentCompetitions[0]._id}/male`,
-                    "_blank"
-                )
-            }
-        >
-            Men's Scoreboard
-        </button>
-
-        <button
-            onClick={() =>
-                window.open(
-                    `/admin/score-board/${dashboard.recentCompetitions[0]._id}/female`,
-                    "_blank"
-                )
-            }
-        >
-            Women's Scoreboard
-        </button>
         </div>
 
     )}

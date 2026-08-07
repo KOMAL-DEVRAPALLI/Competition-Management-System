@@ -57,6 +57,31 @@ const SessionDashboard = () => {
                 >
                     Working Sheet PDF
                 </button>
+
+                <button
+                    onClick={() =>
+                        navigate(
+                            `/admin/live-score/${competitionId}/${gender}`
+                        )
+                    }
+                >
+                    Official Live Screen
+                </button>
+
+                <button
+                    onClick={() =>
+                        window.open(
+                            `/admin/score-board/${competitionId}/${gender}`,
+                            "_blank"
+                        )
+                    }
+                >
+                    Live Scoreboard
+                </button>
+
+                <button disabled>
+                    Results
+                </button>
                 <button
                     onClick={() =>
                         navigate(`/admin/live-score/${competitionId}/${gender}`)
