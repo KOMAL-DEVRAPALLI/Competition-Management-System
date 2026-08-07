@@ -12,7 +12,7 @@ const LiveScore = () => {
     const { competitionId, gender } = useParams();
     const [liveCompetition, setLiveCompetition] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const [editingCurrentWeight, setEditingCurrentWeight] = useState(false);
     const [declaredWeight, setDeclaredWeight] = useState("");
     const [editingEntryId, setEditingEntryId] = useState(null);
     const [editingWeight, setEditingWeight] = useState("");
@@ -36,14 +36,14 @@ const LiveScore = () => {
 
     }, []);
     useEffect(() => {
+    if (!currentAthlete || editingCurrentWeight) {
+        return;
+    }
 
-        if (!currentAthlete) return;
-
-        setDeclaredWeight(
-            currentAthlete.currentAttempt?.declaredWeight ?? ""
-        );
-
-    }, [currentAthlete]);
+    setDeclaredWeight(
+        currentAthlete.currentAttempt?.declaredWeight ?? ""
+    );
+}, [currentAthlete, editingCurrentWeight]);
     const handleProcessLift = async (result) => {
 
         try {
@@ -250,21 +250,23 @@ await loadLiveCompetition();
                                 <label>Declared Weight (kg)</label>
 
                                 <input
-                                    type="number"
-                                    style={{
-                                        width: "120px",
-                                        fontSize: "20px",
-                                        padding: "8px",
-                                    }}
-                                    value={declaredWeight ?? ""}
-                                    disabled={
-                                        !currentAthlete ||
-                                        isFirstAttempt
-                                    }
-                                    onChange={(e) =>
-                                        setDeclaredWeight(e.target.value)
-                                    }
-                                />
+    type="number"
+    style={{
+        width: "120px",
+        fontSize: "20px",
+        padding: "8px",
+    }}
+    value={declaredWeight}
+    disabled={
+        !currentAthlete ||
+        isFirstAttempt
+    }
+    onFocus={() => setEditingCurrentWeight(true)}
+    onBlur={() => setEditingCurrentWeight(false)}
+    onChange={(e) =>
+        setDeclaredWeight(e.target.value)
+    }
+/>
 
                             </div>
 
