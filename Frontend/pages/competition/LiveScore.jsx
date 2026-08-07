@@ -1,21 +1,21 @@
-    import { useEffect, useState } from "react";
-    import { useParams } from "react-router-dom";
-    import {
-        apiRequest,
-        processLift as processLiftAPI,
-        saveDeclaredWeight,
-        updateQueueDeclaration,
-    } from "../../api/axios";
-    import "./LiveScore.css";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+    apiRequest,
+    processLift as processLiftAPI,
+    saveDeclaredWeight,
+    updateQueueDeclaration,
+} from "../../api/axios";
+import "./LiveScore.css";
 
-    const LiveScore = () => {
-        const { competitionId, gender } = useParams();
-        const [liveCompetition, setLiveCompetition] = useState(null);
-        const [loading, setLoading] = useState(true);
+const LiveScore = () => {
+    const { competitionId, gender } = useParams();
+    const [liveCompetition, setLiveCompetition] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-        const [declaredWeight, setDeclaredWeight] = useState("");
-        const [nextWeights, setNextWeights] = useState({});
-        const [editingEntryId, setEditingEntryId] = useState(null);
+    const [declaredWeight, setDeclaredWeight] = useState("");
+    const [nextWeights, setNextWeights] = useState({});
+    const [editingEntryId, setEditingEntryId] = useState(null);
     const {
         currentAthlete,
         nextLifter,
@@ -23,80 +23,80 @@
         competitionResults,
     } = liveCompetition || {};
 
-      useEffect(() => {
+    useEffect(() => {
 
-    loadLiveCompetition();
+        loadLiveCompetition();
 
-    if (editingEntryId) {
-        return;
-    }
+        if (editingEntryId) {
+            return;
+        }
 
-    const interval = setInterval(
-        loadLiveCompetition,
-        3000
-    );
+        const interval = setInterval(
+            loadLiveCompetition,
+            3000
+        );
 
-    return () => clearInterval(interval);
+        return () => clearInterval(interval);
 
-}, [editingEntryId]);
-        useEffect(() => {
+    }, [editingEntryId]);
+    useEffect(() => {
 
-            if (!currentAthlete) return;
+        if (!currentAthlete) return;
 
-            setDeclaredWeight(
-                currentAthlete.currentAttempt?.declaredWeight ?? ""
-            );
+        setDeclaredWeight(
+            currentAthlete.currentAttempt?.declaredWeight ?? ""
+        );
 
-        }, [currentAthlete]);
-        const handleProcessLift = async (result) => {
+    }, [currentAthlete]);
+    const handleProcessLift = async (result) => {
 
-            try {
+        try {
 
-                await processLiftAPI({
-                    entryId: currentAthlete.entryId,
-                    competitionId,
-                    gender,
-                    result,
-                });
+            await processLiftAPI({
+                entryId: currentAthlete.entryId,
+                competitionId,
+                gender,
+                result,
+            });
 
-                await loadLiveCompetition();
+            await loadLiveCompetition();
 
-            } catch (error) {
+        } catch (error) {
 
-                console.log(error);
+            console.log(error);
 
-            }
+        }
 
-        };
-        const handleDeclaredWeight = async () => {
+    };
+    const handleDeclaredWeight = async () => {
 
-            if (!currentAthlete) return;
+        if (!currentAthlete) return;
 
-            const weight = Number(declaredWeight);
+        const weight = Number(declaredWeight);
 
-            if (!weight || weight <= 0) {
-                alert("Enter a valid declared weight.");
-                return;
-            }
+        if (!weight || weight <= 0) {
+            alert("Enter a valid declared weight.");
+            return;
+        }
 
-            try {
+        try {
 
-                await saveDeclaredWeight({
-                    entryId: currentAthlete.entryId,
-                    competitionId,
-                    gender,
-                    declaredWeight: weight,
-                });
+            await saveDeclaredWeight({
+                entryId: currentAthlete.entryId,
+                competitionId,
+                gender,
+                declaredWeight: weight,
+            });
 
-                await loadLiveCompetition();
+            await loadLiveCompetition();
 
-            } catch (error) {
+        } catch (error) {
 
-                console.log(error);
+            console.log(error);
 
-            }
+        }
 
-        };
+    };
     const handleQueueDeclaration = async (
         athlete
     ) => {
@@ -112,342 +112,338 @@
 
         try {
 
-    await updateQueueDeclaration({
+            await updateQueueDeclaration({
 
-        entryId: athlete.entryId,
+                entryId: athlete.entryId,
 
-        competitionId,
+                competitionId,
 
-        gender,
+                gender,
 
-        declaredWeight: weight,
+                declaredWeight: weight,
 
-    });
+            });
 
-    // Editing is finished
-    setEditingEntryId(null);
+            // Editing is finished
+            setEditingEntryId(null);
+            setNextWeights((prev) => ({
+    ...prev,
+    [athlete.entryId]: weight,
+}));
+            await loadLiveCompetition();
 
-    await loadLiveCompetition();
+        } catch (error) {
 
-} catch (error) {
+            console.log(error);
 
-    console.log(error);
-
-}
+        }
 
     };
-        const loadLiveCompetition = async () => {
-            try {
-                const response = await apiRequest(
-                    `/live-competition/${competitionId}/${gender}`,
-                    "GET"
-                );
+    const loadLiveCompetition = async () => {
+        try {
+            const response = await apiRequest(
+                `/live-competition/${competitionId}/${gender}`,
+                "GET"
+            );
 
-                setLiveCompetition(response.data);
+            setLiveCompetition(response.data);
+setNextWeights((previous) => {
+    if (Object.keys(previous).length > 0) {
+        return previous;
+    }
 
-    setNextWeights((previous) => {
-    const updated = { ...previous };
+    const initial = {};
 
     response.data.competitionResults.forEach((athlete) => {
-        if (athlete.entryId !== editingEntryId) {
-            updated[athlete.entryId] =
-                athlete.currentAttempt?.declaredWeight ??
-                athlete.currentAttempt?.previousDeclaredWeight ??
-                "";
-        }
+        initial[athlete.entryId] =
+            athlete.currentAttempt?.declaredWeight ??
+            athlete.currentAttempt?.previousDeclaredWeight ??
+            "";
     });
 
-    return updated;
+    return initial;
 });
-            } catch (error) {
-                console.log(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        const handleStartCompetition = async () => {
-
-            try {
-
-                await apiRequest(
-                    "/live-competition/start",
-                    "POST",
-                    {
-                        competitionId,
-                        gender,
-                    }
-                );
-
-                await loadLiveCompetition();
-
-            } catch (error) {
-
-                console.log(error);
-
-            }
-
-        };
-        if (loading) {
-            return <h2>Loading Live Competition...</h2>;
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
-        const isFirstAttempt =
-            currentAthlete?.currentAttempt?.attemptNo === 1;
-        return (
+    };
+    const handleStartCompetition = async () => {
+
+        try {
+
+            await apiRequest(
+                "/live-competition/start",
+                "POST",
+                {
+                    competitionId,
+                    gender,
+                }
+            );
+
+            await loadLiveCompetition();
+
+        } catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+    if (loading) {
+        return <h2>Loading Live Competition...</h2>;
+    }
+    const isFirstAttempt =
+        currentAthlete?.currentAttempt?.attemptNo === 1;
+    return (
 
         <div className="live-score-page">
 
-        <button onClick={handleStartCompetition}>
-            Start Competition
-        </button>
+            <button onClick={handleStartCompetition}>
+                Start Competition
+            </button>
 
-        <header className="live-header">
+            <header className="live-header">
 
-            <h1>Live Competition</h1>
-
-            <p>
-                Competition : {competitionId} |{" "}
-                {gender === "female" ? "Women" : "Men"}
-            </p>
-
-        </header>
-
-        <div className="live-top">
-
-            <section className="panel">
-
-                <h2>Current Athlete</h2>
+                <h1>Live Competition</h1>
 
                 <p>
-                    <strong>Name:</strong>{" "}
-                    {currentAthlete?.name}
+                    Competition : {competitionId} |{" "}
+                    {gender === "female" ? "Women" : "Men"}
                 </p>
 
-                <p>
-                    <strong>Lot:</strong>{" "}
-                    {currentAthlete?.lotNumber}
-                </p>
+            </header>
 
-                <p>
-                    <strong>Attempt:</strong>{" "}
-                    {currentAthlete?.currentAttempt?.phase}{" "}
-                    {currentAthlete?.currentAttempt?.attemptNo}
-                </p>
+            <div className="live-top">
 
-                <p>
-                    <strong>Current Weight:</strong>{" "}
-                    {
-                        currentAthlete?.currentAttempt
-                            ?.declaredWeight ??
-                        (
+                <section className="panel">
+
+                    <h2>Current Athlete</h2>
+
+                    <p>
+                        <strong>Name:</strong>{" "}
+                        {currentAthlete?.name}
+                    </p>
+
+                    <p>
+                        <strong>Lot:</strong>{" "}
+                        {currentAthlete?.lotNumber}
+                    </p>
+
+                    <p>
+                        <strong>Attempt:</strong>{" "}
+                        {currentAthlete?.currentAttempt?.phase}{" "}
+                        {currentAthlete?.currentAttempt?.attemptNo}
+                    </p>
+
+                    <p>
+                        <strong>Current Weight:</strong>{" "}
+                        {
                             currentAthlete?.currentAttempt
-                                ?.phase === "SNATCH"
-                                ? currentAthlete?.openingSnatch
-                                : currentAthlete?.openingCleanJerk
-                        )
-                    }{" "}
-                    kg
-                </p>
-                                <div className="live-middle">
+                                ?.declaredWeight ??
+                            (
+                                currentAthlete?.currentAttempt
+                                    ?.phase === "SNATCH"
+                                    ? currentAthlete?.openingSnatch
+                                    : currentAthlete?.openingCleanJerk
+                            )
+                        }{" "}
+                        kg
+                    </p>
+                    <div className="live-middle">
 
-                    <section className="panel">
-                        <div>
+                        <section className="panel">
+                            <div>
 
-                            <label>Declared Weight (kg)</label>
+                                <label>Declared Weight (kg)</label>
 
-                            <input
-                                type="number"
-                                style={{
-            width: "120px",
-            fontSize: "20px",
-            padding: "8px",
-        }}
-                                value={declaredWeight ?? ""}
-                                disabled={
-                                    !currentAthlete ||
-                                    isFirstAttempt
-                                }
-                                onChange={(e) =>
-                                    setDeclaredWeight(e.target.value)
-                                }
-                            />
+                                <input
+                                    type="number"
+                                    style={{
+                                        width: "120px",
+                                        fontSize: "20px",
+                                        padding: "8px",
+                                    }}
+                                    value={declaredWeight ?? ""}
+                                    disabled={
+                                        !currentAthlete ||
+                                        isFirstAttempt
+                                    }
+                                    onChange={(e) =>
+                                        setDeclaredWeight(e.target.value)
+                                    }
+                                />
 
-                        </div>
+                            </div>
 
-                        <div className="control-buttons">
+                            <div className="control-buttons">
 
-                        <button className="good-btn"
-        onClick={() => handleProcessLift("GOOD")}
-    >
-        GOOD LIFT
-    </button>
+                                <button className="good-btn"
+                                    onClick={() => handleProcessLift("GOOD")}
+                                >
+                                    GOOD LIFT
+                                </button>
 
-                        <button
-        style={{
-            background: "#dc3545",
-            color: "white",
-            fontSize: "22px",
-            padding: "18px 35px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-        }}
-        disabled={!currentAthlete}
-        onClick={() => handleProcessLift("NO_LIFT")}
-    >
-        NO LIFT
-    </button>
-
-
-                            <button
-                                disabled={!currentAthlete}
-                                onClick={handleDeclaredWeight}
-                            >
-                                Change Weight
-                            </button>
+                                <button
+                                    style={{
+                                        background: "#dc3545",
+                                        color: "white",
+                                        fontSize: "22px",
+                                        padding: "18px 35px",
+                                        borderRadius: "8px",
+                                        border: "none",
+                                        cursor: "pointer",
+                                    }}
+                                    disabled={!currentAthlete}
+                                    onClick={() => handleProcessLift("NO_LIFT")}
+                                >
+                                    NO LIFT
+                                </button>
 
 
-                        </div>
+                                <button
+                                    disabled={!currentAthlete}
+                                    onClick={handleDeclaredWeight}
+                                >
+                                    Change Weight
+                                </button>
 
-                    </section>
+
+                            </div>
+
+                        </section>
 
 
 
-                </div>
+                    </div>
 
-            </section>
+                </section>
 
-        </div>
+            </div>
 
             <section className="entries-panel">
 
-        <h2>Live Results</h2>
+                <h2>Live Results</h2>
 
-        <table>
+                <table>
 
-            <thead>
+                    <thead>
 
-            <tr>
-        <th>Lot</th>
-        <th>Name</th>
-        <th>Snatch</th>
-        <th>Clean & Jerk</th>
-        <th>Total</th>
-        <th>Next Weight</th>
-        <th>Action</th>
-    </tr>
+                        <tr>
+                            <th>Lot</th>
+                            <th>Name</th>
+                            <th>Snatch</th>
+                            <th>Clean & Jerk</th>
+                            <th>Total</th>
+                            <th>Next Weight</th>
+                            <th>Action</th>
+                        </tr>
 
 
-            </thead>
+                    </thead>
 
-        <tbody>
-        {competitionResults?.map((athlete) => (
-            <tr key={athlete.entryId}>
+                    <tbody>
+                        {competitionResults?.map((athlete) => (
+                            <tr key={athlete.entryId}>
 
-                <td>{athlete.lotNumber}</td>
+                                <td>{athlete.lotNumber}</td>
 
-                <td>{athlete.name}</td>
+                                <td>{athlete.name}</td>
 
-                <td>
-                    {athlete.bestSnatch > 0
-                        ? athlete.bestSnatch
-                        : athlete.openingSnatch}
-                </td>
+                                <td>
+                                    {athlete.bestSnatch > 0
+                                        ? athlete.bestSnatch
+                                        : athlete.openingSnatch}
+                                </td>
 
-                <td>
-                    {athlete.bestCleanJerk > 0
-                        ? athlete.bestCleanJerk
-                        : athlete.openingCleanJerk}
-                </td>
+                                <td>
+                                    {athlete.bestCleanJerk > 0
+                                        ? athlete.bestCleanJerk
+                                        : athlete.openingCleanJerk}
+                                </td>
 
-                <td>{athlete.total}</td>
+                                <td>{athlete.total}</td>
 
-                <td>
-                    {athlete.currentAttempt?.completed ? (
-                        <span className="completed">
-                            COMPLETED
-                        </span>
-                    ) : athlete.entryId?.toString() ===
-                    currentAthlete?.entryId?.toString() ? (
-                        <span className="on-platform">
-                            ON PLATFORM
-                        </span>
-                    ) : (
-                        <>
-                           <input
-    className="declared-weight-input"
-    type="number"
-    value={nextWeights[athlete.entryId] ?? ""}
-    onFocus={() => setEditingEntryId(athlete.entryId)}
-    onBlur={() => setEditingEntryId(null)}
-  onChange={(e) => {
-    console.log("Typing:", e.target.value);
-
-    setNextWeights((prev) => {
-        const updated = {
-            ...prev,
-            [athlete.entryId]: e.target.value,
-        };
-
-        console.log("Updated state:", updated);
-
-        return updated;
-    });
+                                <td>
+                                    {athlete.currentAttempt?.completed ? (
+                                        <span className="completed">
+                                            COMPLETED
+                                        </span>
+                                    ) : athlete.entryId?.toString() ===
+                                        currentAthlete?.entryId?.toString() ? (
+                                        <span className="on-platform">
+                                            ON PLATFORM
+                                        </span>
+                                    ) : (
+                                        <>
+                                            <input
+                                                className="declared-weight-input"
+                                                type="number"
+                                                value={nextWeights[athlete.entryId] ?? ""}
+                                                onFocus={() => setEditingEntryId(athlete.entryId)}
+                                                onBlur={() => setEditingEntryId(null)}
+                                              onChange={(e) => {
+    setNextWeights((prev) => ({
+        ...prev,
+        [athlete.entryId]: e.target.value,
+    }));
 }}
-/>
+                                            />
 
-                            {athlete.entryId?.toString() ===
-                                nextLifter?.entryId?.toString() && (
-                                <div
-                                    style={{
-                                        color: "#f59e0b",
-                                        fontWeight: "bold",
-                                        marginTop: "6px",
-                                        textAlign: "center",
-                                    }}
-                                >
-                                    NEXT
-                                </div>
-                            )}
-                        </>
-                    )}
-                </td>
+                                            {athlete.entryId?.toString() ===
+                                                nextLifter?.entryId?.toString() && (
+                                                    <div
+                                                        style={{
+                                                            color: "#f59e0b",
+                                                            fontWeight: "bold",
+                                                            marginTop: "6px",
+                                                            textAlign: "center",
+                                                        }}
+                                                    >
+                                                        NEXT
+                                                    </div>
+                                                )}
+                                        </>
+                                    )}
+                                </td>
 
-                <td>
-                    {athlete.entryId?.toString() ===
-                    currentAthlete?.entryId?.toString() ? (
-                        "-"
-                    ) : (
-                        <button
-                            onClick={() =>
-                                handleQueueDeclaration(
-                                    athlete
-                                )
-                            }
-                        >
-                            Save
-                        </button>
-                    )}
-                </td>
+                                <td>
+                                    {athlete.entryId?.toString() ===
+                                        currentAthlete?.entryId?.toString() ? (
+                                        "-"
+                                    ) : (
+                                        <button
+                                            onClick={() =>
+                                                handleQueueDeclaration(
+                                                    athlete
+                                                )
+                                            }
+                                        >
+                                            Save
+                                        </button>
+                                    )}
+                                </td>
 
-            </tr>
-        ))}
-    </tbody>
+                            </tr>
+                        ))}
+                    </tbody>
 
-        </table>
+                </table>
 
-    </section>
+            </section>
 
-                <footer className="live-footer">
+            <footer className="live-footer">
 
-                    <span>Competition Status : Ready</span>
+                <span>Competition Status : Ready</span>
 
-                    <span>
-                        Athletes : {liveCompetition?.totalAthletes}
-                    </span>
+                <span>
+                    Athletes : {liveCompetition?.totalAthletes}
+                </span>
 
-                </footer>
-            </div>
-        );
-    };
+            </footer>
+        </div>
+    );
+};
 
-    export default LiveScore;
+export default LiveScore;
