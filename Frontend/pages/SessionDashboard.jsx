@@ -13,75 +13,63 @@ const SessionDashboard = () => {
                     : "Men's Session"}
             </h1>
 
-           <div className="session-grid">
+            <div className="session-grid">
 
-    <button
-        onClick={() =>
-            navigate(`/admin/competition/${competitionId}/athletes/${gender}`)
-        }
-    >
-        Athlete List
-    </button>
+                <button
+                    onClick={() =>
+                        navigate(`/competition/${competitionId}/athletes/${gender}`)
+                    }
+                >
+                    Athlete List
+                </button>
 
-    <button
-        onClick={() =>
-            navigate(`/competition/${competitionId}/weigh-in/${gender}`)
-        }
-    >
-        Weigh-In
-    </button>
+                <button
+                    onClick={() =>
+                        navigate(`/competition/${competitionId}/weigh-in/${gender}`)
+                    }
+                >
+                    Weigh-In
+                </button>
 
-    <button
-        onClick={() =>
-            navigate(`/competition/${competitionId}/opening-lifts/${gender}`)
-        }
-    >
-        Opening Lifts
-    </button>
+                <button
+                    onClick={() =>
+                        navigate(`/competition/${competitionId}/opening-lifts/${gender}`)
+                    }
+                >
+                    Opening Lifts
+                </button>
 
-    <button
-        onClick={() =>
-            navigate(`/admin/competition/${competitionId}/start-list/${gender}`)
-        }
-    >
-        Start List
-    </button>
+                <button
+                    onClick={() =>
+                        navigate(`/competition/${competitionId}/start-list/${gender}`)
+                    }
+                >
+                    Start List
+                </button>
 
-    <button
-        onClick={() =>
-            window.open(
-                `${import.meta.env.VITE_API_URL}/working-sheet/${competitionId}/${gender}`,
-                "_blank"
-            )
-        }
-    >
-        Working Sheet PDF
-    </button>
+                <button
+                    onClick={() =>
+                        window.open(
+                            `${import.meta.env.VITE_API_URL}/working-sheet/${competitionId}/${gender}`,
+                            "_blank"
+                        )
+                    }
+                >
+                    Working Sheet PDF
+                </button>
+                <button
+                    onClick={() =>
+                        navigate(`/admin/live-score/${competitionId}/${gender}`)
+                    }
+                >
+                    Live Competition
+                </button>
 
-    <button
-        onClick={() =>
-            navigate(`/admin/live-score/${competitionId}/${gender}`)
-        }
-    >
-        Official Live Screen
-    </button>
+                <button disabled>
+                    Results
+                </button>
+            </div>
 
-    <button
-        onClick={() =>
-            window.open(
-                `/admin/score-board/${competitionId}/${gender}`,
-                "_blank"
-            )
-        }
-    >
-        Live Scoreboard
-    </button>
-
-    <button disabled>
-        Results
-    </button>
-
-</div>
         </div>
     );
 };

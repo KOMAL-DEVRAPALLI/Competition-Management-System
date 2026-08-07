@@ -136,13 +136,38 @@ if (loading) {
     <button
         className="start-list-btn"
         onClick={() =>
-navigate(
-    `/admin/competition/${competitionId}/start-list/${sessionGender}`,{
-        state:{refresh : true}   
-    }
-)        }
+            navigate(
+                `/admin/competition/${competitionId}/start-list/${sessionGender}`,
+                {
+                    state: { refresh: true },
+                }
+            )
+        }
     >
         View Start List
+    </button>
+
+    <button
+        className="live-btn"
+        onClick={() =>
+            navigate(
+                `/admin/live-score/${competitionId}/${sessionGender}`
+            )
+        }
+    >
+        Official Screen
+    </button>
+
+    <button
+        className="scoreboard-btn"
+        onClick={() =>
+            window.open(
+                `/admin/score-board/${competitionId}/${sessionGender}`,
+                "_blank"
+            )
+        }
+    >
+        Live Scoreboard
     </button>
 
 </div>

@@ -9,7 +9,23 @@
     background:#f1f5f9;
     min-height:100vh;
 }
+.live-btn{
+    background:#f59e0b;
+    color:white;
+}
 
+.live-btn:hover{
+    background:#d97706;
+}
+
+.scoreboard-btn{
+    background:#7c3aed;
+    color:white;
+}
+
+.scoreboard-btn:hover{
+    background:#6d28d9;
+}
 /* ===========================
    Header
 =========================== */
