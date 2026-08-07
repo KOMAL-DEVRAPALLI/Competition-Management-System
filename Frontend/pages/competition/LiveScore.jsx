@@ -14,8 +14,8 @@ const LiveScore = () => {
     const [loading, setLoading] = useState(true);
 
     const [declaredWeight, setDeclaredWeight] = useState("");
-    const [nextWeights, setNextWeights] = useState({});
     const [editingEntryId, setEditingEntryId] = useState(null);
+    const [editingWeight, setEditingWeight] = useState("");
     const {
         currentAthlete,
         nextLifter,
@@ -27,10 +27,6 @@ const LiveScore = () => {
 
         loadLiveCompetition();
 
-        if (editingEntryId) {
-            return;
-        }
-
         const interval = setInterval(
             loadLiveCompetition,
             3000
@@ -38,7 +34,7 @@ const LiveScore = () => {
 
         return () => clearInterval(interval);
 
-    }, [editingEntryId]);
+    }, []);
     useEffect(() => {
 
         if (!currentAthlete) return;
@@ -101,9 +97,8 @@ const LiveScore = () => {
         athlete
     ) => {
 
-        const weight = Number(
-            nextWeights[athlete.entryId]
-        );
+        const weight =
+    Number(editingWeight);
 
         if (!weight || weight <= 0) {
             alert("Enter a valid weight.");
@@ -127,9 +122,9 @@ const LiveScore = () => {
             // Editing is finished
             setEditingEntryId(null);
             setNextWeights((prev) => ({
-    ...prev,
-    [athlete.entryId]: weight,
-}));
+                ...prev,
+                [athlete.entryId]: weight,
+            }));
             await loadLiveCompetition();
 
         } catch (error) {
@@ -140,34 +135,26 @@ const LiveScore = () => {
 
     };
     const loadLiveCompetition = async () => {
+
         try {
+
             const response = await apiRequest(
                 `/live-competition/${competitionId}/${gender}`,
                 "GET"
             );
 
             setLiveCompetition(response.data);
-setNextWeights((previous) => {
-    if (Object.keys(previous).length > 0) {
-        return previous;
-    }
 
-    const initial = {};
-
-    response.data.competitionResults.forEach((athlete) => {
-        initial[athlete.entryId] =
-            athlete.currentAttempt?.declaredWeight ??
-            athlete.currentAttempt?.previousDeclaredWeight ??
-            "";
-    });
-
-    return initial;
-});
         } catch (error) {
+
             console.log(error);
+
         } finally {
+
             setLoading(false);
+
         }
+
     };
     const handleStartCompetition = async () => {
 
@@ -380,15 +367,31 @@ setNextWeights((previous) => {
                                             <input
                                                 className="declared-weight-input"
                                                 type="number"
-                                                value={nextWeights[athlete.entryId] ?? ""}
-                                                onFocus={() => setEditingEntryId(athlete.entryId)}
-                                                onBlur={() => setEditingEntryId(null)}
-                                              onChange={(e) => {
-    setNextWeights((prev) => ({
-        ...prev,
-        [athlete.entryId]: e.target.value,
-    }));
-}}
+                                                value={
+                                                    editingEntryId === athlete.entryId
+                                                        ? editingWeight
+                                                        : athlete.currentAttempt?.declaredWeight ??
+                                                        athlete.currentAttempt?.previousDeclaredWeight ??
+                                                        ""
+                                                }
+                                                onFocus={() => {
+
+                                                    setEditingEntryId(athlete.entryId);
+
+                                                    setEditingWeight(
+
+                                                        athlete.currentAttempt?.declaredWeight ??
+
+                                                        athlete.currentAttempt?.previousDeclaredWeight ??
+
+                                                        ""
+
+                                                    );
+
+                                                }} onBlur={() => setEditingEntryId(null)}
+                                                onChange={(e) =>
+    setEditingWeight(e.target.value)
+}
                                             />
 
                                             {athlete.entryId?.toString() ===
