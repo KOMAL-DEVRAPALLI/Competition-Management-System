@@ -1,133 +1,58 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+
 import {
     apiRequest,
-    processLift as processLiftAPI,
+    processLift,
     saveDeclaredWeight,
     updateQueueDeclaration,
 } from "../../api/axios";
+
+import CurrentAthleteCard from "../../components/Admin/LiveScoreSheet/CurrentAthleteCard";
+import NextAthleteCard from "../../components/Admin/LiveScoreSheet/NextAthleteCard";
+import DeclarationQueue from "../../components/Admin/LiveScoreSheet/DeclarationQueue";
+import ScoreboardTable from "../../components/Admin/LiveScoreSheet/ScoreboardTable";
+
 import "./LiveScore.css";
 
 const LiveScore = () => {
+
     const { competitionId, gender } = useParams();
-    const [liveCompetition, setLiveCompetition] = useState(null);
+
     const [loading, setLoading] = useState(true);
 
-    
-    const [editingCurrentWeight, setEditingCurrentWeight] = useState(false);
-    const [declaredWeight, setDeclaredWeight] = useState("");
-    const [editingEntryId, setEditingEntryId] = useState(null);
-    const [editingWeight, setEditingWeight] = useState("");
+    const [liveCompetition, setLiveCompetition] =
+        useState(null);
+
+    const [declaredWeight, setDeclaredWeight] =
+        useState("");
+
     const {
         currentAthlete,
-        nextLifter,
-        pendingDeclarations,
+        nextAthlete,
+        declarationQueue,
         competitionResults,
+        status,
+        currentPhase,
+        totalAthletes,
     } = liveCompetition || {};
 
     useEffect(() => {
 
         loadLiveCompetition();
 
-        const interval = setInterval(
-            loadLiveCompetition,
-            3000
-        );
-
-        return () => clearInterval(interval);
-
     }, []);
+
     useEffect(() => {
-    if (!currentAthlete || editingCurrentWeight) {
-        return;
-    }
-
-    setDeclaredWeight(
-        currentAthlete.currentAttempt?.declaredWeight ?? ""
-    );
-}, [currentAthlete, editingCurrentWeight]);
-    const handleProcessLift = async (result) => {
-
-        try {
-
-            await processLiftAPI({
-                entryId: currentAthlete.entryId,
-                competitionId,
-                gender,
-                result,
-            });
-
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.log(error);
-
-        }
-
-    };
-    const handleDeclaredWeight = async () => {
 
         if (!currentAthlete) return;
 
-        const weight = Number(declaredWeight);
-          console.log("Saving weight:", weight);
-        if (!weight || weight <= 0) {
-            alert("Enter a valid declared weight.");
-            return;
-        }
+        setDeclaredWeight(
+            currentAthlete.currentAttempt?.declaredWeight ?? ""
+        );
 
-        try {
+    }, [currentAthlete]);
 
-            await saveDeclaredWeight({
-                entryId: currentAthlete.entryId,
-                competitionId,
-                gender,
-                declaredWeight: weight,
-            });
-console.log("API Response:", response);
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.log(error);
-
-        }
-
-    };
-    const handleQueueDeclaration = async (
-        athlete
-    ) => {
-
-        const weight =
-            Number(editingWeight);
-
-        if (!weight || weight <= 0) {
-            alert("Enter a valid weight.");
-            return;
-        }
-
-        try {
-
-           await updateQueueDeclaration({
-    entryId: athlete.entryId,
-    competitionId,
-    gender,
-    declaredWeight: weight,
-});
-
-setEditingEntryId(null);
-setEditingWeight("");
-
-await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.log(error);
-
-        }
-
-    };
     const loadLiveCompetition = async () => {
 
         try {
@@ -150,18 +75,24 @@ await loadLiveCompetition();
         }
 
     };
-    const handleStartCompetition = async () => {
+
+    const handleProcessLift = async (result) => {
+
+        if (!currentAthlete) return;
 
         try {
 
-            await apiRequest(
-                "/live-competition/start",
-                "POST",
-                {
-                    competitionId,
-                    gender,
-                }
-            );
+            await processLift({
+
+                entryId: currentAthlete.entryId,
+
+                competitionId,
+
+                gender,
+
+                result,
+
+            });
 
             await loadLiveCompetition();
 
@@ -172,275 +103,148 @@ await loadLiveCompetition();
         }
 
     };
+
+    const handleCurrentDeclaration = async () => {
+
+        if (!currentAthlete) return;
+
+        try {
+
+            await saveDeclaredWeight({
+
+                entryId: currentAthlete.entryId,
+
+                declaredWeight: Number(declaredWeight),
+
+            });
+
+            await loadLiveCompetition();
+
+        } catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+
+    const handleQueueDeclaration = async (
+        entryId,
+        declaredWeight
+    ) => {
+
+        try {
+
+            await updateQueueDeclaration({
+
+                entryId,
+
+                declaredWeight,
+
+            });
+
+            await loadLiveCompetition();
+
+        } catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+
     if (loading) {
-        return <h2>Loading Live Competition...</h2>;
+
+        return (
+            <h2>Loading Live Competition...</h2>
+        );
+
     }
-    const isFirstAttempt =
-        currentAthlete?.currentAttempt?.attemptNo === 1;
+
     return (
 
         <div className="live-score-page">
 
-            <button onClick={handleStartCompetition}>
-                Start Competition
-            </button>
+            <header className="live-score-header">
 
-            <header className="live-header">
+                <h1>
+                    Live Competition
+                </h1>
 
-                <h1>Live Competition</h1>
+                <div className="live-score-session">
 
-                <p>
-                    Competition : {competitionId} |{" "}
-                    {gender === "female" ? "Women" : "Men"}
-                </p>
+                    <span>
+                        Status : {status}
+                    </span>
+
+                    <span>
+                        Phase : {currentPhase}
+                    </span>
+
+                    <span>
+                        Athletes : {totalAthletes}
+                    </span>
+
+                </div>
 
             </header>
 
-            <div className="live-top">
+            <main className="live-score-content">
 
-                <section className="panel">
+                <section className="live-score-top">
 
-                    <h2>Current Athlete</h2>
+                    <CurrentAthleteCard
+                        currentAthlete={currentAthlete}
+                        declaredWeight={declaredWeight}
+                        setDeclaredWeight={
+                            setDeclaredWeight
+                        }
+                        onChangeWeight={
+                            handleCurrentDeclaration
+                        }
+                        onGoodLift={() =>
+                            handleProcessLift("GOOD")
+                        }
+                        onNoLift={() =>
+                            handleProcessLift("NO_LIFT")
+                        }
+                    />
 
-                    <p>
-                        <strong>Name:</strong>{" "}
-                        {currentAthlete?.name}
-                    </p>
-
-                    <p>
-                        <strong>Lot:</strong>{" "}
-                        {currentAthlete?.lotNumber}
-                    </p>
-
-                    <p>
-                        <strong>Attempt:</strong>{" "}
-                        {currentAthlete?.currentAttempt?.phase}{" "}
-                        {currentAthlete?.currentAttempt?.attemptNo}
-                    </p>
-
-                    <p>
-                        <strong>Current Weight:</strong>{" "}
-                        {
-                            currentAthlete?.currentAttempt
-                                ?.declaredWeight ??
-                            (
-                                currentAthlete?.currentAttempt
-                                    ?.phase === "SNATCH"
-                                    ? currentAthlete?.openingSnatch
-                                    : currentAthlete?.openingCleanJerk
-                            )
-                        }{" "}
-                        kg
-                    </p>
-                    <div className="live-middle">
-
-                        <section className="panel">
-                            <div>
-
-                                <label>Declared Weight (kg)</label>
-
-                                <input
-    type="number"
-    style={{
-        width: "120px",
-        fontSize: "20px",
-        padding: "8px",
-    }}
-    value={declaredWeight}
-    disabled={
-        !currentAthlete ||
-        isFirstAttempt
-    }
-    onFocus={() => setEditingCurrentWeight(true)}
-    onBlur={() => setEditingCurrentWeight(false)}
-    onChange={(e) =>
-        setDeclaredWeight(e.target.value)
-    }
-/>
-
-                            </div>
-
-                            <div className="control-buttons">
-
-                                <button className="good-btn"
-                                    onClick={() => handleProcessLift("GOOD")}
-                                >
-                                    GOOD LIFT
-                                </button>
-
-                                <button
-                                    style={{
-                                        background: "#dc3545",
-                                        color: "white",
-                                        fontSize: "22px",
-                                        padding: "18px 35px",
-                                        borderRadius: "8px",
-                                        border: "none",
-                                        cursor: "pointer",
-                                    }}
-                                    disabled={!currentAthlete}
-                                    onClick={() => handleProcessLift("NO_LIFT")}
-                                >
-                                    NO LIFT
-                                </button>
-
-
-                                <button
-                                    disabled={!currentAthlete}
-                                    onClick={handleDeclaredWeight}
-                                >
-                                    Change Weight
-                                </button>
-
-
-                            </div>
-
-                        </section>
-
-
-
-                    </div>
+                    <NextAthleteCard
+                        nextAthlete={nextAthlete}
+                    />
 
                 </section>
 
-            </div>
+                <section className="live-score-middle">
 
-            <section className="entries-panel">
+                    <DeclarationQueue
+                        declarationQueue={
+                            declarationQueue
+                        }
+                        onSaveWeight={
+                            handleQueueDeclaration
+                        }
+                    />
 
-                <h2>Live Results</h2>
+                </section>
 
-                <table>
+                <section className="live-score-bottom">
 
-                    <thead>
+                    <ScoreboardTable
+                        competitionResults={
+                            competitionResults
+                        }
+                    />
 
-                        <tr>
-                            <th>Lot</th>
-                            <th>Name</th>
-                            <th>Snatch</th>
-                            <th>Clean & Jerk</th>
-                            <th>Total</th>
-                            <th>Next Weight</th>
-                            <th>Action</th>
-                        </tr>
+                </section>
 
+            </main>
 
-                    </thead>
-
-                    <tbody>
-                        {competitionResults?.map((athlete) => (
-                            <tr key={athlete.entryId}>
-
-                                <td>{athlete.lotNumber}</td>
-
-                                <td>{athlete.name}</td>
-
-                                <td>
-                                    {athlete.bestSnatch > 0
-                                        ? athlete.bestSnatch
-                                        : athlete.openingSnatch}
-                                </td>
-
-                                <td>
-                                    {athlete.bestCleanJerk > 0
-                                        ? athlete.bestCleanJerk
-                                        : athlete.openingCleanJerk}
-                                </td>
-
-                                <td>{athlete.total}</td>
-
-                                <td>
-                                    {athlete.currentAttempt?.completed ? (
-                                        <span className="completed">
-                                            COMPLETED
-                                        </span>
-                                    ) : athlete.entryId?.toString() ===
-                                        currentAthlete?.entryId?.toString() ? (
-                                        <span className="on-platform">
-                                            ON PLATFORM
-                                        </span>
-                                    ) : (
-                                        <>
-                                            <input
-                                                className="declared-weight-input"
-                                                type="number"
-                                                value={
-    editingEntryId?.toString() === athlete.entryId?.toString()
-        ? editingWeight
-        : athlete.currentAttempt?.declaredWeight ??
-          athlete.currentAttempt?.previousDeclaredWeight ??
-          ""
-}
-                                                onFocus={() => {
-                                                    setEditingEntryId(athlete.entryId);
-
-                                                    setEditingWeight(
-                                                        athlete.currentAttempt?.declaredWeight ??
-                                                        athlete.currentAttempt?.previousDeclaredWeight ??
-                                                        ""
-                                                    );
-                                                }}
-                                                onBlur={() => {
-                                                    setEditingEntryId(null);
-                                                    setEditingWeight("");
-                                                }}
-                                                onChange={(e) =>
-                                                    setEditingWeight(e.target.value)
-                                                }
-                                            />
-
-                                            {athlete.entryId?.toString() ===
-                                                nextLifter?.entryId?.toString() && (
-                                                    <div
-                                                        style={{
-                                                            color: "#f59e0b",
-                                                            fontWeight: "bold",
-                                                            marginTop: "6px",
-                                                            textAlign: "center",
-                                                        }}
-                                                    >
-                                                        NEXT
-                                                    </div>
-                                                )}
-                                        </>
-                                    )}
-                                </td>
-
-                                <td>
-                                    {athlete.entryId?.toString() ===
-                                        currentAthlete?.entryId?.toString() ? (
-                                        "-"
-                                    ) : (
-                                        <button
-                                            onClick={() =>
-                                                handleQueueDeclaration(
-                                                    athlete
-                                                )
-                                            }
-                                        >
-                                            Save
-                                        </button>
-                                    )}
-                                </td>
-
-                            </tr>
-                        ))}
-                    </tbody>
-
-                </table>
-
-            </section>
-
-            <footer className="live-footer">
-
-                <span>Competition Status : Ready</span>
-
-                <span>
-                    Athletes : {liveCompetition?.totalAthletes}
-                </span>
-
-            </footer>
         </div>
+
     );
+
 };
 
 export default LiveScore;

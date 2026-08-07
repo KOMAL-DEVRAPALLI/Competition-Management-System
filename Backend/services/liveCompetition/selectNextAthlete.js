@@ -1,118 +1,102 @@
 import getCurrentAttempt from "./getCurrentAttempt.js";
 
-const selectNextAthlete = (entries, currentEntryId) => {
+const getAttemptWeight = (entry, attempt) => {
+
+    return (
+        attempt.declaredWeight ??
+        (
+            attempt.phase === "SNATCH"
+                ? entry.openingSnatch
+                : entry.openingCleanJerk
+        ) ??
+        Number.MAX_SAFE_INTEGER
+    );
+
+};
+
+const selectNextAthlete = (
+    entries,
+    currentEntryId
+) => {
+
     if (!entries.length) {
         return null;
     }
 
     const sortedEntries = [...entries].sort((a, b) => {
-        const attemptA = getCurrentAttempt(a.competitionEntry);
-        const attemptB = getCurrentAttempt(b.competitionEntry);
 
-        const weightA =
-            attemptA.declaredWeight ??
-            (attemptA.phase === "SNATCH"
-                ? a.openingSnatch
-                : a.openingCleanJerk) ??
-            Number.MAX_SAFE_INTEGER;
-
-        const weightB =
-            attemptB.declaredWeight ??
-            (attemptB.phase === "SNATCH"
-                ? b.openingSnatch
-                : b.openingCleanJerk) ??
-            Number.MAX_SAFE_INTEGER;
-
-        console.log(
-            `${a.name} (${weightA}) vs ${b.name} (${weightB})`
+        const attemptA = getCurrentAttempt(
+            a.competitionEntry
         );
 
-        // 1. Lowest declared weight first
+        const attemptB = getCurrentAttempt(
+            b.competitionEntry
+        );
+
+        const weightA = getAttemptWeight(
+            a,
+            attemptA
+        );
+
+        const weightB = getAttemptWeight(
+            b,
+            attemptB
+        );
+
+        // 1. Lowest declared weight
         if (weightA !== weightB) {
             return weightA - weightB;
         }
 
-        // 2. Lowest attempt number first
+        // 2. Lowest attempt number
         if (attemptA.attemptNo !== attemptB.attemptNo) {
-            return attemptA.attemptNo - attemptB.attemptNo;
+            return (
+                attemptA.attemptNo -
+                attemptB.attemptNo
+            );
         }
 
-        // 3. Earliest declaration time
-        const declaredAtA = a.competitionEntry[
-            attemptA.phase === "SNATCH"
-                ? "snatchAttempts"
-                : "cleanJerkAttempts"
-        ].find(
-            (attempt) => attempt.attemptNo === attemptA.attemptNo
-        )?.declaredAt;
-
-        const declaredAtB = b.competitionEntry[
-            attemptB.phase === "SNATCH"
-                ? "snatchAttempts"
-                : "cleanJerkAttempts"
-        ].find(
-            (attempt) => attempt.attemptNo === attemptB.attemptNo
-        )?.declaredAt;
-
+        // 3. Earliest declaration
         if (
-            declaredAtA &&
-            declaredAtB &&
-            declaredAtA.getTime() !== declaredAtB.getTime()
+            attemptA.declaredAt &&
+            attemptB.declaredAt &&
+            attemptA.declaredAt.getTime() !==
+                attemptB.declaredAt.getTime()
         ) {
-            return declaredAtA.getTime() - declaredAtB.getTime();
+            return (
+                attemptA.declaredAt.getTime() -
+                attemptB.declaredAt.getTime()
+            );
         }
 
-        // 4. Current athlete goes after others if still tied
+        // 4. Current athlete lifts last if still tied
         const isCurrentA =
-            a.entryId.toString() === currentEntryId?.toString();
+            a.entryId.toString() ===
+            currentEntryId?.toString();
 
         const isCurrentB =
-            b.entryId.toString() === currentEntryId?.toString();
+            b.entryId.toString() ===
+            currentEntryId?.toString();
 
         if (isCurrentA !== isCurrentB) {
             return isCurrentA ? 1 : -1;
         }
 
-        // 5. Lot number
-        const lotA = a.lotNumber ?? Number.MAX_SAFE_INTEGER;
-        const lotB = b.lotNumber ?? Number.MAX_SAFE_INTEGER;
+        // 5. Lowest lot number
+        const lotA =
+            a.lotNumber ??
+            Number.MAX_SAFE_INTEGER;
+
+        const lotB =
+            b.lotNumber ??
+            Number.MAX_SAFE_INTEGER;
 
         return lotA - lotB;
+
     });
 
-    console.log(
-        "Sorted order:",
-        sortedEntries.map((athlete) => {
-            const attempt = getCurrentAttempt(
-                athlete.competitionEntry
-            );
-
-            return {
-                name: athlete.name,
-                attemptNo: attempt.attemptNo,
-                weight:
-                    attempt.declaredWeight ??
-                    (attempt.phase === "SNATCH"
-                        ? athlete.openingSnatch
-                        : athlete.openingCleanJerk),
-            };
-        })
-    );
-console.log(
-  sortedEntries.map((entry) => {
-    const attempt = getCurrentAttempt(entry.competitionEntry);
-
-    return {
-      name: entry.name,
-      weight: attempt.declaredWeight,
-      attempt: attempt.attemptNo,
-      result: attempt.result,
-    };
-  })
-);
-
-console.log("Selected:", sortedEntries[0].name);
     return sortedEntries[0];
+
 };
 
 export default selectNextAthlete;

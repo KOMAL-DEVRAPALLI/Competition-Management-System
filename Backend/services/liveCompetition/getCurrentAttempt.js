@@ -2,23 +2,25 @@ const getCurrentAttempt = (competitionEntry) => {
 
     const findPendingAttempt = (attempts, phase) => {
 
-        for (let i = 0; i < attempts.length; i++) {
-
-            const attempt = attempts[i];
+        for (const attempt of attempts) {
 
             if (attempt.result === "PENDING") {
 
-                const previousAttempt =
-                    i > 0 ? attempts[i - 1] : null;
-
                 return {
                     completed: false,
+
                     phase,
+
                     attemptNo: attempt.attemptNo,
-                    declaredWeight: attempt.declaredWeight,
-                    previousDeclaredWeight:
-                        previousAttempt?.declaredWeight ?? null,
-                    result: attempt.result,
+
+                    declaredWeight:
+                        attempt.declaredWeight,
+
+                    declaredAt:
+                        attempt.declaredAt,
+
+                    result:
+                        attempt.result,
                 };
 
             }
@@ -29,30 +31,36 @@ const getCurrentAttempt = (competitionEntry) => {
 
     };
 
-    const snatchAttempt = findPendingAttempt(
+    const snatch = findPendingAttempt(
         competitionEntry.snatchAttempts,
         "SNATCH"
     );
 
-    if (snatchAttempt) {
-        return snatchAttempt;
+    if (snatch) {
+        return snatch;
     }
 
-    const cleanJerkAttempt = findPendingAttempt(
+    const cleanJerk = findPendingAttempt(
         competitionEntry.cleanJerkAttempts,
         "CLEAN_JERK"
     );
 
-    if (cleanJerkAttempt) {
-        return cleanJerkAttempt;
+    if (cleanJerk) {
+        return cleanJerk;
     }
 
     return {
         completed: true,
+
         phase: null,
+
         attemptNo: null,
+
         declaredWeight: null,
-        previousDeclaredWeight: null,
+
+        declaredAt: null,
+
+        result: null,
     };
 
 };

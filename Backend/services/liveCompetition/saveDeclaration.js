@@ -1,36 +1,36 @@
 import CompetitionEntry from "../../models/CompetitionEntry.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
-import advanceCompetition from "./advanceCompetition.js";
 
 const saveDeclaration = async ({
     entryId,
-    competitionId,
-    gender,
     declaredWeight,
 }) => {
-     console.log("saveDeclaration called", {
-        entryId,
-        declaredWeight,
-    });
+
     if (
-        declaredWeight === null ||
-        declaredWeight === undefined ||
+        declaredWeight == null ||
         declaredWeight <= 0
     ) {
-        throw new Error("Invalid declared weight.");
+        throw new Error(
+            "Invalid declared weight."
+        );
     }
 
-    const competitionEntry = await CompetitionEntry.findById(entryId);
+    const competitionEntry =
+        await CompetitionEntry.findById(entryId);
 
     if (!competitionEntry) {
-        throw new Error("Competition entry not found.");
+        throw new Error(
+            "Competition entry not found."
+        );
     }
 
     const currentAttempt =
         getCurrentAttempt(competitionEntry);
 
     if (currentAttempt.completed) {
-        throw new Error("Athlete has completed the competition.");
+        throw new Error(
+            "Athlete has completed the competition."
+        );
     }
 
     const attempts =
@@ -40,28 +40,22 @@ const saveDeclaration = async ({
 
     const attempt = attempts.find(
         (item) =>
-            item.attemptNo === currentAttempt.attemptNo
+            item.attemptNo ===
+            currentAttempt.attemptNo
     );
 
     if (!attempt) {
         throw new Error("Attempt not found.");
     }
 
-    attempt.declaredWeight = declaredWeight;
+    attempt.declaredWeight =
+        declaredWeight;
+
     attempt.declaredAt = new Date();
 
     await competitionEntry.save();
-const check = await CompetitionEntry.findById(entryId);
 
-console.log(
-    check.snatchAttempts.map(a => ({
-        no: a.attemptNo,
-        weight: a.declaredWeight,
-        result: a.result
-    }))
-);
-
-    return await CompetitionEntry.findById(entryId);
+    return competitionEntry;
 
 };
 

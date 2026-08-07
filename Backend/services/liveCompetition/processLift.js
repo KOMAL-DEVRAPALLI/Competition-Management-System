@@ -10,17 +10,22 @@ const processLift = async ({
     result,
 }) => {
 
-    const competitionEntry = await CompetitionEntry.findById(entryId);
+    const competitionEntry =
+        await CompetitionEntry.findById(entryId);
 
     if (!competitionEntry) {
-        throw new Error("Competition entry not found.");
+        throw new Error(
+            "Competition entry not found."
+        );
     }
 
     const currentAttempt =
         getCurrentAttempt(competitionEntry);
 
     if (currentAttempt.completed) {
-        throw new Error("Athlete has already completed the competition.");
+        throw new Error(
+            "Athlete has already completed the competition."
+        );
     }
 
     const attempts =
@@ -29,7 +34,9 @@ const processLift = async ({
             : competitionEntry.cleanJerkAttempts;
 
     const attempt = attempts.find(
-        (item) => item.attemptNo === currentAttempt.attemptNo
+        (item) =>
+            item.attemptNo ===
+            currentAttempt.attemptNo
     );
 
     if (!attempt) {
@@ -37,29 +44,19 @@ const processLift = async ({
     }
 
     attempt.result = result;
-    const nextAttempt = attempts.find(
-    (item) =>
-        item.attemptNo === currentAttempt.attemptNo + 1
-);
-if (nextAttempt) {
 
-    nextAttempt.declaredWeight = null;
-    nextAttempt.declaredAt = null;
-
-}
     await competitionEntry.save();
 
     await updateCompetitionResults(entryId);
 
-   const updatedEntry =
-    await CompetitionEntry.findById(entryId);
+    await advanceCompetition(
+        competitionId,
+        gender
+    );
 
-await advanceCompetition(
-    competitionId,
-    gender
-);
-
-return updatedEntry;
+    return await CompetitionEntry.findById(
+        entryId
+    );
 
 };
 

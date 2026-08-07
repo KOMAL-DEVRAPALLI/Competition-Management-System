@@ -14,7 +14,9 @@ const advanceCompetition = async (
     });
 
     if (!session) {
-        throw new Error("Live competition session not found.");
+        throw new Error(
+            "Live competition session not found."
+        );
     }
 
     const entries = await buildWorkingSheetData(
@@ -27,38 +29,38 @@ const advanceCompetition = async (
         throw new Error("No athletes found.");
     }
 
-    // Athletes still lifting in current phase
-    let eligibleEntries = entries.filter((entry) => {
+    const getEligibleEntries = (phase) => {
 
-    const attempt = getCurrentAttempt(
-        entry.competitionEntry
+        return entries.filter((entry) => {
+
+            const attempt = getCurrentAttempt(
+                entry.competitionEntry
+            );
+
+            return (
+                !attempt.completed &&
+                attempt.phase === phase
+            );
+
+        });
+
+    };
+
+    // Current phase athletes
+    let eligibleEntries = getEligibleEntries(
+        session.currentPhase
     );
 
-   return (
-    !attempt.completed &&
-    attempt.phase === session.currentPhase
-);
-
-});
-    // Current phase completed
-    if (eligibleEntries.length === 0) {
+    // Move to Clean & Jerk if Snatch is finished
+    if (!eligibleEntries.length) {
 
         if (session.currentPhase === "SNATCH") {
 
             session.currentPhase = "CLEAN_JERK";
 
-           eligibleEntries = entries.filter((entry) => {
-
-    const attempt = getCurrentAttempt(
-        entry.competitionEntry
-    );
-
-  return (
-    !attempt.completed &&
-    attempt.phase === session.currentPhase
-);
-
-});
+            eligibleEntries = getEligibleEntries(
+                "CLEAN_JERK"
+            );
 
         } else {
 
@@ -72,49 +74,29 @@ const advanceCompetition = async (
 
     }
 
-  if (!eligibleEntries.length) {
-    throw new Error("No eligible athletes found.");
-}
+    if (!eligibleEntries.length) {
+        throw new Error(
+            "No eligible athletes found."
+        );
+    }
 
-const nextAthlete =
-    selectNextAthlete(
+    const nextAthlete = selectNextAthlete(
         eligibleEntries,
         session.currentEntryId
     );
 
-if (!nextAthlete) {
-    throw new Error(
-        "Unable to determine next athlete."
-    );
-}
+    if (!nextAthlete) {
+        throw new Error(
+            "Unable to determine next athlete."
+        );
+    }
 
-console.log(
-    "Current Entry:",
-    session.currentEntryId.toString()
-);
+    session.currentEntryId =
+        nextAthlete.entryId;
 
-console.log(
-    "Next Athlete:",
-    nextAthlete.name,
-    nextAthlete.entryId.toString()
-);
+    await session.save();
 
-session.currentEntryId = nextAthlete.entryId;
-
-console.log(
-    "Assigned Entry:",
-    session.currentEntryId.toString()
-);
-
-await session.save();
-
-const updatedSession =
-    await LiveCompetition.findById(session._id);
-
-console.log(
-    "Saved Entry:",
-    updatedSession.currentEntryId.toString()
-);
+    return session;
 
 };
 
