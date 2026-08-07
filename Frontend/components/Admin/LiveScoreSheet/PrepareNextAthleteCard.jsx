@@ -1,12 +1,13 @@
-import "./PrepareNextAthleteCard.css"
-const NextAthleteCard = ({
-    nextAthlete,
+import "./PrepareNextAthleteCard.css";
+
+const PrepareNextAttemptCard = ({
+    prepareAthlete,
     declaredWeight,
     setDeclaredWeight,
     onSaveWeight,
 }) => {
 
-    if (!nextAthlete) {
+    if (!prepareAthlete) {
 
         return (
 
@@ -20,7 +21,7 @@ const NextAthleteCard = ({
 
                 <div className="next-athlete-empty">
 
-                    No Athlete Waiting
+                    No Athlete Waiting For Declaration
 
                 </div>
 
@@ -31,11 +32,11 @@ const NextAthleteCard = ({
     }
 
     const currentWeight =
-        nextAthlete.currentAttempt.declaredWeight ??
+        prepareAthlete.currentAttempt.declaredWeight ??
         (
-            nextAthlete.currentAttempt.phase === "SNATCH"
-                ? nextAthlete.openingSnatch
-                : nextAthlete.openingCleanJerk
+            prepareAthlete.currentAttempt.phase === "SNATCH"
+                ? prepareAthlete.openingSnatch
+                : prepareAthlete.openingCleanJerk
         );
 
     return (
@@ -54,7 +55,9 @@ const NextAthleteCard = ({
 
                     <span>Lot Number</span>
 
-                    <strong>{nextAthlete.lotNumber}</strong>
+                    <strong>
+                        {prepareAthlete.lotNumber}
+                    </strong>
 
                 </div>
 
@@ -62,17 +65,23 @@ const NextAthleteCard = ({
 
                     <span>Athlete</span>
 
-                    <strong>{nextAthlete.name}</strong>
+                    <strong>
+                        {prepareAthlete.name}
+                    </strong>
 
                 </div>
 
                 <div className="next-athlete-row">
 
-                    <span>Current Attempt</span>
+                    <span>Next Attempt</span>
 
                     <strong>
 
-                        {nextAthlete.currentAttempt.phase} - Attempt {nextAthlete.currentAttempt.attemptNo}
+                        {prepareAthlete.currentAttempt.phase}
+                        {" "}
+                        Attempt
+                        {" "}
+                        {prepareAthlete.currentAttempt.attemptNo}
 
                     </strong>
 
@@ -80,9 +89,15 @@ const NextAthleteCard = ({
 
                 <div className="next-athlete-row">
 
-                    <span>Current Declaration</span>
+                    <span>Previous Declaration</span>
 
-                    <strong>{currentWeight} kg</strong>
+                    <strong>
+
+                        {currentWeight != null
+                            ? `${currentWeight} kg`
+                            : "-"}
+
+                    </strong>
 
                 </div>
 
@@ -101,7 +116,9 @@ const NextAthleteCard = ({
                     type="number"
                     value={declaredWeight}
                     onChange={(e) =>
-                        setDeclaredWeight(e.target.value)
+                        setDeclaredWeight(
+                            e.target.value
+                        )
                     }
                 />
 
@@ -126,4 +143,4 @@ const NextAthleteCard = ({
 
 };
 
-export default NextAthleteCard;
+export default PrepareNextAttemptCard;

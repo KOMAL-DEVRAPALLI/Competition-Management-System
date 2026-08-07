@@ -19,6 +19,23 @@ const liveCompetitionSchema = new mongoose.Schema(
             ref: "CompetitionEntry",
             default: null,
         },
+        gender: {
+            type: String,
+            enum: ["male", "female"],
+            required: true,
+        },
+
+        currentEntryId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "CompetitionEntry",
+            default: null,
+        },
+
+        prepareEntryId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "CompetitionEntry",
+            default: null,
+        },
 
         currentPhase: {
             type: String,

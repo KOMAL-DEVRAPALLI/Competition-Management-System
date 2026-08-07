@@ -19,6 +19,10 @@ const advanceCompetition = async (
         );
     }
 
+    // Athlete who has just completed the lift
+    const previousCurrentEntryId =
+        session.currentEntryId;
+
     const entries = await buildWorkingSheetData(
         competitionId,
         gender,
@@ -29,7 +33,7 @@ const advanceCompetition = async (
         throw new Error("No athletes found.");
     }
 
-    const getEligibleEntries = (phase) => {
+    const getPendingEntries = (phase) => {
 
         return entries.filter((entry) => {
 
@@ -46,25 +50,58 @@ const advanceCompetition = async (
 
     };
 
-    // Current phase athletes
-    let eligibleEntries = getEligibleEntries(
-        session.currentPhase
-    );
+    const getEligibleEntries = (pendingEntries) => {
 
-    // Move to Clean & Jerk if Snatch is finished
-    if (!eligibleEntries.length) {
+        return pendingEntries.filter((entry) => {
 
-        if (session.currentPhase === "SNATCH") {
-
-            session.currentPhase = "CLEAN_JERK";
-
-            eligibleEntries = getEligibleEntries(
-                "CLEAN_JERK"
+            const attempt = getCurrentAttempt(
+                entry.competitionEntry
             );
+
+            return (
+                attempt.declaredWeight != null
+            );
+
+        });
+
+    };
+
+    // -----------------------------------
+    // Check current phase
+    // -----------------------------------
+
+    let pendingEntries =
+        getPendingEntries(
+            session.currentPhase
+        );
+
+    // Move to Clean & Jerk ONLY if every
+    // snatch attempt has been completed.
+    if (!pendingEntries.length) {
+
+        if (
+            session.currentPhase ===
+            "SNATCH"
+        ) {
+
+            session.currentPhase =
+                "CLEAN_JERK";
+
+            pendingEntries =
+                getPendingEntries(
+                    "CLEAN_JERK"
+                );
 
         } else {
 
-            session.status = "FINISHED";
+            session.status =
+                "FINISHED";
+
+            session.currentEntryId =
+                null;
+
+            session.prepareEntryId =
+                null;
 
             await session.save();
 
@@ -74,25 +111,81 @@ const advanceCompetition = async (
 
     }
 
-    if (!eligibleEntries.length) {
-        throw new Error(
-            "No eligible athletes found."
+    const eligibleEntries =
+        getEligibleEntries(
+            pendingEntries
         );
+
+    // Nobody is ready.
+    // Wait for declarations.
+    if (!eligibleEntries.length) {
+
+        session.currentEntryId =
+            null;
+
+        session.prepareEntryId =
+            previousCurrentEntryId;
+
+        console.log(
+            "No athlete is ready for the platform."
+        );
+
+        console.log(
+            "prepareEntryId:",
+            session.prepareEntryId?.toString()
+        );
+
+        await session.save();
+
+        return session;
+
     }
 
-    const nextAthlete = selectNextAthlete(
-        eligibleEntries,
-        session.currentEntryId
-    );
+    const nextAthlete =
+        selectNextAthlete(
+            eligibleEntries,
+            previousCurrentEntryId
+        );
 
     if (!nextAthlete) {
+
         throw new Error(
             "Unable to determine next athlete."
         );
+
     }
 
+    // Athlete who just lifted
+    session.prepareEntryId =
+        previousCurrentEntryId;
+
+    // Athlete now on platform
     session.currentEntryId =
         nextAthlete.entryId;
+
+    console.log(
+        "===== ADVANCE COMPETITION ====="
+    );
+
+    console.log(
+        "Previous Current:",
+        previousCurrentEntryId?.toString()
+    );
+
+    console.log(
+        "New Current:",
+        nextAthlete.entryId.toString()
+    );
+
+    console.log(
+        "prepareEntryId:",
+        session.prepareEntryId?.toString()
+    );
+
+    console.log(
+        "currentEntryId:",
+        session.currentEntryId?.toString()
+    );
 
     await session.save();
 

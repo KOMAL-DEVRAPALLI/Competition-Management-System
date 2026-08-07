@@ -37,21 +37,27 @@ const getLiveCompetition = async (
             session.currentEntryId?.toString()
     );
 
-   const eligibleEntries = entries.filter((entry) => {
-
-    const attempt = getCurrentAttempt(
-        entry.competitionEntry
+    const prepareEntry = entries.find(
+        (entry) =>
+            entry.entryId.toString() ===
+            session.prepareEntryId?.toString()
     );
 
-    return (
-        !attempt.completed &&
-        attempt.phase === session.currentPhase &&
-        attempt.declaredWeight != null &&
-        entry.entryId.toString() !==
-            session.currentEntryId?.toString()
-    );
+    const eligibleEntries = entries.filter((entry) => {
 
-});
+        const attempt = getCurrentAttempt(
+            entry.competitionEntry
+        );
+
+        return (
+            !attempt.completed &&
+            attempt.phase === session.currentPhase &&
+            attempt.declaredWeight != null &&
+            entry.entryId.toString() !==
+                session.currentEntryId?.toString()
+        );
+
+    });
 
     const nextEntry = selectNextAthlete(
         eligibleEntries,
@@ -157,21 +163,23 @@ const getLiveCompetition = async (
     );
 
     const declarationQueue = entries
-    .filter((entry) => {
+        .filter((entry) => {
 
-        const attempt = getCurrentAttempt(
-            entry.competitionEntry
-        );
+            const attempt = getCurrentAttempt(
+                entry.competitionEntry
+            );
 
-        return (
-            !attempt.completed &&
-            attempt.phase === session.currentPhase &&
-            entry.entryId.toString() !==
-                session.currentEntryId?.toString()
-        );
+            return (
+                !attempt.completed &&
+                attempt.phase === session.currentPhase &&
+                entry.entryId.toString() !==
+                    session.currentEntryId?.toString() &&
+                entry.entryId.toString() !==
+                    session.prepareEntryId?.toString()
+            );
 
-    })
-    .map((entry) => mapAthlete(entry));
+        })
+        .map((entry) => mapAthlete(entry));
 
     return {
 
@@ -185,6 +193,14 @@ const getLiveCompetition = async (
                 ? mapAthlete(
                       currentEntry,
                       "ON_PLATFORM"
+                  )
+                : null,
+
+        prepareAthlete:
+            prepareEntry
+                ? mapAthlete(
+                      prepareEntry,
+                      "PREPARE"
                   )
                 : null,
 

@@ -27,15 +27,16 @@ const LiveScore = () => {
     const [declaredWeight, setDeclaredWeight] =
         useState("");
 
-    const {
-        currentAthlete,
-        nextAthlete,
-        declarationQueue,
-        competitionResults,
-        status,
-        currentPhase,
-        totalAthletes,
-    } = liveCompetition || {};
+   const {
+    currentAthlete,
+    prepareAthlete,
+    nextAthlete,
+    declarationQueue,
+    competitionResults,
+    status,
+    currentPhase,
+    totalAthletes,
+} = liveCompetition || {};
 
     useEffect(() => {
 
@@ -45,21 +46,42 @@ const LiveScore = () => {
 
     useEffect(() => {
 
-        if (!nextAthlete) return;
+    if (!prepareAthlete) {
 
-        setDeclaredWeight(
-            nextAthlete.currentAttempt?.declaredWeight ??
-            (
-                nextAthlete.currentAttempt?.phase ===
-                "SNATCH"
-                    ? nextAthlete.openingSnatch
-                    : nextAthlete.openingCleanJerk
-            ) ??
-            ""
-        );
+        setDeclaredWeight("");
 
-    }, [nextAthlete]);
+        return;
 
+    }
+
+    setDeclaredWeight(
+        prepareAthlete.currentAttempt?.declaredWeight ?? ""
+    );
+
+}, [prepareAthlete]);
+const handlePrepareDeclaration = async () => {
+
+    if (!prepareAthlete) return;
+
+    try {
+
+        await saveDeclaredWeight({
+
+            entryId: prepareAthlete.entryId,
+
+            declaredWeight: Number(declaredWeight),
+
+        });
+
+        await loadLiveCompetition();
+
+    } catch (error) {
+
+        console.log(error);
+
+    }
+
+};
     const loadLiveCompetition = async () => {
 
         try {
@@ -214,11 +236,11 @@ const LiveScore = () => {
                     />
 
                     <PrepareNextAttemptCard
-                        nextAthlete={nextAthlete}
-                        declaredWeight={declaredWeight}
-                        setDeclaredWeight={setDeclaredWeight}
-                        onSaveWeight={handleCurrentDeclaration}
-                    />
+    prepareAthlete={prepareAthlete}
+    declaredWeight={declaredWeight}
+    setDeclaredWeight={setDeclaredWeight}
+    onSaveWeight={handlePrepareDeclaration}
+/>
 
                 </section>
 

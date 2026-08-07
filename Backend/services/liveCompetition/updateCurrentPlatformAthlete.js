@@ -8,24 +8,25 @@ const updateCurrentPlatformAthlete = async (
     gender
 ) => {
 
-    // Normalize gender
     gender = gender.toLowerCase();
 
-    console.log("======== UPDATE PLATFORM ========");
-console.log("competitionId:", competitionId.toString());
-console.log("gender:", gender);
-console.log("typeof gender:", typeof gender);
     const session = await LiveCompetition.findOne({
         competitionId,
         gender,
     });
 
     if (!session) {
-
         throw new Error(
             "Live competition session not found."
         );
+    }
 
+    // ---------------------------------
+    // Platform already occupied
+    // Do NOT replace current athlete
+    // ---------------------------------
+    if (session.currentEntryId) {
+        return session;
     }
 
     const entries = await buildWorkingSheetData(
@@ -48,6 +49,9 @@ console.log("typeof gender:", typeof gender);
 
     });
 
+    // ---------------------------------
+    // Nobody ready
+    // ---------------------------------
     if (!eligibleEntries.length) {
 
         console.log(
@@ -62,13 +66,13 @@ console.log("typeof gender:", typeof gender);
 
     }
 
-    const currentAthlete =
+    const nextAthlete =
         selectNextAthlete(
             eligibleEntries,
             null
         );
 
-    if (!currentAthlete) {
+    if (!nextAthlete) {
 
         session.currentEntryId = null;
 
@@ -79,7 +83,7 @@ console.log("typeof gender:", typeof gender);
     }
 
     session.currentEntryId =
-        currentAthlete.entryId;
+        nextAthlete.entryId;
 
     await session.save();
 
