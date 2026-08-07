@@ -9,77 +9,106 @@
     background:#f1f5f9;
     min-height:100vh;
 }
-.live-btn{
-    background:#f59e0b;
-    color:white;
-}
 
-.live-btn:hover{
-    background:#d97706;
-}
-
-.scoreboard-btn{
-    background:#7c3aed;
-    color:white;
-}
-
-.scoreboard-btn:hover{
-    background:#6d28d9;
-}
 /* ===========================
-   Header
+   Header Actions
 =========================== */
+
 .header-actions{
     display:flex;
     gap:12px;
     align-items:center;
+    flex-wrap:wrap;
 }
 
-.start-list-btn{
+/* ===========================
+   Buttons
+=========================== */
 
+.prepare-btn,
+.start-list-btn,
+.live-btn,
+.scoreboard-btn{
     padding:12px 20px;
-
-    background:#16a34a;
-
-    color:#ffffff;
-
     border:none;
-
     border-radius:8px;
-
+    color:#fff;
     font-size:15px;
     font-weight:600;
-
     cursor:pointer;
-
     transition:all .25s ease;
 }
 
-.start-list-btn:hover{
+.prepare-btn{
+    background:#2563eb;
+}
 
-    background:#15803d;
-
+.prepare-btn:hover{
+    background:#1d4ed8;
     transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(37,99,235,.25);
+}
 
+.start-list-btn{
+    background:#16a34a;
+}
+
+.start-list-btn:hover{
+    background:#15803d;
+    transform:translateY(-2px);
     box-shadow:0 6px 14px rgba(22,163,74,.25);
 }
 
-@media(max-width:768px){
+.live-btn{
+    background:#f59e0b;
+}
+
+.live-btn:hover{
+    background:#d97706;
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(245,158,11,.25);
+}
+
+.scoreboard-btn{
+    background:#7c3aed;
+}
+
+.scoreboard-btn:hover{
+    background:#6d28d9;
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(124,58,237,.25);
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width:768px){
+
+    .competition-athlete-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+    }
 
     .header-actions{
-
         width:100%;
-
         flex-direction:column;
     }
 
     .prepare-btn,
-    .start-list-btn{
-
+    .start-list-btn,
+    .live-btn,
+    .scoreboard-btn{
         width:100%;
     }
 
 }
+
+/* ===========================
+   Header
+=========================== */
+
 .competition-athlete-header{
     background:#ffffff;
     border-radius:14px;
@@ -105,26 +134,6 @@
 .page-subtitle{
     color:#64748b;
     font-size:15px;
-}
-
-/* ===========================
-   Button
-=========================== */
-
-.prepare-btn{
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:14px 26px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:15px;
-    font-weight:600;
-    transition:.3s;
-}
-
-.prepare-btn:hover{
-    background:#1d4ed8;
 }
 
 /* ===========================
