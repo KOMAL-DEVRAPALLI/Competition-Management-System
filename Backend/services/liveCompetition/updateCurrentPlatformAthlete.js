@@ -11,16 +11,10 @@ const updateCurrentPlatformAthlete = async (
     // Normalize gender
     gender = gender.toLowerCase();
 
-    console.log("Updating Platform Athlete");
-    console.log("Competition:", competitionId.toString());
-    console.log("Gender:", gender);
-    gender = gender.toLowerCase();
-
-console.log("Searching Live Session");
-
-console.log("Competition ID:", competitionId.toString());
-
-console.log("Gender:", gender);
+    console.log("======== UPDATE PLATFORM ========");
+console.log("competitionId:", competitionId.toString());
+console.log("gender:", gender);
+console.log("typeof gender:", typeof gender);
     const session = await LiveCompetition.findOne({
         competitionId,
         gender,
