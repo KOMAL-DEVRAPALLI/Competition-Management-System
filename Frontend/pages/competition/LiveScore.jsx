@@ -371,17 +371,13 @@ await loadLiveCompetition();
                                             <input
                                                 className="declared-weight-input"
                                                 type="number"
-                                               await updateQueueDeclaration({
-    entryId: athlete.entryId,
-    competitionId,
-    gender,
-    declaredWeight: weight,
-});
-
-setEditingEntryId(null);
-setEditingWeight("");
-
-await loadLiveCompetition();
+                                                value={
+    editingEntryId?.toString() === athlete.entryId?.toString()
+        ? editingWeight
+        : athlete.currentAttempt?.declaredWeight ??
+          athlete.currentAttempt?.previousDeclaredWeight ??
+          ""
+}
                                                 onFocus={() => {
                                                     setEditingEntryId(athlete.entryId);
 
