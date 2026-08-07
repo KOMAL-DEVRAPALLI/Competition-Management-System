@@ -1,7 +1,7 @@
 
 
 import puppeteer from "puppeteer";
-import { workingSheetTemplate } from "./WorkingSheetTemplate.js";
+import { workingSheetTemplate } from "./workingSheetTemplate.js";
 
 export const generateWorkingSheet = async (
     competition,
