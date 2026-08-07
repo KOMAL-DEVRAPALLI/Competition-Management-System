@@ -32,6 +32,16 @@ const getLiveCompetition = async (
 );
 
 console.log(
+    "Current Athlete:",
+    debugAthlete?.name
+);
+
+console.log(
+    "Snatch Attempts:",
+    debugAthlete?.competitionEntry?.snatchAttempts
+);
+
+console.log(
     "Current Athlete Attempts:",
     debugAthlete.competitionEntry.snatchAttempts
 );
