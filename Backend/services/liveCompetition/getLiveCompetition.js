@@ -25,13 +25,16 @@ const getLiveCompetition = async (
         true
     );
 
-    console.log(
-        entries.map((athlete) => ({
-            lot: athlete.lotNumber,
-            weight: athlete.weightCategory,
-            display: athlete.displayWeightCategory,
-        }))
-    );
+    const debugAthlete = entries.find(
+    (entry) =>
+        entry.entryId.toString() ===
+        session.currentEntryId.toString()
+);
+
+console.log(
+    "Current Athlete Attempts:",
+    debugAthlete.competitionEntry.snatchAttempts
+);
 
     if (!entries.length) {
         throw new Error(
@@ -39,7 +42,20 @@ const getLiveCompetition = async (
         );
     }
 
-    const mapAthlete = (athlete) => ({
+   const mapAthlete = (athlete) => {
+
+    const attempt = getCurrentAttempt(
+        athlete.competitionEntry
+    );
+
+    console.log(
+        "Athlete:",
+        athlete.name,
+        "Current Attempt:",
+        attempt
+    );
+
+    return {
 
         entryId: athlete.entryId,
 
@@ -81,9 +97,7 @@ const getLiveCompetition = async (
 
         place: athlete.place,
 
-        currentAttempt: getCurrentAttempt(
-            athlete.competitionEntry
-        ),
+        currentAttempt: attempt,
 
         snatchAttempts:
             athlete.competitionEntry.snatchAttempts,
@@ -94,7 +108,9 @@ const getLiveCompetition = async (
         competitionEntry:
             athlete.competitionEntry,
 
-    });
+    };
+
+};
 
     const currentAthlete = entries.find(
         (athlete) =>
@@ -105,12 +121,17 @@ const getLiveCompetition = async (
     // -----------------------------
     // Find Next Lifter
     // -----------------------------
-    const eligibleEntries = entries.filter((entry) => {
+    const eligibleEntries = entries.filter((athlete) => {
 
         const attempt = getCurrentAttempt(
-            entry.competitionEntry
-        );
+    athlete.competitionEntry
+);
 
+console.log(
+    athlete.name,
+    "Current Attempt:",
+    attempt
+);
         return (
             !attempt.completed &&
             attempt.phase === session.currentPhase &&
