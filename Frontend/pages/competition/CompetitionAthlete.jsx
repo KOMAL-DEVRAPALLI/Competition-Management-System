@@ -81,7 +81,39 @@ const CompetitionAthleteList = () => {
             return acc;
         }, {})
     );
+const availableWeightCategories = [
 
+    ...new Set(
+
+        (competition?.weightCategories ?? [])
+
+            .filter(
+                (item) =>
+                    item.gender.toLowerCase() ===
+                    sessionGender.toLowerCase()
+            )
+
+            .flatMap(
+                (item) => item.weights
+            )
+
+    ),
+
+].sort((a, b) => {
+
+    const aValue =
+        a.startsWith("+")
+            ? Number.MAX_SAFE_INTEGER
+            : parseFloat(a);
+
+    const bValue =
+        b.startsWith("+")
+            ? Number.MAX_SAFE_INTEGER
+            : parseFloat(b);
+
+    return aValue - bValue;
+
+});
 
 
     if (loading) {
