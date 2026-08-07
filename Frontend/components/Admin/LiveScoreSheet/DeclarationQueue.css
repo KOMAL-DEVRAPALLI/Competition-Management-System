@@ -1,0 +1,83 @@
+/* ===========================
+   Declaration Queue
+=========================== */
+
+.declaration-queue-card{
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:20px;
+
+    box-shadow:0 4px 15px rgba(0,0,0,.08);
+
+}
+
+.declaration-queue-header{
+
+    margin-bottom:15px;
+
+}
+
+.declaration-queue-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+.declaration-queue-table th{
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:12px;
+
+    text-align:center;
+
+}
+
+.declaration-queue-table td{
+
+    padding:12px;
+
+    text-align:center;
+
+    border-bottom:1px solid #eee;
+
+}
+
+.queue-weight-input{
+
+    width:80px;
+
+    padding:8px;
+
+    text-align:center;
+
+}
+
+.queue-save-btn{
+
+    padding:8px 16px;
+
+    border:none;
+
+    border-radius:6px;
+
+    background:#16a34a;
+
+    color:white;
+
+    cursor:pointer;
+
+}
+
+.queue-save-btn:hover{
+
+    background:#15803d;
+
+}

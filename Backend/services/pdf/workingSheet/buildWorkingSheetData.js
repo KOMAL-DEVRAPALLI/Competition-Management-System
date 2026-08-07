@@ -105,7 +105,14 @@ const buildWorkingSheetData = async (
         });
 
     const rows = Object.values(groupedRows);
-        
+        console.table(
+    rows.map((row) => ({
+        entryId: row.entryId.toString(),
+        lot: row.lotNumber,
+        name: row.name,
+        category: row.weightCategory,
+    }))
+);
    rows.sort((a, b) => {
 
     const weightA =

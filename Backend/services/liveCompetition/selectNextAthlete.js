@@ -14,10 +14,7 @@ const getAttemptWeight = (entry, attempt) => {
 
 };
 
-const selectNextAthlete = (
-    entries,
-    currentEntryId
-) => {
+const selectNextAthlete = (entries) => {
 
     if (!entries.length) {
         return null;
@@ -25,23 +22,17 @@ const selectNextAthlete = (
 
     const sortedEntries = [...entries].sort((a, b) => {
 
-        const attemptA = getCurrentAttempt(
-            a.competitionEntry
-        );
+        const attemptA =
+            getCurrentAttempt(a.competitionEntry);
 
-        const attemptB = getCurrentAttempt(
-            b.competitionEntry
-        );
+        const attemptB =
+            getCurrentAttempt(b.competitionEntry);
 
-        const weightA = getAttemptWeight(
-            a,
-            attemptA
-        );
+        const weightA =
+            getAttemptWeight(a, attemptA);
 
-        const weightB = getAttemptWeight(
-            b,
-            attemptB
-        );
+        const weightB =
+            getAttemptWeight(b, attemptB);
 
         // 1. Lowest declared weight
         if (weightA !== weightB) {
@@ -69,29 +60,11 @@ const selectNextAthlete = (
             );
         }
 
-        // 4. Current athlete lifts last if still tied
-        const isCurrentA =
-            a.entryId.toString() ===
-            currentEntryId?.toString();
-
-        const isCurrentB =
-            b.entryId.toString() ===
-            currentEntryId?.toString();
-
-        if (isCurrentA !== isCurrentB) {
-            return isCurrentA ? 1 : -1;
-        }
-
-        // 5. Lowest lot number
-        const lotA =
-            a.lotNumber ??
-            Number.MAX_SAFE_INTEGER;
-
-        const lotB =
-            b.lotNumber ??
-            Number.MAX_SAFE_INTEGER;
-
-        return lotA - lotB;
+        // 4. Lowest lot number
+        return (
+            (a.lotNumber ?? Number.MAX_SAFE_INTEGER) -
+            (b.lotNumber ?? Number.MAX_SAFE_INTEGER)
+        );
 
     });
 

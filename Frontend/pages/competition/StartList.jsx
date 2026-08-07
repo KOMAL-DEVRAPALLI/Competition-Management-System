@@ -22,25 +22,25 @@ const StartList = () => {
     const displayEntries = entries;
 
     useEffect(() => {
-    fetchEntries();
-}, []);
+        fetchEntries();
+    }, []);
 
-const fetchEntries = async () => {
-    try {
-        const response = await apiRequest(
-            `/working-sheet/data/${competitionId}/${sessionGender}`,
-            "GET"
-        );
+    const fetchEntries = async () => {
+        try {
+            const response = await apiRequest(
+                `/working-sheet/data/${competitionId}/${sessionGender}`,
+                "GET"
+            );
 
-       
 
-        setEntries(response.data);
-    } catch (error) {
-        console.log(error);
-    } finally {
-        setLoading(false);
-    }
-};
+
+            setEntries(response.data);
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) {
 
@@ -51,7 +51,7 @@ const fetchEntries = async () => {
         );
 
     }
-
+   
     return (
 
         <div className="start-list-page">
@@ -82,7 +82,7 @@ const fetchEntries = async () => {
                 >
                     📄 Download PDF
                 </button>
-
+                
             </div>
             <div className="table-wrapper">
 

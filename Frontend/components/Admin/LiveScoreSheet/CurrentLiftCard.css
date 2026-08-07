@@ -1,0 +1,231 @@
+/* =====================================
+   DECLARATION QUEUE CARD
+====================================== */
+
+.declaration-queue-card{
+
+    background:#ffffff;
+
+    border-radius:16px;
+
+    padding:28px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+}
+
+/* =====================================
+   HEADER
+====================================== */
+
+.declaration-queue-header{
+
+    border-bottom:3px solid #2563eb;
+
+    padding-bottom:14px;
+
+    margin-bottom:20px;
+
+}
+
+.declaration-queue-header h2{
+
+    margin:0;
+
+    font-size:30px;
+
+    font-weight:700;
+
+    color:#111827;
+
+}
+
+/* =====================================
+   TABLE
+====================================== */
+
+.declaration-queue-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+/* =====================================
+   HEADER ROW
+====================================== */
+
+.declaration-queue-table thead th{
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:16px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    text-align:center;
+
+    position:sticky;
+
+    top:0;
+
+}
+
+/* =====================================
+   BODY ROWS
+====================================== */
+
+.declaration-queue-table tbody tr{
+
+    transition:.2s;
+
+}
+
+.declaration-queue-table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+.declaration-queue-table td{
+
+    padding:16px 12px;
+
+    text-align:center;
+
+    border-bottom:1px solid #e5e7eb;
+
+    font-size:15px;
+
+    color:#374151;
+
+}
+
+.declaration-queue-table td:first-child{
+
+    font-weight:700;
+
+}
+
+.declaration-queue-table td:nth-child(2){
+
+    font-weight:600;
+
+    color:#111827;
+
+}
+
+/* =====================================
+   INPUT
+====================================== */
+
+.queue-weight-input{
+
+    width:90px;
+
+    height:42px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:8px;
+
+    text-align:center;
+
+    font-size:16px;
+
+    outline:none;
+
+    transition:.2s;
+
+}
+
+.queue-weight-input:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+}
+
+/* =====================================
+   SAVE BUTTON
+====================================== */
+
+.queue-save-btn{
+
+    min-width:90px;
+
+    height:42px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#16a34a;
+
+    color:white;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.queue-save-btn:hover{
+
+    background:#15803d;
+
+    transform:translateY(-2px);
+
+}
+
+/* =====================================
+   EMPTY STATE
+====================================== */
+
+.declaration-queue-empty{
+
+    height:180px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:22px;
+
+    font-weight:600;
+
+    color:#6b7280;
+
+}
+
+/* =====================================
+   RESPONSIVE
+====================================== */
+
+@media (max-width:1200px){
+
+    .declaration-queue-card{
+
+        overflow-x:auto;
+
+    }
+
+    .declaration-queue-table{
+
+        min-width:900px;
+
+    }
+
+}

@@ -1,34 +1,43 @@
 import { useState } from "react";
-
+import "./DeclarationQueue.css"
 const DeclarationQueue = ({
     declarationQueue,
     onSaveWeight,
 }) => {
 
-    const [queueWeights, setQueueWeights] =
-        useState({});
+    const [weights, setWeights] = useState({});
 
-    if (!declarationQueue.length) {
+    if (!declarationQueue?.length) {
+
         return (
-            <div className="declaration-queue">
 
-                <div className="declaration-queue-header">
-                    <h2>Declaration Queue</h2>
+            <div className="declaration-queue-card">
+
+                <h2>
+                    Declaration Queue
+                </h2>
+
+                <div className="declaration-queue-empty">
+
+                    No Athletes Waiting
+
                 </div>
 
-                <p>No Athletes Waiting</p>
-
             </div>
+
         );
+
     }
 
     return (
 
-        <div className="declaration-queue">
+        <div className="declaration-queue-card">
 
             <div className="declaration-queue-header">
 
-                <h2>Declaration Queue</h2>
+                <h2>
+                    Declaration Queue
+                </h2>
 
             </div>
 
@@ -44,11 +53,11 @@ const DeclarationQueue = ({
 
                         <th>Attempt</th>
 
-                        <th>Current Weight</th>
+                        <th>Current</th>
 
-                        <th>New Weight</th>
+                        <th>New</th>
 
-                        <th>Action</th>
+                        <th></th>
 
                     </tr>
 
@@ -56,49 +65,53 @@ const DeclarationQueue = ({
 
                 <tbody>
 
-                    {declarationQueue.map(
-                        (athlete) => (
+                    {declarationQueue.map((athlete) => {
+
+                        const currentWeight =
+                            athlete.currentAttempt.declaredWeight ??
+                            (
+                                athlete.currentAttempt.phase ===
+                                "SNATCH"
+                                    ? athlete.openingSnatch
+                                    : athlete.openingCleanJerk
+                            );
+
+                        return (
 
                             <tr key={athlete.entryId}>
 
-                                <td>
-                                    {athlete.lotNumber}
-                                </td>
+                                <td>{athlete.lotNumber}</td>
+
+                                <td>{athlete.name}</td>
 
                                 <td>
-                                    {athlete.name}
-                                </td>
 
-                                <td>
                                     {athlete.currentAttempt.phase}
                                     {" "}
                                     {athlete.currentAttempt.attemptNo}
+
                                 </td>
 
                                 <td>
-                                    {athlete.currentAttempt
-                                        .declaredWeight ??
-                                        (
-                                            athlete.currentAttempt.phase ===
-                                            "SNATCH"
-                                                ? athlete.openingSnatch
-                                                : athlete.openingCleanJerk
-                                        )}
+
+                                    {currentWeight} kg
+
                                 </td>
 
                                 <td>
 
                                     <input
-                                        className="declaration-queue-input"
+                                        className="queue-weight-input"
                                         type="number"
                                         value={
-                                            queueWeights[
+                                            weights[
                                                 athlete.entryId
-                                            ] ?? ""
+                                            ] ??
+                                            currentWeight
                                         }
                                         onChange={(e) =>
-                                            setQueueWeights({
-                                                ...queueWeights,
+                                            setWeights({
+                                                ...weights,
                                                 [athlete.entryId]:
                                                     e.target.value,
                                             })
@@ -110,27 +123,31 @@ const DeclarationQueue = ({
                                 <td>
 
                                     <button
-                                        className="declaration-queue-save-btn"
+                                        className="queue-save-btn"
                                         onClick={() =>
                                             onSaveWeight(
                                                 athlete.entryId,
                                                 Number(
-                                                    queueWeights[
+                                                    weights[
                                                         athlete.entryId
-                                                    ]
+                                                    ] ??
+                                                    currentWeight
                                                 )
                                             )
                                         }
                                     >
+
                                         Save
+
                                     </button>
 
                                 </td>
 
                             </tr>
 
-                        )
-                    )}
+                        );
+
+                    })}
 
                 </tbody>
 

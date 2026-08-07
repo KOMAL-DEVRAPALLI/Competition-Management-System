@@ -9,7 +9,24 @@
     background:#f1f5f9;
     min-height:100vh;
 }
+.pdf-btn{
 
+    padding:12px 22px;
+
+    border:none;
+
+    border-radius:8px;
+
+    color:#fff;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
 /* ===========================
    Header Actions
 =========================== */

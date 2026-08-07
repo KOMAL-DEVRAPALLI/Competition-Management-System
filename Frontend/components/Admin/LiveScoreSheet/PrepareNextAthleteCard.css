@@ -1,0 +1,309 @@
+/* =====================================
+   PREPARE NEXT ATTEMPT CARD
+====================================== */
+
+.next-athlete-card{
+
+    background:#ffffff;
+
+    border-radius:16px;
+
+    padding:28px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:24px;
+
+}
+
+/* =====================================
+   HEADER
+====================================== */
+
+.next-athlete-header{
+
+    border-bottom:3px solid #2563eb;
+
+    padding-bottom:14px;
+
+}
+
+.next-athlete-header h2{
+
+    margin:0;
+
+    font-size:30px;
+
+    font-weight:700;
+
+    color:#111827;
+
+}
+
+/* =====================================
+   DETAILS
+====================================== */
+
+.next-athlete-details{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+}
+
+/* =====================================
+   ROW
+====================================== */
+
+.next-athlete-row{
+
+    display:grid;
+
+    grid-template-columns:180px 1fr;
+
+    align-items:center;
+
+    min-height:55px;
+
+    border-radius:10px;
+
+    background:#f8fafc;
+
+    border:1px solid #e5e7eb;
+
+    overflow:hidden;
+
+}
+
+/* Label */
+
+.next-athlete-row span{
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
+    font-weight:600;
+
+    padding:16px;
+
+    display:flex;
+
+    align-items:center;
+
+}
+
+/* Value */
+
+.next-athlete-row strong{
+
+    padding:16px;
+
+    text-align:right;
+
+    font-size:18px;
+
+    color:#111827;
+
+}
+
+/* =====================================
+   CURRENT DECLARATION
+====================================== */
+
+.next-athlete-row:last-child{
+
+    background:#dbeafe;
+
+    border:2px solid #2563eb;
+
+}
+
+.next-athlete-row:last-child span{
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+.next-athlete-row:last-child strong{
+
+    color:#1d4ed8;
+
+    font-size:28px;
+
+    font-weight:800;
+
+}
+
+/* =====================================
+   INPUT SECTION
+====================================== */
+
+.next-athlete-weight{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+}
+
+.next-athlete-weight label{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    color:#374151;
+
+}
+
+.next-athlete-input{
+
+    width:100%;
+
+    height:56px;
+
+    border:2px solid #d1d5db;
+
+    border-radius:10px;
+
+    padding:0 16px;
+
+    font-size:22px;
+
+    font-weight:700;
+
+    outline:none;
+
+    transition:.2s;
+
+    box-sizing:border-box;
+
+}
+
+.next-athlete-input:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+}
+
+/* =====================================
+   BUTTON
+====================================== */
+
+.next-athlete-actions{
+
+    margin-top:auto;
+
+}
+
+.save-next-weight-btn{
+
+    width:100%;
+
+    height:60px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.save-next-weight-btn:hover{
+
+    background:#1d4ed8;
+
+    transform:translateY(-2px);
+
+}
+
+.save-next-weight-btn:active{
+
+    transform:scale(.98);
+
+}
+
+/* =====================================
+   EMPTY
+====================================== */
+
+.next-athlete-empty{
+
+    min-height:420px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:24px;
+
+    font-weight:700;
+
+    color:#6b7280;
+
+}
+
+/* =====================================
+   RESPONSIVE
+====================================== */
+
+@media(max-width:768px){
+
+    .next-athlete-card{
+
+        padding:20px;
+
+    }
+
+    .next-athlete-header h2{
+
+        font-size:24px;
+
+    }
+
+    .next-athlete-row{
+
+        grid-template-columns:140px 1fr;
+
+    }
+
+    .next-athlete-row strong{
+
+        font-size:16px;
+
+    }
+
+    .next-athlete-row:last-child strong{
+
+        font-size:22px;
+
+    }
+
+}

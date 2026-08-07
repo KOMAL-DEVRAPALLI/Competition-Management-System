@@ -156,23 +156,21 @@ const getLiveCompetition = async (
     );
 
     const declarationQueue = entries
-        .filter((entry) => {
+    .filter((entry) => {
 
-            const attempt =
-                getCurrentAttempt(
-                    entry.competitionEntry
-                );
-
-            return (
-                !attempt.completed &&
-                entry.entryId.toString() !==
-                    session.currentEntryId?.toString()
-            );
-
-        })
-        .map((entry) =>
-            mapAthlete(entry)
+        const attempt = getCurrentAttempt(
+            entry.competitionEntry
         );
+
+        return (
+            !attempt.completed &&
+            attempt.phase === session.currentPhase &&
+            entry.entryId.toString() !==
+                session.currentEntryId?.toString()
+        );
+
+    })
+    .map((entry) => mapAthlete(entry));
 
     return {
 

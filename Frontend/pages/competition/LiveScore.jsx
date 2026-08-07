@@ -8,10 +8,10 @@ import {
     updateQueueDeclaration,
 } from "../../api/axios";
 
-import CurrentAthleteCard from "../../components/Admin/LiveScoreSheet/CurrentAthleteCard";
-import NextAthleteCard from "../../components/Admin/LiveScoreSheet/NextAthleteCard";
+import CurrentAthleteCard from "../../components/Admin/LiveScoreSheet/CurrentLifterCard";
+import PrepareNextAttemptCard from "../../components/Admin/LiveScoreSheet/PrepareNextAthleteCard";
 import DeclarationQueue from "../../components/Admin/LiveScoreSheet/DeclarationQueue";
-import ScoreboardTable from "../../components/Admin/LiveScoreSheet/ScoreboardTable";
+import ScoreboardTable from "../../components/Admin/LiveScoreSheet/LiveResultTable";
 
 import "./LiveScore.css";
 
@@ -45,13 +45,20 @@ const LiveScore = () => {
 
     useEffect(() => {
 
-        if (!currentAthlete) return;
+        if (!nextAthlete) return;
 
         setDeclaredWeight(
-            currentAthlete.currentAttempt?.declaredWeight ?? ""
+            nextAthlete.currentAttempt?.declaredWeight ??
+            (
+                nextAthlete.currentAttempt?.phase ===
+                "SNATCH"
+                    ? nextAthlete.openingSnatch
+                    : nextAthlete.openingCleanJerk
+            ) ??
+            ""
         );
 
-    }, [currentAthlete]);
+    }, [nextAthlete]);
 
     const loadLiveCompetition = async () => {
 
@@ -106,13 +113,13 @@ const LiveScore = () => {
 
     const handleCurrentDeclaration = async () => {
 
-        if (!currentAthlete) return;
+        if (!nextAthlete) return;
 
         try {
 
             await saveDeclaredWeight({
 
-                entryId: currentAthlete.entryId,
+                entryId: nextAthlete.entryId,
 
                 declaredWeight: Number(declaredWeight),
 
@@ -195,13 +202,6 @@ const LiveScore = () => {
 
                     <CurrentAthleteCard
                         currentAthlete={currentAthlete}
-                        declaredWeight={declaredWeight}
-                        setDeclaredWeight={
-                            setDeclaredWeight
-                        }
-                        onChangeWeight={
-                            handleCurrentDeclaration
-                        }
                         onGoodLift={() =>
                             handleProcessLift("GOOD")
                         }
@@ -210,8 +210,11 @@ const LiveScore = () => {
                         }
                     />
 
-                    <NextAthleteCard
+                    <PrepareNextAttemptCard
                         nextAthlete={nextAthlete}
+                        declaredWeight={declaredWeight}
+                        setDeclaredWeight={setDeclaredWeight}
+                        onSaveWeight={handleCurrentDeclaration}
                     />
 
                 </section>
@@ -219,12 +222,8 @@ const LiveScore = () => {
                 <section className="live-score-middle">
 
                     <DeclarationQueue
-                        declarationQueue={
-                            declarationQueue
-                        }
-                        onSaveWeight={
-                            handleQueueDeclaration
-                        }
+                        declarationQueue={declarationQueue}
+                        onSaveWeight={handleQueueDeclaration}
                     />
 
                 </section>
@@ -232,9 +231,7 @@ const LiveScore = () => {
                 <section className="live-score-bottom">
 
                     <ScoreboardTable
-                        competitionResults={
-                            competitionResults
-                        }
+                        competitionResults={competitionResults}
                     />
 
                 </section>

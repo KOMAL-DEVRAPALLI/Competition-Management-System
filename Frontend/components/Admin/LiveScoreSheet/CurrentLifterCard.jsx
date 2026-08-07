@@ -1,8 +1,6 @@
+import "./CurrentLiftCard.css"
 const CurrentAthleteCard = ({
     currentAthlete,
-    declaredWeight,
-    setDeclaredWeight,
-    onChangeWeight,
     onGoodLift,
     onNoLift,
 }) => {
@@ -21,16 +19,13 @@ const CurrentAthleteCard = ({
 
             <div className="current-athlete-header">
 
-                <h2>Current Athlete</h2>
+                <h2>
+                    Current Lift
+                </h2>
 
             </div>
 
             <div className="current-athlete-details">
-
-                <div className="current-athlete-row">
-                    <span>Name</span>
-                    <strong>{currentAthlete.name}</strong>
-                </div>
 
                 <div className="current-athlete-row">
                     <span>Lot Number</span>
@@ -38,8 +33,8 @@ const CurrentAthleteCard = ({
                 </div>
 
                 <div className="current-athlete-row">
-                    <span>Weight Category</span>
-                    <strong>{currentAthlete.weightCategory}</strong>
+                    <span>Name</span>
+                    <strong>{currentAthlete.name}</strong>
                 </div>
 
                 <div className="current-athlete-row">
@@ -53,28 +48,11 @@ const CurrentAthleteCard = ({
                 </div>
 
                 <div className="current-athlete-row">
-                    <span>Current Weight</span>
+                    <span>Weight On Bar</span>
                     <strong>
                         {currentAthlete.currentAttempt.declaredWeight} kg
                     </strong>
                 </div>
-
-            </div>
-
-            <div className="current-athlete-weight">
-
-                <label>
-                    Declared Weight
-                </label>
-
-                <input
-                    className="current-athlete-input"
-                    type="number"
-                    value={declaredWeight}
-                    onChange={(e) =>
-                        setDeclaredWeight(e.target.value)
-                    }
-                />
 
             </div>
 
@@ -92,13 +70,6 @@ const CurrentAthleteCard = ({
                     onClick={onNoLift}
                 >
                     NO LIFT
-                </button>
-
-                <button
-                    className="change-weight-btn"
-                    onClick={onChangeWeight}
-                >
-                    CHANGE WEIGHT
                 </button>
 
             </div>

@@ -1,36 +1,26 @@
 import CompetitionEntry from "../../models/CompetitionEntry.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
+import updateCurrentPlatformAthlete from "./updateCurrentPlatformAthlete.js";
 
 const saveDeclaration = async ({
     entryId,
     declaredWeight,
 }) => {
 
-    if (
-        declaredWeight == null ||
-        declaredWeight <= 0
-    ) {
-        throw new Error(
-            "Invalid declared weight."
-        );
+    if (declaredWeight == null || declaredWeight <= 0) {
+        throw new Error("Invalid declared weight.");
     }
 
-    const competitionEntry =
-        await CompetitionEntry.findById(entryId);
+    const competitionEntry = await CompetitionEntry.findById(entryId);
 
     if (!competitionEntry) {
-        throw new Error(
-            "Competition entry not found."
-        );
+        throw new Error("Competition entry not found.");
     }
 
-    const currentAttempt =
-        getCurrentAttempt(competitionEntry);
+    const currentAttempt = getCurrentAttempt(competitionEntry);
 
     if (currentAttempt.completed) {
-        throw new Error(
-            "Athlete has completed the competition."
-        );
+        throw new Error("Athlete has completed the competition.");
     }
 
     const attempts =
@@ -40,22 +30,26 @@ const saveDeclaration = async ({
 
     const attempt = attempts.find(
         (item) =>
-            item.attemptNo ===
-            currentAttempt.attemptNo
+            item.attemptNo === currentAttempt.attemptNo
     );
 
     if (!attempt) {
         throw new Error("Attempt not found.");
     }
 
-    attempt.declaredWeight =
-        declaredWeight;
-
+    attempt.declaredWeight = declaredWeight;
     attempt.declaredAt = new Date();
 
     await competitionEntry.save();
 
-    return competitionEntry;
+    await competitionEntry.populate("athleteId");
+
+    await updateCurrentPlatformAthlete(
+        competitionEntry.competitionId,
+        competitionEntry.athleteId.personalInfo.gender
+    );
+
+    return await CompetitionEntry.findById(entryId);
 
 };
 

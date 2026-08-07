@@ -36,10 +36,10 @@ const currentRowRef = useRef(null);
 
         loadScoreBoard();
 
-        const interval = setInterval(
+        /* const interval = setInterval(
             loadScoreBoard,
             3000
-        );
+        ); */
 
         return () => clearInterval(interval);
 
