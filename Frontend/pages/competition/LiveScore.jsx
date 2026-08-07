@@ -144,7 +144,10 @@
                 );
 
                 setLiveCompetition(response.data);
-
+                console.log(
+    "Competition Results:",
+    response.data.competitionResults
+);
     setNextWeights((previous) => {
     const updated = { ...previous };
 
@@ -379,12 +382,18 @@
     value={nextWeights[athlete.entryId] ?? ""}
     onFocus={() => setEditingEntryId(athlete.entryId)}
     onBlur={() => setEditingEntryId(null)}
-    onChange={(e) =>
-        setNextWeights((prev) => ({
-            ...prev,
-            [athlete.entryId]: e.target.value,
-        }))
-    }
+   onChange={(e) => {
+    console.log(
+        "Typing:",
+        athlete.entryId,
+        e.target.value
+    );
+
+    setNextWeights((prev) => ({
+        ...prev,
+        [athlete.entryId]: e.target.value,
+    }));
+}}
 />
 
                             {athlete.entryId?.toString() ===
