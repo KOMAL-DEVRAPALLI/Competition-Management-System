@@ -95,29 +95,63 @@ const advanceCompetition = async (
     // is declared and ready.
     // -----------------------------------
 
-    const getEligibleEntries = (
-        pendingEntries
-    ) => {
+   const getEligibleEntries = (
+    pendingEntries
+) => {
 
-        return pendingEntries.filter(
-            (entry) => {
+    return pendingEntries.filter(
+        (entry) => {
 
-                const attempt =
-                    getCurrentAttempt(
-                        entry.competitionEntry
-                    );
+            const attempt =
+                getCurrentAttempt(
+                    entry.competitionEntry
+                );
+
+            if (
+                !attempt ||
+                attempt.completed ||
+                attempt.phase !==
+                    session.currentPhase
+            ) {
+                return false;
+            }
+
+            // -----------------------------------
+            // Attempt 1:
+            // Opening weight automatically makes
+            // the athlete eligible.
+            // -----------------------------------
+
+            if (
+                attempt.attemptNo === 1
+            ) {
+
+                const openingWeight =
+                    attempt.phase === "SNATCH"
+                        ? entry.openingSnatch
+                        : entry.openingCleanJerk;
 
                 return (
-                    !attempt.completed &&
-                    attempt.phase ===
-                        session.currentPhase &&
-                    attempt.declaredWeight != null
+                    openingWeight != null &&
+                    openingWeight > 0
                 );
 
             }
-        );
 
-    };
+            // -----------------------------------
+            // Attempt 2 / 3:
+            // Must have an explicit declaration.
+            // -----------------------------------
+
+            return (
+                attempt.declaredWeight != null &&
+                attempt.declaredWeight > 0
+            );
+
+        }
+    );
+
+};
 
     // -----------------------------------
     // Determine whether the athlete who
