@@ -179,7 +179,7 @@ const processLift = async ({
     }
 
     // =====================================
-    // DETERMINE NEXT ATTEMPT
+    // DETERMINE ATHLETE'S NEXT ATTEMPT
     // =====================================
 
     const nextAttempt =
@@ -216,32 +216,32 @@ const processLift = async ({
     );
 
     console.log(
-        "NEXT ATTEMPT:",
+        "Athlete Next Attempt:",
         nextAttempt
     );
 
     // =====================================
-    // IMPORTANT
+    // CASE 1
     //
-    // DO NOT CLEAR CURRENT ATHLETE YET.
+    // ATHLETE HAS ANOTHER ATTEMPT IN
+    // THE SAME PHASE
     //
-    // The same athlete remains selected
-    // for the next attempt.
+    // S1 → S2
+    // S2 → S3
+    // CJ1 → CJ2
+    // CJ2 → CJ3
+    //
+    // KEEP SAME ATHLETE SELECTED.
     // =====================================
 
     if (
-        !nextAttempt.completed
+        !nextAttempt.completed &&
+        nextAttempt.phase ===
+            session.currentPhase
     ) {
-
-        // ---------------------------------
-        // SAME ATHLETE REMAINS ON PLATFORM
-        // ---------------------------------
 
         session.currentEntryId =
             updatedEntry._id;
-
-        session.currentPhase =
-            nextAttempt.phase;
 
         session.status =
             "RUNNING";
@@ -259,8 +259,8 @@ const processLift = async ({
         );
 
         console.log(
-            "Next Phase:",
-            nextAttempt.phase
+            "Current Phase:",
+            session.currentPhase
         );
 
         console.log(
@@ -269,6 +269,7 @@ const processLift = async ({
         );
 
         return {
+
             athlete:
                 updatedEntry,
 
@@ -281,34 +282,358 @@ const processLift = async ({
 
             manualSelectionRequired:
                 false,
+
         };
     }
 
     // =====================================
-    // ATHLETE COMPLETED ENTIRE COMPETITION
+    // CASE 2
+    //
+    // ATHLETE FINISHED SNATCH
+    //
+    // NEXT ATTEMPT IS CLEAN & JERK.
+    //
+    // DO NOT START CJ FOR THIS ATHLETE
+    // UNTIL THE ENTIRE SNATCH SESSION
+    // IS COMPLETE.
+    // =====================================
+
+    if (
+        currentAttempt.phase ===
+            "SNATCH" &&
+        nextAttempt.phase ===
+            "CLEAN_JERK"
+    ) {
+
+        // ---------------------------------
+        // Load all competition entries
+        // ---------------------------------
+
+        const sessionEntries =
+            await CompetitionEntry
+                .find({
+                    competitionId,
+                })
+                .populate({
+                    path: "athleteId",
+                    select:
+                        "personalInfo.gender",
+                });
+
+        // ---------------------------------
+        // Determine athletes in this
+        // live competition session.
+        // ---------------------------------
+
+        const liveEntries =
+            sessionEntries.filter(
+                (entry) => {
+
+                    const athleteGender =
+                        entry.athleteId
+                            ?.personalInfo
+                            ?.gender;
+
+                    if (!athleteGender) {
+                        return false;
+                    }
+
+                    if (
+                        athleteGender
+                            .toLowerCase() !==
+                        normalizedGender
+                    ) {
+                        return false;
+                    }
+
+                    // -----------------------------
+                    // Selected weight categories
+                    // -----------------------------
+
+                    if (
+                        Array.isArray(
+                            session
+                                .selectedWeightCategories
+                        ) &&
+                        session
+                            .selectedWeightCategories
+                            .length > 0
+                    ) {
+
+                        const category =
+                            entry
+                                .official
+                                ?.finalWeightCategory
+                                ?.trim();
+
+                        return session
+                            .selectedWeightCategories
+                            .includes(
+                                category
+                            );
+                    }
+
+                    return true;
+
+                }
+            );
+
+        // ---------------------------------
+        // Check whether ALL athletes have
+        // completed all Snatch attempts.
+        // ---------------------------------
+
+        const allSnatchCompleted =
+            liveEntries.every(
+                (entry) => {
+
+                    const snatchAttempts =
+                        entry.snatchAttempts ||
+                        [];
+
+                    return (
+                        snatchAttempts.length >=
+                            3 &&
+                        snatchAttempts.every(
+                            (snatchAttempt) =>
+                                snatchAttempt
+                                    .result !==
+                                "PENDING"
+                        )
+                    );
+
+                }
+            );
+
+        console.log(
+            "===== SNATCH PHASE CHECK ====="
+        );
+
+        console.log(
+            "Live Athletes:",
+            liveEntries.length
+        );
+
+        console.log(
+            "All Snatch Completed:",
+            allSnatchCompleted
+        );
+
+        // =================================
+        // SNATCH STILL IN PROGRESS
+        //
+        // IMPORTANT:
+        //
+        // KEEP currentEntryId.
+        //
+        // The athlete remains selected
+        // on screen.
+        //
+        // getLiveCompetition.js will report:
+        //
+        // canSelectAnotherAthlete = true
+        //
+        // because this athlete's next
+        // phase is CLEAN_JERK while the
+        // live phase is still SNATCH.
+        //
+        // The official can then select
+        // another Snatch athlete.
+        // =================================
+
+        if (!allSnatchCompleted) {
+
+            session.currentPhase =
+                "SNATCH";
+
+            session.currentEntryId =
+                updatedEntry._id;
+
+            session.status =
+                "RUNNING";
+
+            await session.save();
+
+            console.log(
+                "===== SNATCH STILL IN PROGRESS ====="
+            );
+
+            console.log(
+                "Current athlete remains selected."
+            );
+
+            console.log(
+                "Current Entry:",
+                session.currentEntryId
+                    .toString()
+            );
+
+            console.log(
+                "Other athletes still have Snatch attempts."
+            );
+
+            console.log(
+                "Clean & Jerk has NOT started."
+            );
+
+            return {
+
+                athlete:
+                    updatedEntry,
+
+                session,
+
+                nextAttempt,
+
+                platformCleared:
+                    false,
+
+                manualSelectionRequired:
+                    true,
+
+                phaseTransitioned:
+                    false,
+
+            };
+        }
+
+        // =================================
+        // ALL ATHLETES FINISHED SNATCH
+        //
+        // Move competition phase to
+        // CLEAN & JERK.
+        //
+        // IMPORTANT:
+        //
+        // Keep current athlete selected.
+        //
+        // Official can manually replace
+        // this athlete with the athlete
+        // who should perform CJ1.
+        // =================================
+
+        session.currentPhase =
+            "CLEAN_JERK";
+
+        session.currentEntryId =
+            updatedEntry._id;
+
+        session.status =
+            "RUNNING";
+
+        await session.save();
+
+        console.log(
+            "===== SNATCH COMPLETE ====="
+        );
+
+        console.log(
+            "Competition phase changed to CLEAN_JERK."
+        );
+
+        console.log(
+            "Current athlete remains selected."
+        );
+
+        console.log(
+            "Official may now select the first CJ athlete."
+        );
+
+        return {
+
+            athlete:
+                updatedEntry,
+
+            session,
+
+            nextAttempt,
+
+            platformCleared:
+                false,
+
+            manualSelectionRequired:
+                true,
+
+            phaseTransitioned:
+                true,
+
+        };
+    }
+
+    // =====================================
+    // CASE 3
+    //
+    // ATHLETE HAS COMPLETED ENTIRE
+    // COMPETITION.
+    //
+    // KEEP ATHLETE SELECTED.
+    //
+    // The selection service / frontend
+    // will allow the official to choose
+    // another eligible athlete.
+    // =====================================
+
+    if (
+        nextAttempt.completed
+    ) {
+
+        session.currentEntryId =
+            updatedEntry._id;
+
+        session.status =
+            "RUNNING";
+
+        await session.save();
+
+        console.log(
+            "===== ATHLETE COMPLETED ====="
+        );
+
+        console.log(
+            "Current athlete remains selected."
+        );
+
+        console.log(
+            "Official may select another athlete."
+        );
+
+        return {
+
+            athlete:
+                updatedEntry,
+
+            session,
+
+            nextAttempt,
+
+            platformCleared:
+                false,
+
+            manualSelectionRequired:
+                true,
+
+            phaseTransitioned:
+                false,
+
+        };
+    }
+
+    // =====================================
+    // SAFETY FALLBACK
+    //
+    // Keep current athlete selected.
     // =====================================
 
     session.currentEntryId =
-        null;
+        updatedEntry._id;
 
     session.status =
         "RUNNING";
 
     await session.save();
 
-    console.log(
-        "===== ATHLETE COMPLETED ====="
-    );
-
-    console.log(
-        "Platform cleared."
-    );
-
-    console.log(
-        "Manual selection required."
-    );
-
     return {
+
         athlete:
             updatedEntry,
 
@@ -317,10 +642,14 @@ const processLift = async ({
         nextAttempt,
 
         platformCleared:
-            true,
+            false,
 
         manualSelectionRequired:
             true,
+
+        phaseTransitioned:
+            false,
+
     };
 };
 

@@ -1,0 +1,400 @@
+/* =========================================================
+   CURRENT ATHLETE
+========================================================= */
+
+.live-score-current {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin-bottom: 28px;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.20);
+}
+
+
+/* =========================================================
+   PANEL HEADER
+========================================================= */
+
+.live-score-current-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 16px 22px;
+
+    background: #0f2d50;
+
+    color: #ffffff;
+}
+
+
+.live-score-current-header h2 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+
+.live-score-current-header span {
+    padding: 7px 12px;
+
+    border-radius: 7px;
+
+    background: #facc15;
+
+    color: #422006;
+
+    font-size: 12px;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   EMPTY PLATFORM
+========================================================= */
+
+.live-score-empty {
+    min-height: 180px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+
+    padding: 30px;
+
+    text-align: center;
+
+    background: #f8fafc;
+}
+
+
+.live-score-empty h2 {
+    margin: 0 0 8px;
+
+    color: #64748b;
+
+    font-size: 30px;
+
+    font-weight: 900;
+}
+
+
+.live-score-empty p {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 16px;
+}
+
+
+/* =========================================================
+   CURRENT ATHLETE PANEL
+========================================================= */
+
+.current-athlete-panel {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 24px;
+
+    background: #facc15;
+
+    color: #422006;
+}
+
+
+/* =========================================================
+   ATHLETE INFORMATION
+========================================================= */
+
+.current-athlete-main {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 30px;
+
+    margin-bottom: 24px;
+}
+
+
+.current-athlete-label {
+    margin-bottom: 5px;
+
+    color: #713f12;
+
+    font-size: 13px;
+
+    font-weight: 900;
+
+    letter-spacing: 1px;
+}
+
+
+.current-athlete-main h1 {
+    margin: 0;
+
+    color: #422006;
+
+    font-size: 34px;
+
+    line-height: 1.1;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   ATHLETE META
+========================================================= */
+
+.current-athlete-meta {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+}
+
+
+.current-athlete-meta > div {
+    min-width: 110px;
+
+    padding: 12px 16px;
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, 0.55);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    text-align: center;
+}
+
+
+.current-athlete-meta strong {
+    color: #713f12;
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+}
+
+
+.current-athlete-meta span {
+    color: #422006;
+
+    font-size: 20px;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   DECLARATION
+========================================================= */
+
+.current-athlete-declaration {
+    padding: 18px;
+
+    border-radius: 12px;
+
+    background: rgba(255, 255, 255, 0.50);
+}
+
+
+.current-athlete-declaration label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #713f12;
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   DECLARATION CONTROL
+========================================================= */
+
+.declaration-control {
+    display: flex;
+
+    gap: 10px;
+}
+
+
+.declaration-control input {
+    width: 180px;
+
+    box-sizing: border-box;
+
+    padding: 12px 14px;
+
+    border: 2px solid #a16207;
+
+    border-radius: 8px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    font-size: 18px;
+
+    font-weight: 800;
+}
+
+
+.declaration-control input:focus {
+    border-color: #422006;
+
+    box-shadow:
+        0 0 0 3px rgba(66, 32, 6, 0.15);
+}
+
+
+.declaration-control input:disabled {
+    background: #f8fafc;
+
+    cursor: not-allowed;
+
+    opacity: 0.75;
+}
+
+
+.declaration-control button {
+    padding: 12px 20px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #422006;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+.declaration-control button:hover {
+    background: #713f12;
+}
+
+
+.declaration-control button:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   DECLARATION NOTE
+========================================================= */
+
+.current-athlete-declaration small {
+    display: block;
+
+    margin-top: 8px;
+
+    color: #713f12;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .current-athlete-main {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .current-athlete-meta {
+        justify-content: flex-start;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .live-score-current-header {
+        padding: 14px 16px;
+    }
+
+    .current-athlete-panel {
+        padding: 16px;
+    }
+
+    .current-athlete-main h1 {
+        font-size: 27px;
+    }
+
+    .current-athlete-meta {
+        width: 100%;
+    }
+
+    .current-athlete-meta > div {
+        flex: 1;
+    }
+
+    .declaration-control {
+        flex-direction: column;
+    }
+
+    .declaration-control input {
+        width: 100%;
+    }
+
+}

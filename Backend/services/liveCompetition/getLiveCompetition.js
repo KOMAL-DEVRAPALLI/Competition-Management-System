@@ -157,6 +157,114 @@ const getLiveCompetition = async (
             : null;
 
     // =====================================
+    // DETERMINE CURRENT ATHLETE'S
+    // SELECTION STATE
+    // =====================================
+
+    let canSelectAnotherAthlete =
+        true;
+
+    let currentAthleteAttempt =
+        null;
+
+    if (currentEntry) {
+
+        currentAthleteAttempt =
+            getCurrentAttempt(
+                currentEntry.competitionEntry
+            );
+
+        // ---------------------------------
+        // CURRENT ATHLETE HAS COMPLETED
+        // THE ENTIRE COMPETITION
+        //
+        // Another athlete can be selected.
+        // ---------------------------------
+
+        if (
+            currentAthleteAttempt.completed
+        ) {
+
+            canSelectAnotherAthlete =
+                true;
+
+        }
+
+        // ---------------------------------
+        // CURRENT ATHLETE'S NEXT ATTEMPT
+        // BELONGS TO A DIFFERENT PHASE
+        //
+        // Example:
+        //
+        // Session = SNATCH
+        // Athlete finished S3
+        // Athlete's next attempt = CJ1
+        //
+        // Do NOT force the athlete to remain
+        // selected because CJ has not started.
+        //
+        // Another Snatch athlete can be
+        // selected.
+        // ---------------------------------
+
+        else if (
+            currentAthleteAttempt.phase !==
+            session.currentPhase
+        ) {
+
+            canSelectAnotherAthlete =
+                true;
+
+        }
+
+        // ---------------------------------
+        // CURRENT ATHLETE STILL HAS AN
+        // ATTEMPT IN THE CURRENT PHASE
+        // ---------------------------------
+
+        else {
+
+            const declaredWeight =
+                currentAthleteAttempt
+                    .declaredWeight;
+
+            // ---------------------------------
+            // Next declaration has NOT been
+            // saved yet.
+            //
+            // Keep athlete selection locked.
+            // ---------------------------------
+
+            if (
+                declaredWeight == null ||
+                Number(declaredWeight) <= 0
+            ) {
+
+                canSelectAnotherAthlete =
+                    false;
+
+            }
+
+            // ---------------------------------
+            // Next declaration has already
+            // been saved.
+            //
+            // Official can now select another
+            // athlete.
+            // ---------------------------------
+
+            else {
+
+                canSelectAnotherAthlete =
+                    true;
+
+            }
+
+        }
+
+    }
+
+    // =====================================
     // TV SCOREBOARD
     //
     // COMPLETE COMPETITION LIST
@@ -271,9 +379,8 @@ const getLiveCompetition = async (
                 //
                 // Keep athlete visible.
                 //
-                // Official can see the complete
-                // list, but selectOfficialAthlete
-                // will reject the selection.
+                // selectOfficialAthlete()
+                // remains the final authority.
                 // ---------------------------------
 
                 else if (
@@ -335,6 +442,16 @@ const getLiveCompetition = async (
     );
 
     console.log(
+        "Current Athlete Attempt:",
+        currentAthleteAttempt
+    );
+
+    console.log(
+        "Can Select Another Athlete:",
+        canSelectAnotherAthlete
+    );
+
+    console.log(
         "Total Athletes:",
         athletes.length
     );
@@ -374,6 +491,16 @@ const getLiveCompetition = async (
                 : null,
 
         // ---------------------------------
+        // IMPORTANT:
+        //
+        // Frontend uses this to determine
+        // whether another athlete can be
+        // selected.
+        // ---------------------------------
+
+        canSelectAnotherAthlete,
+
+        // ---------------------------------
         // COMPLETE OFFICIAL ATHLETE LIST
         // ---------------------------------
 
@@ -405,7 +532,6 @@ const getLiveCompetition = async (
             athletes.length,
 
     };
-
 };
 
 export default getLiveCompetition;

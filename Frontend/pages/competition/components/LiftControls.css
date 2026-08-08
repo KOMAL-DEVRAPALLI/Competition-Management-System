@@ -1,0 +1,96 @@
+/* =========================================================
+   LIFT DECISION CONTROLS
+========================================================= */
+
+.lift-decision {
+    display: flex;
+
+    gap: 14px;
+
+    margin-top: 18px;
+}
+
+
+/* =========================================================
+   BUTTON BASE
+========================================================= */
+
+.lift-decision button {
+    flex: 1;
+
+    min-height: 60px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    font-size: 18px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease,
+        opacity 0.15s ease;
+}
+
+
+.lift-decision button:hover {
+    transform: translateY(-1px);
+}
+
+
+.lift-decision button:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   GOOD LIFT
+========================================================= */
+
+.good-btn {
+    background: #166534;
+
+    color: #ffffff;
+}
+
+
+.good-btn:hover {
+    background: #14532d;
+}
+
+
+/* =========================================================
+   NO LIFT
+========================================================= */
+
+.no-lift-btn {
+    background: #991b1b;
+
+    color: #ffffff;
+}
+
+
+.no-lift-btn:hover {
+    background: #7f1d1d;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .lift-decision {
+        flex-direction: column;
+    }
+
+}

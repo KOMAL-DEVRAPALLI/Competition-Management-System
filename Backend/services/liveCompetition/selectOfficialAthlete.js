@@ -8,9 +8,9 @@ const selectOfficialAthlete = async ({
     entryId,
 }) => {
 
-    // -----------------------------------
-    // Validate required data
-    // -----------------------------------
+    // =====================================
+    // VALIDATE REQUIRED DATA
+    // =====================================
 
     if (!competitionId) {
         throw new Error(
@@ -33,9 +33,9 @@ const selectOfficialAthlete = async ({
     const normalizedGender =
         gender.toLowerCase();
 
-    // -----------------------------------
-    // Find live competition session
-    // -----------------------------------
+    // =====================================
+    // FIND LIVE COMPETITION SESSION
+    // =====================================
 
     const session =
         await LiveCompetition.findOne({
@@ -49,24 +49,9 @@ const selectOfficialAthlete = async ({
         );
     }
 
-    // -----------------------------------
-    // Do not replace an athlete who is
-    // already selected.
-    //
-    // Official must finish/clear the
-    // current athlete first.
-    // -----------------------------------
-
-    if (session.currentEntryId) {
-
-        throw new Error(
-            "Another athlete is already selected. Complete or clear the current athlete first."
-        );
-    }
-
-    // -----------------------------------
-    // Find selected athlete
-    // -----------------------------------
+    // =====================================
+    // FIND ATHLETE TO BE SELECTED
+    // =====================================
 
     const competitionEntry =
         await CompetitionEntry.findOne({
@@ -80,9 +65,147 @@ const selectOfficialAthlete = async ({
         );
     }
 
-    // -----------------------------------
-    // Verify athlete gender
-    // -----------------------------------
+    // =====================================
+    // PREVENT SELECTING THE SAME ATHLETE
+    // =====================================
+
+    if (
+        session.currentEntryId &&
+        session.currentEntryId
+            .toString() ===
+            competitionEntry._id
+                .toString()
+    ) {
+
+        throw new Error(
+            "This athlete is already selected."
+        );
+    }
+
+    // =====================================
+    // CHECK CURRENT ATHLETE
+    //
+    // IMPORTANT:
+    //
+    // The current athlete may remain on
+    // the platform after GOOD / NO_LIFT.
+    //
+    // Another athlete may be selected only
+    // when the current athlete does NOT
+    // require an undeclared attempt in the
+    // current live phase.
+    // =====================================
+
+    if (session.currentEntryId) {
+
+        const currentEntry =
+            await CompetitionEntry.findOne({
+                _id:
+                    session.currentEntryId,
+
+                competitionId,
+            });
+
+        if (!currentEntry) {
+
+            // ---------------------------------
+            // Stale platform reference.
+            //
+            // Safe to clear it.
+            // ---------------------------------
+
+            session.currentEntryId =
+                null;
+
+            await session.save();
+
+        } else {
+
+            const currentAthleteAttempt =
+                getCurrentAttempt(
+                    currentEntry
+                );
+
+            // ---------------------------------
+            // CURRENT ATHLETE COMPLETED
+            //
+            // Nothing more to declare.
+            //
+            // Another athlete may be selected.
+            // ---------------------------------
+
+            if (
+                currentAthleteAttempt.completed
+            ) {
+
+                // Selection allowed.
+
+            }
+
+            // ---------------------------------
+            // CURRENT ATHLETE'S NEXT ATTEMPT
+            // BELONGS TO ANOTHER PHASE
+            //
+            // Example:
+            //
+            // Live phase = SNATCH
+            // Current athlete next = CLEAN_JERK
+            //
+            // The athlete has finished Snatch.
+            //
+            // Another Snatch athlete may now
+            // be selected.
+            // ---------------------------------
+
+            else if (
+                currentAthleteAttempt.phase !==
+                session.currentPhase
+            ) {
+
+                // Selection allowed.
+
+            }
+
+            // ---------------------------------
+            // CURRENT ATHLETE STILL HAS AN
+            // ATTEMPT IN THE CURRENT PHASE
+            // ---------------------------------
+
+            else {
+
+                const declaredWeight =
+                    currentAthleteAttempt
+                        .declaredWeight;
+
+                // ---------------------------------
+                // NEXT ATTEMPT NOT DECLARED
+                //
+                // BLOCK selection.
+                // ---------------------------------
+
+                if (
+                    declaredWeight == null ||
+                    Number(declaredWeight) <= 0
+                ) {
+
+                    throw new Error(
+                        "Declare the current athlete's next attempt before selecting another athlete."
+                    );
+                }
+
+                // ---------------------------------
+                // DECLARATION EXISTS
+                //
+                // Selection is allowed.
+                // ---------------------------------
+
+            }
+        }
+    }
+
+    // =====================================
+    // VERIFY SELECTED ATHLETE GENDER
+    // =====================================
 
     const athleteGender =
         competitionEntry
@@ -100,66 +223,62 @@ const selectOfficialAthlete = async ({
         athleteGender.toLowerCase() !==
         normalizedGender
     ) {
+
         throw new Error(
             "Athlete gender does not match the live session."
         );
     }
 
-    // -----------------------------------
-    // Get athlete's next attempt
+    // =====================================
+    // GET ATHLETE'S NEXT ATTEMPT
     //
-    // The OFFICIAL chooses the athlete.
+    // The official chooses the athlete.
     //
-    // The SYSTEM determines whether this
-    // is S1, S2, S3, CJ1, CJ2 or CJ3.
-    // -----------------------------------
+    // The system determines:
+    //
+    // S1 / S2 / S3
+    // CJ1 / CJ2 / CJ3
+    // =====================================
 
     const currentAttempt =
         getCurrentAttempt(
             competitionEntry
         );
 
-    // -----------------------------------
-    // Athlete has completed competition
-    // -----------------------------------
+    // =====================================
+    // ATHLETE COMPLETED
+    // =====================================
 
     if (
         currentAttempt.completed
     ) {
+
         throw new Error(
             "Athlete has already completed the competition."
         );
     }
 
-    // -----------------------------------
-    // Verify phase
-    //
-    // Example:
-    //
-    // Live session = SNATCH
-    // Athlete's next attempt = SNATCH
-    //
-    // Valid.
-    //
-    // Live session = SNATCH
-    // Athlete's next attempt = CLEAN_JERK
-    //
-    // Not valid.
-    // -----------------------------------
+    // =====================================
+    // VERIFY CURRENT COMPETITION PHASE
+    // =====================================
 
     if (
         currentAttempt.phase !==
         session.currentPhase
     ) {
+
         throw new Error(
             `Athlete's next attempt is ${currentAttempt.phase}, but the live session is currently in ${session.currentPhase}.`
         );
     }
 
-    // -----------------------------------
-    // Set manually selected athlete
-    // as CURRENT ATHLETE
-    // -----------------------------------
+    // =====================================
+    // SELECT ATHLETE
+    //
+    // THIS IS ALWAYS MANUAL.
+    //
+    // NO automatic athlete selection.
+    // =====================================
 
     session.currentEntryId =
         competitionEntry._id;
@@ -169,9 +288,9 @@ const selectOfficialAthlete = async ({
 
     await session.save();
 
-    // -----------------------------------
-    // Log selection
-    // -----------------------------------
+    // =====================================
+    // LOG SELECTION
+    // =====================================
 
     console.log(
         "===================================="
@@ -229,19 +348,23 @@ const selectOfficialAthlete = async ({
         "===================================="
     );
 
-    // -----------------------------------
-    // Return selected athlete information
-    // -----------------------------------
+    // =====================================
+    // RETURN SELECTED ATHLETE
+    // =====================================
 
     return {
+
         session,
 
         athlete: {
+
             entryId:
                 competitionEntry._id,
 
             athleteId:
-                competitionEntry.athleteId?._id,
+                competitionEntry
+                    .athleteId
+                    ?._id,
 
             name:
                 competitionEntry

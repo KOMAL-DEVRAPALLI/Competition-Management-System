@@ -99,7 +99,11 @@ const saveDeclaration = async ({
     }
 
     // -----------------------------------
-    // Save declaration
+    // Save / EDIT declaration
+    //
+    // Because the attempt is still
+    // PENDING, an existing declaration
+    // can be changed.
     // -----------------------------------
 
     attempt.declaredWeight =
@@ -156,7 +160,7 @@ const saveDeclaration = async ({
     // -----------------------------------
     // IMPORTANT
     //
-    // DO NOT:
+    // Declaration does NOT:
     //
     // - select athlete
     // - change currentEntryId

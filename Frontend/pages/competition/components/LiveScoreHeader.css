@@ -1,0 +1,113 @@
+/* =========================================================
+   HEADER
+========================================================= */
+
+.live-score-header {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 24px;
+
+    margin-bottom: 20px;
+
+    padding: 20px 24px;
+
+    background: #0a2342;
+
+    border-radius: 14px;
+
+    border-bottom: 3px solid #2563eb;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.live-score-header h1 {
+    margin: 0 0 6px;
+
+    color: #ffffff;
+
+    font-size: 30px;
+
+    font-weight: 800;
+}
+
+
+.live-score-header p {
+    margin: 0;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   SESSION INFO
+========================================================= */
+
+.live-score-session {
+    display: flex;
+
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+
+.live-score-session span {
+    padding: 8px 12px;
+
+    border-radius: 8px;
+
+    background: #132f52;
+
+    color: #ffffff;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .live-score-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .live-score-session {
+        justify-content: flex-start;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .live-score-header {
+        padding: 16px;
+    }
+
+    .live-score-header h1 {
+        font-size: 24px;
+    }
+
+}

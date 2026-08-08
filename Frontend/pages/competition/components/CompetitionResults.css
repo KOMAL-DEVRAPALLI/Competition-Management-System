@@ -1,0 +1,270 @@
+/* =========================================================
+   OFFICIAL ATHLETE SELECTION
+========================================================= */
+
+.official-athlete-list {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin-bottom: 28px;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.official-list-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    background: #0f2d50;
+
+    color: #ffffff;
+}
+
+
+.official-list-header h2 {
+    margin: 0 0 5px;
+
+    color: #ffffff;
+
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+
+.official-list-header p {
+    margin: 0;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+}
+
+
+.official-list-header > strong {
+    white-space: nowrap;
+
+    padding: 9px 14px;
+
+    border-radius: 8px;
+
+    background: #1e40af;
+
+    color: #ffffff;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.official-list-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.official-athlete-table {
+    width: 100%;
+
+    min-width: 850px;
+
+    border-collapse: collapse;
+
+    color: #111827;
+}
+
+
+.official-athlete-table th {
+    padding: 13px 12px;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+.official-athlete-table td {
+    padding: 13px 12px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    text-align: center;
+
+    font-size: 14px;
+}
+
+
+.official-athlete-table td:nth-child(2) {
+    min-width: 230px;
+
+    text-align: left;
+}
+
+
+.official-athlete-table td:nth-child(2) strong {
+    color: inherit;
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+.official-athlete-table tbody tr {
+    transition:
+        background 0.15s ease;
+}
+
+
+.official-athlete-table tbody tr:hover td {
+    background: #f8fafc;
+}
+
+
+/* =========================================================
+   SELECTED
+========================================================= */
+
+.official-selected-row td {
+    background: #fef3c7 !important;
+
+    color: #422006 !important;
+
+    font-weight: 800;
+}
+
+
+.official-selected-row td:nth-child(2),
+.official-selected-row td:nth-child(2) strong {
+    color: #422006 !important;
+}
+
+
+/* =========================================================
+   COMPLETED
+========================================================= */
+
+.official-completed-row td {
+    background: #f3f4f6;
+
+    color: #9ca3af;
+
+    opacity: 0.65;
+}
+
+
+/* =========================================================
+   SELECT BUTTON
+========================================================= */
+
+.select-athlete-btn {
+    min-width: 105px;
+
+    padding: 8px 12px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+
+.select-athlete-btn:hover {
+    background: #1d4ed8;
+}
+
+
+.select-athlete-btn:disabled {
+    background: #94a3b8;
+
+    color: #ffffff;
+
+    cursor: not-allowed;
+}
+
+
+.official-selected-row .select-athlete-btn {
+    background: #a16207;
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.no-athletes-cell {
+    padding: 30px !important;
+
+    color: #64748b !important;
+
+    text-align: center !important;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .official-list-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+}

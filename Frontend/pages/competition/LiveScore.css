@@ -5,6 +5,7 @@
 .live-score-page {
     width: 100%;
     min-height: 100vh;
+
     box-sizing: border-box;
 
     padding: 24px;
@@ -28,11 +29,13 @@
     min-height: 100vh;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     text-align: center;
 }
+
 
 .live-score-loading h2 {
     margin: 0;
@@ -45,84 +48,16 @@
 
 
 /* =========================================================
-   HEADER
-========================================================= */
-
-.live-score-header {
-    width: 100%;
-    box-sizing: border-box;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 24px;
-
-    margin-bottom: 20px;
-    padding: 20px 24px;
-
-    background: #0a2342;
-
-    border-radius: 14px;
-
-    border-bottom: 3px solid #2563eb;
-}
-
-.live-score-header h1 {
-    margin: 0 0 6px;
-
-    color: #ffffff;
-
-    font-size: 30px;
-    font-weight: 800;
-}
-
-.live-score-header p {
-    margin: 0;
-
-    color: #cbd5e1;
-
-    font-size: 14px;
-}
-
-
-/* =========================================================
-   SESSION INFORMATION
-========================================================= */
-
-.live-score-session {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-
-    gap: 10px;
-
-    flex-wrap: wrap;
-}
-
-.live-score-session span {
-    padding: 8px 12px;
-
-    border-radius: 8px;
-
-    background: #132f52;
-
-    color: #ffffff;
-
-    font-size: 13px;
-    font-weight: 700;
-}
-
-
-/* =========================================================
    STATUS MESSAGE
 ========================================================= */
 
 .lift-status {
     width: 100%;
+
     box-sizing: border-box;
 
     margin-bottom: 20px;
+
     padding: 14px 18px;
 
     border-radius: 10px;
@@ -131,6 +66,7 @@
     font-weight: 700;
 }
 
+
 .lift-status-success {
     background: #dcfce7;
 
@@ -138,6 +74,7 @@
 
     border: 1px solid #86efac;
 }
+
 
 .lift-status-error {
     background: #fee2e2;
@@ -156,10 +93,12 @@
     width: 100%;
 
     display: flex;
+
     justify-content: center;
 
     margin-bottom: 24px;
 }
+
 
 .live-score-start button {
     min-width: 240px;
@@ -167,6 +106,7 @@
     padding: 15px 24px;
 
     border: none;
+
     border-radius: 10px;
 
     background: #2563eb;
@@ -183,11 +123,13 @@
         transform 0.15s ease;
 }
 
+
 .live-score-start button:hover {
     background: #1d4ed8;
 
     transform: translateY(-1px);
 }
+
 
 .live-score-start button:disabled {
     opacity: 0.6;
@@ -199,893 +141,7 @@
 
 
 /* =========================================================
-   CURRENT ATHLETE CARD
-========================================================= */
-
-.live-score-current {
-    width: 100%;
-    box-sizing: border-box;
-
-    margin-bottom: 28px;
-
-    background: #ffffff;
-
-    color: #111827;
-
-    border-radius: 16px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.20);
-}
-
-
-/* =========================================================
-   CURRENT ATHLETE HEADER
-========================================================= */
-
-.live-score-current-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 20px;
-
-    padding: 16px 22px;
-
-    background: #0f2d50;
-
-    color: #ffffff;
-}
-
-.live-score-current-header h2 {
-    margin: 0;
-
-    font-size: 22px;
-    font-weight: 800;
-}
-
-.live-score-current-header span {
-    padding: 7px 12px;
-
-    border-radius: 7px;
-
-    background: #facc15;
-
-    color: #422006;
-
-    font-size: 12px;
-    font-weight: 900;
-}
-
-
-/* =========================================================
-   PLATFORM EMPTY
-========================================================= */
-
-.live-score-empty {
-    min-height: 180px;
-
-    display: flex;
-    flex-direction: column;
-
-    justify-content: center;
-    align-items: center;
-
-    padding: 30px;
-
-    box-sizing: border-box;
-
-    text-align: center;
-
-    background: #f8fafc;
-}
-
-.live-score-empty h2 {
-    margin: 0 0 8px;
-
-    color: #64748b;
-
-    font-size: 30px;
-    font-weight: 900;
-}
-
-.live-score-empty p {
-    margin: 0;
-
-    color: #64748b;
-
-    font-size: 16px;
-}
-
-
-/* =========================================================
-   CURRENT ATHLETE PANEL
-========================================================= */
-
-.current-athlete-panel {
-    width: 100%;
-    box-sizing: border-box;
-
-    padding: 24px;
-
-    background: #facc15;
-
-    color: #422006;
-}
-
-
-/* =========================================================
-   CURRENT ATHLETE MAIN
-========================================================= */
-
-.current-athlete-main {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 30px;
-
-    margin-bottom: 24px;
-}
-
-.current-athlete-label {
-    margin-bottom: 5px;
-
-    color: #713f12;
-
-    font-size: 13px;
-    font-weight: 900;
-
-    letter-spacing: 1px;
-}
-
-.current-athlete-main h1 {
-    margin: 0;
-
-    color: #422006;
-
-    font-size: 34px;
-    line-height: 1.1;
-    font-weight: 900;
-}
-
-
-/* =========================================================
-   CURRENT ATHLETE META
-========================================================= */
-
-.current-athlete-meta {
-    display: flex;
-    justify-content: flex-end;
-
-    gap: 12px;
-
-    flex-wrap: wrap;
-}
-
-.current-athlete-meta > div {
-    min-width: 110px;
-
-    padding: 12px 16px;
-
-    border-radius: 10px;
-
-    background: rgba(255, 255, 255, 0.55);
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 4px;
-
-    text-align: center;
-}
-
-.current-athlete-meta strong {
-    color: #713f12;
-
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.current-athlete-meta span {
-    color: #422006;
-
-    font-size: 20px;
-    font-weight: 900;
-}
-
-
-/* =========================================================
-   DECLARATION
-========================================================= */
-
-.current-athlete-declaration {
-    padding: 18px;
-
-    border-radius: 12px;
-
-    background: rgba(255, 255, 255, 0.50);
-}
-
-.current-athlete-declaration label {
-    display: block;
-
-    margin-bottom: 8px;
-
-    color: #713f12;
-
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.declaration-control {
-    display: flex;
-
-    gap: 10px;
-}
-
-.declaration-control input {
-    width: 180px;
-    box-sizing: border-box;
-
-    padding: 12px 14px;
-
-    border: 2px solid #a16207;
-    border-radius: 8px;
-
-    outline: none;
-
-    background: #ffffff;
-
-    color: #111827;
-
-    font-size: 18px;
-    font-weight: 800;
-}
-
-.declaration-control input:focus {
-    border-color: #422006;
-
-    box-shadow:
-        0 0 0 3px rgba(66, 32, 6, 0.15);
-}
-
-.declaration-control input:disabled {
-    background: #f8fafc;
-
-    cursor: not-allowed;
-
-    opacity: 0.75;
-}
-
-.declaration-control button {
-    padding: 12px 20px;
-
-    border: none;
-    border-radius: 8px;
-
-    background: #422006;
-
-    color: #ffffff;
-
-    font-size: 14px;
-    font-weight: 800;
-
-    cursor: pointer;
-}
-
-.declaration-control button:hover {
-    background: #713f12;
-}
-
-.declaration-control button:disabled {
-    opacity: 0.5;
-
-    cursor: not-allowed;
-}
-
-.current-athlete-declaration small {
-    display: block;
-
-    margin-top: 8px;
-
-    color: #713f12;
-
-    font-size: 12px;
-    font-weight: 600;
-}
-
-
-/* =========================================================
-   LIFT DECISION
-========================================================= */
-
-.lift-decision {
-    display: flex;
-
-    gap: 14px;
-
-    margin-top: 18px;
-}
-
-.lift-decision button {
-    flex: 1;
-
-    min-height: 60px;
-
-    border: none;
-    border-radius: 10px;
-
-    font-size: 18px;
-    font-weight: 900;
-
-    cursor: pointer;
-
-    transition:
-        background 0.15s ease,
-        transform 0.15s ease,
-        opacity 0.15s ease;
-}
-
-.lift-decision button:hover {
-    transform: translateY(-1px);
-}
-
-.lift-decision button:disabled {
-    opacity: 0.55;
-
-    cursor: not-allowed;
-
-    transform: none;
-}
-
-.good-btn {
-    background: #166534;
-
-    color: #ffffff;
-}
-
-.good-btn:hover {
-    background: #14532d;
-}
-
-.no-lift-btn {
-    background: #991b1b;
-
-    color: #ffffff;
-}
-
-.no-lift-btn:hover {
-    background: #7f1d1d;
-}
-
-
-/* =========================================================
-   OFFICIAL ATHLETE SELECTION
-========================================================= */
-
-.official-athlete-list {
-    width: 100%;
-    box-sizing: border-box;
-
-    margin-bottom: 28px;
-
-    background: #ffffff;
-
-    color: #111827;
-
-    border-radius: 16px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.18);
-}
-
-
-/* =========================================================
-   OFFICIAL LIST HEADER
-========================================================= */
-
-.official-list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 20px;
-
-    padding: 20px 22px;
-
-    background: #0f2d50;
-
-    color: #ffffff;
-}
-
-.official-list-header h2 {
-    margin: 0 0 5px;
-
-    color: #ffffff;
-
-    font-size: 22px;
-    font-weight: 800;
-}
-
-.official-list-header p {
-    margin: 0;
-
-    color: #cbd5e1;
-
-    font-size: 13px;
-}
-
-.official-list-header > strong {
-    white-space: nowrap;
-
-    padding: 9px 14px;
-
-    border-radius: 8px;
-
-    background: #1e40af;
-
-    color: #ffffff;
-
-    font-size: 13px;
-}
-
-
-/* =========================================================
-   IMPORTANT:
-   MATCHES LiveScore.jsx
-========================================================= */
-
-.official-list-table-wrapper {
-    width: 100%;
-
-    overflow-x: auto;
-}
-
-
-/* =========================================================
-   OFFICIAL TABLE
-========================================================= */
-
-.official-athlete-table {
-    width: 100%;
-
-    min-width: 850px;
-
-    border-collapse: collapse;
-
-    color: #111827;
-}
-
-.official-athlete-table th {
-    padding: 13px 12px;
-
-    background: #2563eb;
-
-    color: #ffffff;
-
-    text-align: center;
-
-    font-size: 13px;
-    font-weight: 800;
-
-    white-space: nowrap;
-}
-
-.official-athlete-table td {
-    padding: 13px 12px;
-
-    border-bottom: 1px solid #e5e7eb;
-
-    background: #ffffff;
-
-    color: #111827;
-
-    text-align: center;
-
-    font-size: 14px;
-}
-
-.official-athlete-table td:nth-child(2) {
-    min-width: 230px;
-
-    text-align: left;
-}
-
-.official-athlete-table td:nth-child(2) strong {
-    color: inherit;
-}
-
-
-/* =========================================================
-   OFFICIAL TABLE HOVER
-========================================================= */
-
-.official-athlete-table tbody tr {
-    transition:
-        background 0.15s ease;
-}
-
-.official-athlete-table tbody tr:hover td {
-    background: #f8fafc;
-}
-
-
-/* =========================================================
-   SELECTED ATHLETE
-========================================================= */
-
-.official-selected-row td {
-    background: #fef3c7 !important;
-
-    color: #422006 !important;
-
-    font-weight: 800;
-}
-
-.official-selected-row td:nth-child(2),
-.official-selected-row td:nth-child(2) strong {
-    color: #422006 !important;
-}
-
-
-/* =========================================================
-   COMPLETED ATHLETE
-========================================================= */
-
-.official-completed-row td {
-    background: #f3f4f6;
-
-    color: #9ca3af;
-
-    opacity: 0.65;
-}
-
-
-/* =========================================================
-   SELECT BUTTON
-========================================================= */
-
-.select-athlete-btn {
-    min-width: 105px;
-
-    padding: 8px 12px;
-
-    border: none;
-    border-radius: 7px;
-
-    background: #2563eb;
-
-    color: #ffffff;
-
-    font-size: 12px;
-    font-weight: 900;
-
-    cursor: pointer;
-}
-
-.select-athlete-btn:hover {
-    background: #1d4ed8;
-}
-
-.select-athlete-btn:disabled {
-    background: #94a3b8;
-
-    color: #ffffff;
-
-    cursor: not-allowed;
-}
-
-.official-selected-row .select-athlete-btn {
-    background: #a16207;
-
-    color: #ffffff;
-}
-
-
-/* =========================================================
-   NO ATHLETES
-========================================================= */
-
-.no-athletes-cell {
-    padding: 30px !important;
-
-    color: #64748b !important;
-
-    text-align: center !important;
-
-    font-weight: 700;
-}
-
-
-/* =========================================================
-   SCOREBOARD
-========================================================= */
-
-.scoreboard {
-    width: 100%;
-    box-sizing: border-box;
-
-    padding: 22px;
-
-    background: #ffffff;
-
-    border-radius: 16px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.18);
-}
-
-
-/* =========================================================
-   SCOREBOARD HEADER
-========================================================= */
-
-.scoreboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 16px;
-    padding-bottom: 14px;
-
-    border-bottom: 3px solid #2563eb;
-}
-
-.scoreboard-header h2 {
-    margin: 0;
-
-    color: #111827;
-
-    font-size: 26px;
-    font-weight: 900;
-}
-
-
-/* =========================================================
-   SCOREBOARD WRAPPER
-========================================================= */
-
-.scoreboard-wrapper {
-    width: 100%;
-
-    overflow-x: auto;
-}
-
-
-/* =========================================================
-   SCOREBOARD TABLE
-========================================================= */
-
-.scoreboard-table {
-    width: 100%;
-
-    min-width: 1150px;
-
-    border-collapse: collapse;
-
-    color: #ffffff;
-}
-
-.scoreboard-table thead th {
-    padding: 14px 10px;
-
-    background: #2563eb;
-
-    color: #ffffff;
-
-    text-align: center;
-
-    font-size: 13px;
-    font-weight: 900;
-
-    white-space: nowrap;
-}
-
-.scoreboard-table tbody tr {
-    transition:
-        background 0.15s ease;
-}
-
-.scoreboard-table tbody td {
-    padding: 13px 10px;
-
-    border-bottom: 1px solid #d1d5db;
-
-    background: #0b1f3a;
-
-    color: #ffffff;
-
-    text-align: center;
-
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.scoreboard-table tbody td:first-child {
-    font-weight: 900;
-}
-
-.scoreboard-table tbody td:nth-child(2) {
-    min-width: 230px;
-
-    text-align: left;
-
-    font-weight: 800;
-}
-
-.scoreboard-table tbody td:nth-child(2) strong {
-    color: inherit;
-}
-
-
-/* =========================================================
-   SCOREBOARD HOVER
-========================================================= */
-
-.scoreboard-table tbody tr:hover td {
-    background: #18385f;
-
-    color: #ffffff;
-}
-
-
-/* =========================================================
-   CURRENT ATHLETE ON TV
-   YELLOW
-========================================================= */
-
-.scoreboard-current-row td {
-    background: #facc15 !important;
-
-    color: #422006 !important;
-
-    font-weight: 900;
-
-    border-bottom-color: #ca8a04;
-}
-
-.scoreboard-current-row td:first-child {
-    border-left: 7px solid #eab308;
-
-    color: #422006 !important;
-}
-
-.scoreboard-current-row td:nth-child(2),
-.scoreboard-current-row td:nth-child(2) strong {
-    color: #422006 !important;
-}
-
-.scoreboard-current-row:hover td {
-    background: #facc15 !important;
-
-    color: #422006 !important;
-}
-
-.scoreboard-current-row:hover td:nth-child(2),
-.scoreboard-current-row:hover td:nth-child(2) strong {
-    color: #422006 !important;
-}
-
-
-/* =========================================================
-   COMPLETED ATHLETE
-========================================================= */
-
-.scoreboard-completed-row td {
-    opacity: 0.65;
-}
-
-.scoreboard-completed-row:hover td {
-    opacity: 1;
-
-    background: #18385f;
-}
-
-
-/* =========================================================
-   ATTEMPT RESULT
-========================================================= */
-
-.attempt-good,
-.attempt-fail,
-.attempt-pending {
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
-    min-width: 54px;
-    box-sizing: border-box;
-
-    padding: 6px 9px;
-
-    border-radius: 7px;
-
-    font-weight: 900;
-
-    white-space: nowrap;
-}
-
-.attempt-good {
-    background: #dcfce7;
-
-    color: #15803d !important;
-}
-
-.attempt-fail {
-    background: #fee2e2;
-
-    color: #b91c1c !important;
-}
-
-.attempt-pending {
-    background: #e5e7eb;
-
-    color: #374151 !important;
-}
-
-
-/* =========================================================
-   SCOREBOARD RESULT COLUMNS
-========================================================= */
-
-.scoreboard-table td:nth-child(9),
-.scoreboard-table td:nth-child(10),
-.scoreboard-table td:nth-child(11),
-.scoreboard-table td:nth-child(12) {
-    font-weight: 900;
-}
-
-
-/* =========================================================
-   CURRENT ROW RESULT BOXES
-========================================================= */
-
-.scoreboard-current-row .attempt-good {
-    background: #dcfce7;
-
-    color: #15803d !important;
-}
-
-.scoreboard-current-row .attempt-fail {
-    background: #fee2e2;
-
-    color: #b91c1c !important;
-}
-
-.scoreboard-current-row .attempt-pending {
-    background: #e5e7eb;
-
-    color: #374151 !important;
-}
-
-
-/* =========================================================
-   EMPTY SCOREBOARD
-========================================================= */
-
-.no-scoreboard-data {
-    padding: 35px !important;
-
-    background: #0b1f3a !important;
-
-    color: #cbd5e1 !important;
-
-    text-align: center !important;
-
-    font-weight: 700 !important;
-}
-
-
-/* =========================================================
-   LARGE TV SCREEN
+   RESPONSIVE
 ========================================================= */
 
 @media (min-width: 1600px) {
@@ -1094,40 +150,8 @@
         padding: 30px;
     }
 
-    .scoreboard-table thead th {
-        padding: 16px 12px;
-
-        font-size: 15px;
-    }
-
-    .scoreboard-table tbody td {
-        padding: 16px 12px;
-
-        font-size: 16px;
-    }
-
-    .scoreboard-table tbody td:nth-child(2) {
-        min-width: 280px;
-
-        font-size: 17px;
-    }
-
-    .attempt-good,
-    .attempt-fail,
-    .attempt-pending {
-        min-width: 60px;
-
-        padding: 7px 11px;
-
-        font-size: 15px;
-    }
-
 }
 
-
-/* =========================================================
-   TABLET
-========================================================= */
 
 @media (max-width: 1000px) {
 
@@ -1135,87 +159,13 @@
         padding: 16px;
     }
 
-    .live-score-header {
-        flex-direction: column;
-
-        align-items: flex-start;
-    }
-
-    .live-score-session {
-        justify-content: flex-start;
-    }
-
-    .current-athlete-main {
-        flex-direction: column;
-
-        align-items: flex-start;
-    }
-
-    .current-athlete-meta {
-        justify-content: flex-start;
-    }
-
-    .official-list-header {
-        flex-direction: column;
-
-        align-items: flex-start;
-    }
-
 }
 
-
-/* =========================================================
-   MOBILE
-========================================================= */
 
 @media (max-width: 650px) {
 
     .live-score-page {
         padding: 10px;
-    }
-
-    .live-score-header {
-        padding: 16px;
-    }
-
-    .live-score-header h1 {
-        font-size: 24px;
-    }
-
-    .live-score-current-header {
-        padding: 14px 16px;
-    }
-
-    .current-athlete-panel {
-        padding: 16px;
-    }
-
-    .current-athlete-main h1 {
-        font-size: 27px;
-    }
-
-    .current-athlete-meta {
-        width: 100%;
-    }
-
-    .current-athlete-meta > div {
-        flex: 1;
-    }
-
-    .declaration-control {
-        flex-direction: column;
-    }
-
-    .declaration-control input {
-        width: 100%;
-    }
-
-    .lift-decision {
-        flex-direction: column;
-    }
-
-    .scoreboard {
-        padding: 14px;
     }
 
 }
