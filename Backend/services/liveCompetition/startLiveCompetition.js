@@ -349,3 +349,4 @@ const startLiveCompetition = async ({
 };
 
 export default startLiveCompetition;
+

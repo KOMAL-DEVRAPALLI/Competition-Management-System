@@ -10,7 +10,6 @@ import {
 import "./LiveScore.css";
 
 const LiveScore = () => {
-
     const {
         competitionId,
         gender,
@@ -60,107 +59,24 @@ const LiveScore = () => {
 
     const {
         currentAthlete = null,
-
         athletes = [],
-
         competitionResults = [],
-
         status = "READY",
-
         currentPhase = "SNATCH",
-
         totalAthletes = 0,
-
     } = liveCompetition || {};
 
     // =====================================
     // LOAD LIVE COMPETITION
     // =====================================
 
-    useEffect(() => {
-
-        loadLiveCompetition();
-
-    }, [competitionId, gender]);
-
-    // =====================================
-    // SYNC DECLARATION INPUT
-    // =====================================
-
-    useEffect(() => {
-
-        if (!currentAthlete) {
-
-            setDeclaredWeight("");
-
-            return;
-
-        }
-
-        const attempt =
-            currentAthlete.currentAttempt;
-
-        if (!attempt) {
-
-            setDeclaredWeight("");
-
-            return;
-
-        }
-
-        // -----------------------------------
-        // Existing declaration
-        // -----------------------------------
-
-        if (
-            attempt.declaredWeight != null &&
-            attempt.declaredWeight > 0
-        ) {
-
-            setDeclaredWeight(
-                attempt.declaredWeight
-            );
-
-            return;
-
-        }
-
-        // -----------------------------------
-        // Attempt 1 uses opening weight
-        // -----------------------------------
-
-        if (
-            attempt.attemptNo === 1
-        ) {
-
-            const openingWeight =
-                attempt.phase === "SNATCH"
-                    ? currentAthlete.openingSnatch
-                    : currentAthlete.openingCleanJerk;
-
-            setDeclaredWeight(
-                openingWeight ?? ""
-            );
-
-            return;
-
-        }
-
-        // -----------------------------------
-        // Attempt 2 / 3
-        // -----------------------------------
-
-        setDeclaredWeight("");
-
-    }, [currentAthlete]);
-
-    // =====================================
-    // LOAD LIVE COMPETITION
-    // =====================================
-
-    const loadLiveCompetition = async () => {
-
+    const loadLiveCompetition = async (
+        showLoading = false
+    ) => {
         try {
+            if (showLoading) {
+                setLoading(true);
+            }
 
             const response =
                 await apiRequest(
@@ -175,15 +91,9 @@ const LiveScore = () => {
             return response.data;
 
         } catch (error) {
-
             console.error(
                 "Failed to load live competition:",
                 error
-            );
-
-            console.log(
-                "Backend Response:",
-                error.response?.data
             );
 
             setLiftError(
@@ -194,304 +104,330 @@ const LiveScore = () => {
                 "Failed to load live competition."
             );
 
+            return null;
+
         } finally {
+            if (showLoading) {
+                setLoading(false);
+            }
+        }
+    };
 
-            setLoading(false);
+    // =====================================
+    // INITIAL LOAD
+    // =====================================
 
+    useEffect(() => {
+        loadLiveCompetition(true);
+    }, [
+        competitionId,
+        gender,
+    ]);
+
+    // =====================================
+    // LIVE REFRESH
+    //
+    // Important for TV scoreboard.
+    //
+    // This DOES NOT select anyone.
+    // It only reads current server state.
+    // =====================================
+
+    useEffect(() => {
+        const interval =
+            setInterval(() => {
+                loadLiveCompetition(false);
+            }, 1000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [
+        competitionId,
+        gender,
+    ]);
+
+    // =====================================
+    // SYNC DECLARATION INPUT
+    // =====================================
+
+    useEffect(() => {
+        if (!currentAthlete) {
+            setDeclaredWeight("");
+            return;
         }
 
-    };
+        const attempt =
+            currentAthlete.currentAttempt;
+
+        if (!attempt) {
+            setDeclaredWeight("");
+            return;
+        }
+
+        // Existing declaration
+        if (
+            attempt.declaredWeight != null &&
+            attempt.declaredWeight > 0
+        ) {
+            setDeclaredWeight(
+                attempt.declaredWeight
+            );
+
+            return;
+        }
+
+        // Attempt 1 uses opening weight
+        if (
+            attempt.attemptNo === 1
+        ) {
+            const openingWeight =
+                attempt.phase === "SNATCH"
+                    ? currentAthlete.openingSnatch
+                    : currentAthlete.openingCleanJerk;
+
+            setDeclaredWeight(
+                openingWeight ?? ""
+            );
+
+            return;
+        }
+
+        // Attempt 2 / 3
+        setDeclaredWeight("");
+
+    }, [currentAthlete]);
 
     // =====================================
     // START COMPETITION
     //
-    // IMPORTANT:
+    // Creates session only.
     //
-    // This ONLY creates the session.
-    //
-    // It does NOT select an athlete.
+    // NO ATHLETE IS SELECTED.
     // =====================================
 
     const handleStartCompetition =
         async () => {
 
-        if (startingCompetition) {
-            return;
-        }
+            if (startingCompetition) {
+                return;
+            }
 
-        try {
+            try {
+                setStartingCompetition(true);
+                setLiftError("");
+                setLiftMessage("");
 
-            setStartingCompetition(true);
+                await apiRequest(
+                    `/live-competition/start/${competitionId}/${gender}`,
+                    "POST",
+                    {
+                        sessionName: "",
+                        selectedWeightCategories: [],
+                    }
+                );
 
-            setLiftError("");
+                setLiftMessage(
+                    "Live competition started. Official must select the athlete."
+                );
 
-            setLiftMessage("");
+                await loadLiveCompetition(
+                    false
+                );
 
-            await apiRequest(
-                `/live-competition/start/${competitionId}/${gender}`,
-                "POST",
-                {
-                    sessionName: "",
-                    selectedWeightCategories: [],
-                }
-            );
+            } catch (error) {
+                console.error(
+                    "Failed to start competition:",
+                    error
+                );
 
-            setLiftMessage(
-                "Live competition started. Official must select the athlete."
-            );
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to start competition."
+                );
 
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.error(
-                "Failed to start competition:",
-                error
-            );
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to start competition."
-            );
-
-        } finally {
-
-            setStartingCompetition(false);
-
-        }
-
-    };
+            } finally {
+                setStartingCompetition(false);
+            }
+        };
 
     // =====================================
     // SELECT ATHLETE
     //
-    // OFFICIAL MANUALLY CHOOSES ATHLETE
+    // OFFICIAL MANUALLY SELECTS.
     //
-    // NO AUTOMATIC ORDERING
+    // NO AUTOMATIC ORDERING.
     // =====================================
 
     const handleSelectAthlete =
         async (athlete) => {
 
-        if (
-            !athlete ||
-            selectingAthlete
-        ) {
-            return;
-        }
+            if (
+                !athlete ||
+                selectingAthlete
+            ) {
+                return;
+            }
 
-        // -----------------------------------
-        // Cannot select another athlete
-        // while platform is occupied.
-        // -----------------------------------
+            // Platform already occupied
+            if (currentAthlete) {
+                setLiftError(
+                    "Complete the current athlete before selecting another athlete."
+                );
 
-        if (currentAthlete) {
+                return;
+            }
 
-            setLiftError(
-                "Complete the current athlete before selecting another athlete."
-            );
+            // Invalid attempt
+            if (
+                !athlete.currentAttempt
+            ) {
+                setLiftError(
+                    "This athlete does not have a valid current attempt."
+                );
 
-            return;
+                return;
+            }
 
-        }
+            // Wrong phase
+            if (
+                athlete.currentAttempt.phase !==
+                currentPhase
+            ) {
+                setLiftError(
+                    `This athlete belongs to ${athlete.currentAttempt.phase}, while the live session is in ${currentPhase}.`
+                );
 
-        // -----------------------------------
-        // Check athlete has an attempt
-        // -----------------------------------
+                return;
+            }
 
-        if (
-            !athlete.currentAttempt
-        ) {
+            try {
+                setSelectingAthlete(true);
+                setLiftError("");
+                setLiftMessage("");
 
-            setLiftError(
-                "This athlete does not have a valid current attempt."
-            );
+                await apiRequest(
+                    SELECT_ATHLETE_URL,
+                    "POST",
+                    {
+                        competitionId,
+                        gender,
+                        entryId:
+                            athlete.entryId,
+                    }
+                );
 
-            return;
+                setLiftMessage(
+                    `${athlete.name} selected.`
+                );
 
-        }
+                await loadLiveCompetition(
+                    false
+                );
 
-        // -----------------------------------
-        // Verify phase
-        // -----------------------------------
+            } catch (error) {
+                console.error(
+                    "Failed to select athlete:",
+                    error
+                );
 
-        if (
-            athlete.currentAttempt.phase !==
-            currentPhase
-        ) {
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to select athlete."
+                );
 
-            setLiftError(
-                `This athlete belongs to ${athlete.currentAttempt.phase}, while the live session is in ${currentPhase}.`
-            );
-
-            return;
-
-        }
-
-        try {
-
-            setSelectingAthlete(true);
-
-            setLiftError("");
-
-            setLiftMessage("");
-
-            console.log(
-                "===== OFFICIAL SELECT ATHLETE ====="
-            );
-
-            console.log(
-                "Entry ID:",
-                athlete.entryId
-            );
-
-            console.log(
-                "Name:",
-                athlete.name
-            );
-
-            console.log(
-                "Phase:",
-                athlete.currentAttempt.phase
-            );
-
-            console.log(
-                "Attempt:",
-                athlete.currentAttempt.attemptNo
-            );
-
-            await apiRequest(
-                SELECT_ATHLETE_URL,
-                "POST",
-                {
-                    competitionId,
-                    gender,
-                    entryId:
-                        athlete.entryId,
-                }
-            );
-
-            setLiftMessage(
-                `${athlete.name} selected.`
-            );
-
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.error(
-                "Failed to select athlete:",
-                error
-            );
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to select athlete."
-            );
-
-        } finally {
-
-            setSelectingAthlete(false);
-
-        }
-
-    };
+            } finally {
+                setSelectingAthlete(false);
+            }
+        };
 
     // =====================================
     // SAVE DECLARATION
     //
-    // Declaration ONLY.
+    // DECLARATION ONLY.
     //
-    // It does NOT select athlete.
+    // Does NOT select athlete.
+    // Does NOT move athlete.
     // =====================================
 
     const handleSaveDeclaration =
         async () => {
 
-        if (
-            !currentAthlete ||
-            savingDeclaration
-        ) {
-            return;
-        }
+            if (
+                !currentAthlete ||
+                savingDeclaration
+            ) {
+                return;
+            }
 
-        const weight =
-            Number(
-                declaredWeight
-            );
+            const weight =
+                Number(
+                    declaredWeight
+                );
 
-        if (
-            Number.isNaN(weight) ||
-            weight <= 0
-        ) {
+            if (
+                Number.isNaN(weight) ||
+                weight <= 0
+            ) {
+                setLiftError(
+                    "Please enter a valid declared weight."
+                );
 
-            setLiftError(
-                "Please enter a valid declared weight."
-            );
+                return;
+            }
 
-            return;
+            try {
+                setSavingDeclaration(true);
+                setLiftError("");
+                setLiftMessage("");
 
-        }
+                await saveDeclaredWeight({
+                    entryId:
+                        currentAthlete.entryId,
 
-        try {
+                    declaredWeight:
+                        weight,
+                });
 
-            setSavingDeclaration(true);
+                setLiftMessage(
+                    "Declaration saved successfully."
+                );
 
-            setLiftError("");
+                await loadLiveCompetition(
+                    false
+                );
 
-            setLiftMessage("");
+            } catch (error) {
+                console.error(
+                    "Failed to save declaration:",
+                    error
+                );
 
-            await saveDeclaredWeight({
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to save declaration."
+                );
 
-                entryId:
-                    currentAthlete.entryId,
-
-                declaredWeight:
-                    weight,
-
-            });
-
-            setLiftMessage(
-                "Declaration saved successfully."
-            );
-
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.error(
-                "Failed to save declaration:",
-                error
-            );
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to save declaration."
-            );
-
-        } finally {
-
-            setSavingDeclaration(false);
-
-        }
-
-    };
+            } finally {
+                setSavingDeclaration(false);
+            }
+        };
 
     // =====================================
     // PROCESS LIFT
     //
     // GOOD / NO LIFT
     //
-    // Backend clears current athlete.
+    // Backend clears currentEntryId.
     //
     // NO automatic next athlete.
     // =====================================
@@ -499,80 +435,59 @@ const LiveScore = () => {
     const handleProcessLift =
         async (result) => {
 
-        if (
-            !currentAthlete ||
-            processingLift
-        ) {
-            return;
-        }
+            if (
+                !currentAthlete ||
+                processingLift
+            ) {
+                return;
+            }
 
-        try {
+            try {
+                setProcessingLift(true);
+                setLiftMessage("");
+                setLiftError("");
 
-            setProcessingLift(true);
+                await processLift({
+                    entryId:
+                        currentAthlete.entryId,
 
-            setLiftMessage("");
+                    competitionId,
 
-            setLiftError("");
+                    gender,
 
-            console.log(
-                "===== PROCESS OFFICIAL RESULT ====="
-            );
+                    result,
+                });
 
-            console.log(
-                "Athlete:",
-                currentAthlete.name
-            );
+                setLiftMessage(
+                    result === "GOOD"
+                        ? "Good Lift saved successfully."
+                        : "No Lift saved successfully."
+                );
 
-            console.log(
-                "Result:",
-                result
-            );
+                setDeclaredWeight("");
 
-            await processLift({
+                await loadLiveCompetition(
+                    false
+                );
 
-                entryId:
-                    currentAthlete.entryId,
+            } catch (error) {
+                console.error(
+                    "Failed to process lift:",
+                    error
+                );
 
-                competitionId,
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to save lift."
+                );
 
-                gender,
-
-                result,
-
-            });
-
-            setLiftMessage(
-                result === "GOOD"
-                    ? "Good Lift saved successfully."
-                    : "No Lift saved successfully."
-            );
-
-            setDeclaredWeight("");
-
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.error(
-                "Failed to process lift:",
-                error
-            );
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to save lift."
-            );
-
-        } finally {
-
-            setProcessingLift(false);
-
-        }
-
-    };
+            } finally {
+                setProcessingLift(false);
+            }
+        };
 
     // =====================================
     // GET DISPLAY WEIGHT
@@ -593,37 +508,26 @@ const LiveScore = () => {
             return null;
         }
 
-        // -----------------------------------
         // Declared weight
-        // -----------------------------------
-
         if (
             attempt.declaredWeight != null &&
             attempt.declaredWeight > 0
         ) {
-
             return attempt.declaredWeight;
-
         }
 
-        // -----------------------------------
         // Attempt 1
-        // -----------------------------------
-
         if (
             attempt.attemptNo === 1
         ) {
-
             return (
                 attempt.phase === "SNATCH"
                     ? athlete.openingSnatch
                     : athlete.openingCleanJerk
             );
-
         }
 
         return null;
-
     };
 
     // =====================================
@@ -650,25 +554,21 @@ const LiveScore = () => {
         if (
             attempt.result === "GOOD"
         ) {
-
             return (
                 <span className="attempt-good">
                     {displayWeight ?? "-"} ✓
                 </span>
             );
-
         }
 
         if (
             attempt.result === "NO_LIFT"
         ) {
-
             return (
                 <span className="attempt-fail">
                     {displayWeight ?? "-"} ✗
                 </span>
             );
-
         }
 
         return (
@@ -676,50 +576,37 @@ const LiveScore = () => {
                 {displayWeight ?? "-"}
             </span>
         );
-
     };
 
     // =====================================
-    // DETERMINE ATHLETE LIST
+    // OFFICIAL ATHLETE LIST
     //
-    // New backend returns `athletes`.
+    // Backend provides ALL athletes.
     //
-    // The fallback keeps compatibility with
-    // an older GET response while we finish
-    // the backend transition.
+    // Official chooses manually.
     // =====================================
 
     const officialAthletes =
-        athletes?.length
+        Array.isArray(athletes)
             ? athletes
-            : (
-                competitionResults?.length
-                    ? competitionResults
-                    : []
-            );
+            : [];
 
     // =====================================
     // LOADING
     // =====================================
 
     if (loading) {
-
         return (
-
             <div className="live-score-page">
 
                 <div className="live-score-loading">
-
                     <h2>
                         Loading Live Competition...
                     </h2>
-
                 </div>
 
             </div>
-
         );
-
     }
 
     // =====================================
@@ -742,7 +629,6 @@ const LiveScore = () => {
     // =====================================
 
     return (
-
         <div className="live-score-page">
 
             {/* =================================
@@ -830,7 +716,6 @@ const LiveScore = () => {
                         `✕ ${liftError}`}
 
                 </div>
-
             )}
 
             {/* =================================
@@ -851,15 +736,12 @@ const LiveScore = () => {
                             startingCompetition
                         }
                     >
-
                         {startingCompetition
                             ? "Starting..."
                             : "Start Competition"}
-
                     </button>
 
                 </div>
-
             )}
 
             {/* =================================
@@ -875,20 +757,16 @@ const LiveScore = () => {
                     </h2>
 
                     {currentAthlete && (
-
                         <span>
                             ON PLATFORM
                         </span>
-
                     )}
 
                 </div>
 
                 {!currentAthlete ? (
 
-                    <div
-                        className="live-score-empty"
-                    >
+                    <div className="live-score-empty">
 
                         <h2>
                             PLATFORM EMPTY
@@ -926,7 +804,6 @@ const LiveScore = () => {
                             <div className="current-athlete-meta">
 
                                 <div>
-
                                     <strong>
                                         Lot
                                     </strong>
@@ -937,11 +814,9 @@ const LiveScore = () => {
                                                 .lotNumber
                                         }
                                     </span>
-
                                 </div>
 
                                 <div>
-
                                     <strong>
                                         Attempt
                                     </strong>
@@ -956,11 +831,9 @@ const LiveScore = () => {
                                                 ?.attemptNo
                                         }
                                     </span>
-
                                 </div>
 
                                 <div>
-
                                     <strong>
                                         Weight
                                     </strong>
@@ -971,7 +844,6 @@ const LiveScore = () => {
                                             "-"
                                         } kg
                                     </span>
-
                                 </div>
 
                             </div>
@@ -1020,22 +892,18 @@ const LiveScore = () => {
                                         !declaredWeight
                                     }
                                 >
-
                                     {savingDeclaration
                                         ? "Saving..."
                                         : "Save Declaration"}
-
                                 </button>
 
                             </div>
 
                             {isAttemptOne && (
-
                                 <small>
                                     Attempt 1 uses the
                                     opening weight.
                                 </small>
-
                             )}
 
                         </div>
@@ -1058,9 +926,7 @@ const LiveScore = () => {
                                     )
                                 }
                             >
-
                                 GOOD LIFT
-
                             </button>
 
                             <button
@@ -1075,15 +941,12 @@ const LiveScore = () => {
                                     )
                                 }
                             >
-
                                 NO LIFT
-
                             </button>
 
                         </div>
 
                     </div>
-
                 )}
 
             </section>
@@ -1118,9 +981,7 @@ const LiveScore = () => {
 
                 <div className="official-list-table-wrapper">
 
-                    <table
-                        className="official-athlete-table"
-                    >
+                    <table className="official-athlete-table">
 
                         <thead>
 
@@ -1175,12 +1036,13 @@ const LiveScore = () => {
                                             ?.toString();
 
                                     const isCompleted =
-                                        attempt?.completed === true;
+                                        attempt?.completed ===
+                                        true;
 
                                     const wrongPhase =
                                         attempt &&
                                         attempt.phase !==
-                                            currentPhase;
+                                        currentPhase;
 
                                     return (
 
@@ -1208,13 +1070,11 @@ const LiveScore = () => {
                                             {/* NAME */}
 
                                             <td>
-
                                                 <strong>
                                                     {
                                                         athlete.name
                                                     }
                                                 </strong>
-
                                             </td>
 
                                             {/* CATEGORY */}
@@ -1229,28 +1089,23 @@ const LiveScore = () => {
                                             {/* ATTEMPT */}
 
                                             <td>
-
                                                 {
                                                     attempt?.phase ??
                                                     "-"
                                                 }{" "}
-
                                                 {
                                                     attempt?.attemptNo ??
                                                     "-"
                                                 }
-
                                             </td>
 
                                             {/* WEIGHT */}
 
                                             <td>
-
                                                 {
                                                     weight ??
                                                     "-"
                                                 } kg
-
                                             </td>
 
                                             {/* ACTION */}
@@ -1290,7 +1145,6 @@ const LiveScore = () => {
                                         </tr>
 
                                     );
-
                                 }
                             )}
 
@@ -1303,7 +1157,6 @@ const LiveScore = () => {
                                         className="no-athletes-cell"
                                     >
                                         No athletes available.
-
                                     </td>
 
                                 </tr>
@@ -1334,9 +1187,7 @@ const LiveScore = () => {
 
                 <div className="scoreboard-wrapper">
 
-                    <table
-                        className="scoreboard-table"
-                    >
+                    <table className="scoreboard-table">
 
                         <thead>
 
@@ -1436,158 +1287,121 @@ const LiveScore = () => {
                                             {/* NAME */}
 
                                             <td>
-
                                                 <strong>
                                                     {
                                                         athlete.name
                                                     }
                                                 </strong>
-
                                             </td>
 
                                             {/* S1 */}
 
                                             <td>
-
                                                 {renderAttempt(
                                                     athlete
                                                         .snatchAttempts
-                                                        ?.[
-                                                            0
-                                                        ],
-                                                    athlete
-                                                        .openingSnatch
+                                                        ?.[0],
+                                                    athlete.openingSnatch
                                                 )}
-
                                             </td>
 
                                             {/* S2 */}
 
                                             <td>
-
                                                 {renderAttempt(
                                                     athlete
                                                         .snatchAttempts
-                                                        ?.[
-                                                            1
-                                                        ]
+                                                        ?.[1]
                                                 )}
-
                                             </td>
 
                                             {/* S3 */}
 
                                             <td>
-
                                                 {renderAttempt(
                                                     athlete
                                                         .snatchAttempts
-                                                        ?.[
-                                                            2
-                                                        ]
+                                                        ?.[2]
                                                 )}
-
                                             </td>
 
                                             {/* CJ1 */}
 
                                             <td>
-
                                                 {renderAttempt(
                                                     athlete
                                                         .cleanJerkAttempts
-                                                        ?.[
-                                                            0
-                                                        ],
-                                                    athlete
-                                                        .openingCleanJerk
+                                                        ?.[0],
+                                                    athlete.openingCleanJerk
                                                 )}
-
                                             </td>
 
                                             {/* CJ2 */}
 
                                             <td>
-
                                                 {renderAttempt(
                                                     athlete
                                                         .cleanJerkAttempts
-                                                        ?.[
-                                                            1
-                                                        ]
+                                                        ?.[1]
                                                 )}
-
                                             </td>
 
                                             {/* CJ3 */}
 
                                             <td>
-
                                                 {renderAttempt(
                                                     athlete
                                                         .cleanJerkAttempts
-                                                        ?.[
-                                                            2
-                                                        ]
+                                                        ?.[2]
                                                 )}
-
                                             </td>
 
                                             {/* BEST SNATCH */}
 
                                             <td>
-
                                                 <strong>
                                                     {
                                                         athlete.bestSnatch ??
                                                         0
                                                     }
                                                 </strong>
-
                                             </td>
 
                                             {/* BEST CLEAN & JERK */}
 
                                             <td>
-
                                                 <strong>
                                                     {
                                                         athlete.bestCleanJerk ??
                                                         0
                                                     }
                                                 </strong>
-
                                             </td>
 
                                             {/* TOTAL */}
 
                                             <td>
-
                                                 <strong>
                                                     {
                                                         athlete.total ??
                                                         0
                                                     }
                                                 </strong>
-
                                             </td>
 
                                             {/* RANK */}
 
                                             <td>
-
                                                 {
                                                     athlete.place ??
                                                     athlete.rank ??
                                                     "-"
                                                 }
-
                                             </td>
 
                                         </tr>
 
                                     );
-
                                 }
                             )}
 
@@ -1599,9 +1413,7 @@ const LiveScore = () => {
                                         colSpan="12"
                                         className="no-scoreboard-data"
                                     >
-
                                         No scoreboard data available.
-
                                     </td>
 
                                 </tr>
@@ -1617,9 +1429,7 @@ const LiveScore = () => {
             </section>
 
         </div>
-
     );
-
 };
 
 export default LiveScore;
