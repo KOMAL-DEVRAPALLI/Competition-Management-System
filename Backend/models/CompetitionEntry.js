@@ -20,13 +20,32 @@ const attemptSchema = new mongoose.Schema(
             default: null,
         },
 
+        // -----------------------------------
+        // Actual time this attempt was judged
+        // GOOD / NO_LIFT
+        //
+        // Used to determine the sequence of
+        // previous attempts for calling order.
+        // -----------------------------------
+
+        completedAt: {
+            type: Date,
+            default: null,
+        },
+
         result: {
             type: String,
-            enum: ["PENDING", "GOOD", "NO_LIFT"],
+            enum: [
+                "PENDING",
+                "GOOD",
+                "NO_LIFT",
+            ],
             default: "PENDING",
         },
     },
-    { _id: false }
+    {
+        _id: false,
+    }
 );
 
 const competitionEntrySchema = new mongoose.Schema(
@@ -42,6 +61,7 @@ const competitionEntrySchema = new mongoose.Schema(
             ref: "Athlete",
             required: true,
         },
+
         competitionCategory: {
             ageCategory: {
                 type: String,
@@ -49,40 +69,47 @@ const competitionEntrySchema = new mongoose.Schema(
                 trim: true,
             },
         },
+
         official: {
             bodyWeight: {
                 type: Number,
                 default: null,
                 min: 0,
             },
+
             eligibleWeightCategories: {
                 type: [String],
                 trim: true,
                 default: [],
             },
+
             selectedWeightCategory: {
                 type: String,
                 trim: true,
                 default: null,
             },
+
             finalWeightCategory: {
                 type: String,
                 trim: true,
                 default: null,
             },
+
             lotNumber: {
                 type: Number,
                 default: null,
                 min: 1,
             },
+
             weighInCompletedAt: {
-                type: Date
+                type: Date,
             },
+
             weighedBy: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Admin",
-                default: null
-            }
+                default: null,
+            },
         },
 
         opening: {
@@ -101,6 +128,7 @@ const competitionEntrySchema = new mongoose.Schema(
 
         snatchAttempts: {
             type: [attemptSchema],
+
             default: [
                 { attemptNo: 1 },
                 { attemptNo: 2 },
@@ -110,6 +138,7 @@ const competitionEntrySchema = new mongoose.Schema(
 
         cleanJerkAttempts: {
             type: [attemptSchema],
+
             default: [
                 { attemptNo: 1 },
                 { attemptNo: 2 },
@@ -141,6 +170,7 @@ const competitionEntrySchema = new mongoose.Schema(
 
         status: {
             type: String,
+
             enum: [
                 "PENDING",
                 "WEIGHED",
@@ -148,6 +178,7 @@ const competitionEntrySchema = new mongoose.Schema(
                 "COMPETING",
                 "COMPLETED",
             ],
+
             default: "PENDING",
         },
 

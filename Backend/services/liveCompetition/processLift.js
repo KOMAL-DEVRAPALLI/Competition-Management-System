@@ -23,6 +23,10 @@ const processLift = async ({
         );
     }
 
+    // -----------------------------------
+    // Find competition entry
+    // -----------------------------------
+
     const competitionEntry =
         await CompetitionEntry.findById(
             entryId
@@ -82,7 +86,24 @@ const processLift = async ({
 
     attempt.result = result;
 
+    // -----------------------------------
+    // Record actual completion time
+    //
+    // This represents when the official
+    // judged the attempt GOOD / NO_LIFT.
+    //
+    // Used later for competition
+    // calling-order calculations.
+    // -----------------------------------
+
+    attempt.completedAt =
+        new Date();
+
     await competitionEntry.save();
+
+    // -----------------------------------
+    // Logging
+    // -----------------------------------
 
     console.log(
         "===== PROCESS LIFT ====="
@@ -90,7 +111,9 @@ const processLift = async ({
 
     console.log(
         "Entry:",
-        competitionEntry._id.toString()
+        competitionEntry
+            ._id
+            .toString()
     );
 
     console.log(
@@ -111,6 +134,11 @@ const processLift = async ({
     console.log(
         "Result:",
         result
+    );
+
+    console.log(
+        "Completed At:",
+        attempt.completedAt
     );
 
     // -----------------------------------

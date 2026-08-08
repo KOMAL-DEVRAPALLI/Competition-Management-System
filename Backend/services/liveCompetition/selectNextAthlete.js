@@ -1,7 +1,7 @@
 import getCurrentAttempt from "./getCurrentAttempt.js";
 
 // -----------------------------------
-// Get attempt weight
+// Get current attempt weight
 // -----------------------------------
 
 const getAttemptWeight = (
@@ -13,6 +13,10 @@ const getAttemptWeight = (
         return Number.MAX_SAFE_INTEGER;
     }
 
+    // -----------------------------------
+    // Declared weight
+    // -----------------------------------
+
     if (
         attempt.declaredWeight != null &&
         attempt.declaredWeight > 0
@@ -21,6 +25,10 @@ const getAttemptWeight = (
             attempt.declaredWeight
         );
     }
+
+    // -----------------------------------
+    // Attempt 1 can use opening weight
+    // -----------------------------------
 
     const openingWeight =
         attempt.phase === "SNATCH"
@@ -37,28 +45,96 @@ const getAttemptWeight = (
 
 
 // -----------------------------------
-// Get declaration time
+// Get previous attempt
+//
+// Example:
+//
+// Current Attempt 1
+// → no previous attempt
+//
+// Current Attempt 2
+// → Attempt 1
+//
+// Current Attempt 3
+// → Attempt 2
 // -----------------------------------
 
-const getDeclarationTime = (
-    attempt
+const getPreviousAttempt = (
+    competitionEntry,
+    currentAttempt
 ) => {
 
     if (
-        !attempt ||
-        !attempt.declaredAt
+        !currentAttempt ||
+        currentAttempt.attemptNo <= 1
     ) {
+        return null;
+    }
+
+    const attempts =
+        currentAttempt.phase === "SNATCH"
+            ? competitionEntry.snatchAttempts
+            : competitionEntry.cleanJerkAttempts;
+
+    return (
+        attempts.find(
+            (attempt) =>
+                attempt.attemptNo ===
+                currentAttempt.attemptNo - 1
+        ) ?? null
+    );
+};
+
+
+// -----------------------------------
+// Get previous attempt completion time
+//
+// This is used only when:
+// - weight is equal
+// - attempt number is equal
+//
+// The athlete whose previous attempt
+// was completed earlier has priority.
+// -----------------------------------
+
+const getPreviousAttemptSequence = (
+    competitionEntry,
+    currentAttempt
+) => {
+
+    const previousAttempt =
+        getPreviousAttempt(
+            competitionEntry,
+            currentAttempt
+        );
+
+    // -----------------------------------
+    // No previous attempt
+    //
+    // This applies to Attempt 1.
+    // -----------------------------------
+
+    if (!previousAttempt) {
         return Number.MAX_SAFE_INTEGER;
     }
 
-    const time =
+    // -----------------------------------
+    // Previous attempt must have been
+    // completed.
+    // -----------------------------------
+
+    if (!previousAttempt.completedAt) {
+        return Number.MAX_SAFE_INTEGER;
+    }
+
+    const completedTime =
         new Date(
-            attempt.declaredAt
+            previousAttempt.completedAt
         ).getTime();
 
-    return Number.isNaN(time)
+    return Number.isNaN(completedTime)
         ? Number.MAX_SAFE_INTEGER
-        : time;
+        : completedTime;
 };
 
 
@@ -88,6 +164,10 @@ const selectNextAthlete = (
                         b.competitionEntry
                     );
 
+                // -----------------------------------
+                // 1. LOWEST WEIGHT
+                // -----------------------------------
+
                 const weightA =
                     getAttemptWeight(
                         a,
@@ -100,15 +180,76 @@ const selectNextAthlete = (
                         attemptB
                     );
 
-                const declarationA =
-                    getDeclarationTime(
+                if (
+                    weightA !== weightB
+                ) {
+
+                    return (
+                        weightA -
+                        weightB
+                    );
+                }
+
+
+                // -----------------------------------
+                // 2. LOWEST ATTEMPT NUMBER
+                // -----------------------------------
+
+                const attemptNoA =
+                    attemptA?.attemptNo ??
+                    Number.MAX_SAFE_INTEGER;
+
+                const attemptNoB =
+                    attemptB?.attemptNo ??
+                    Number.MAX_SAFE_INTEGER;
+
+                if (
+                    attemptNoA !==
+                    attemptNoB
+                ) {
+
+                    return (
+                        attemptNoA -
+                        attemptNoB
+                    );
+                }
+
+
+                // -----------------------------------
+                // 3. PREVIOUS ATTEMPT SEQUENCE
+                //
+                // Earlier previous attempt
+                // completion = earlier lifting
+                // sequence.
+                // -----------------------------------
+
+                const sequenceA =
+                    getPreviousAttemptSequence(
+                        a.competitionEntry,
                         attemptA
                     );
 
-                const declarationB =
-                    getDeclarationTime(
+                const sequenceB =
+                    getPreviousAttemptSequence(
+                        b.competitionEntry,
                         attemptB
                     );
+
+                if (
+                    sequenceA !==
+                    sequenceB
+                ) {
+
+                    return (
+                        sequenceA -
+                        sequenceB
+                    );
+                }
+
+
+                // -----------------------------------
+                // 4. LOWEST LOT NUMBER
+                // -----------------------------------
 
                 const lotA =
                     a.lotNumber ??
@@ -118,117 +259,6 @@ const selectNextAthlete = (
                     b.lotNumber ??
                     Number.MAX_SAFE_INTEGER;
 
-
-                // -----------------------------------
-                // DEBUG
-                // -----------------------------------
-
-                console.log(
-                    "===== ATHLETE ORDER DATA ====="
-                );
-
-                console.log(
-                    "ATHLETE A:",
-                    {
-                        name:
-                            a.name,
-
-                        entryId:
-                            a.entryId?.toString(),
-
-                        phase:
-                            attemptA?.phase,
-
-                        attempt:
-                            attemptA?.attemptNo,
-
-                        weight:
-                            weightA,
-
-                        declaredWeight:
-                            attemptA?.declaredWeight,
-
-                        declaredAt:
-                            attemptA?.declaredAt,
-
-                        declarationTime:
-                            declarationA,
-
-                        lot:
-                            lotA,
-                    }
-                );
-
-                console.log(
-                    "ATHLETE B:",
-                    {
-                        name:
-                            b.name,
-
-                        entryId:
-                            b.entryId?.toString(),
-
-                        phase:
-                            attemptB?.phase,
-
-                        attempt:
-                            attemptB?.attemptNo,
-
-                        weight:
-                            weightB,
-
-                        declaredWeight:
-                            attemptB?.declaredWeight,
-
-                        declaredAt:
-                            attemptB?.declaredAt,
-
-                        declarationTime:
-                            declarationB,
-
-                        lot:
-                            lotB,
-                    }
-                );
-
-
-                // -----------------------------------
-                // 1. LOWEST WEIGHT
-                // -----------------------------------
-
-                if (
-                    weightA !== weightB
-                ) {
-
-                    return (
-                        weightA -
-                        weightB
-                    );
-
-                }
-
-
-                // -----------------------------------
-                // 2. EARLIEST DECLARATION
-                // -----------------------------------
-
-                if (
-                    declarationA !==
-                    declarationB
-                ) {
-
-                    return (
-                        declarationA -
-                        declarationB
-                    );
-
-                }
-
-
-                // -----------------------------------
-                // 3. LOWEST LOT NUMBER
-                // -----------------------------------
-
                 if (
                     lotA !== lotB
                 ) {
@@ -237,12 +267,11 @@ const selectNextAthlete = (
                         lotA -
                         lotB
                     );
-
                 }
 
 
                 // -----------------------------------
-                // 4. STABLE FALLBACK
+                // 5. STABLE FALLBACK
                 // -----------------------------------
 
                 return (
@@ -253,13 +282,12 @@ const selectNextAthlete = (
                                 .toString()
                         )
                 );
-
             }
         );
 
 
     // -----------------------------------
-    // FINAL SELECTION DEBUG
+    // FINAL DEBUG
     // -----------------------------------
 
     console.log(
@@ -274,38 +302,50 @@ const selectNextAthlete = (
             selected.competitionEntry
         );
 
-    console.log(
-        {
-            name:
-                selected.name,
+    const selectedPreviousAttempt =
+        getPreviousAttempt(
+            selected.competitionEntry,
+            selectedAttempt
+        );
 
-            entryId:
-                selected.entryId?.toString(),
+    console.log({
+        name:
+            selected.name,
 
-            phase:
-                selectedAttempt?.phase,
+        entryId:
+            selected.entryId?.toString(),
 
-            attempt:
-                selectedAttempt?.attemptNo,
+        phase:
+            selectedAttempt?.phase,
 
-            weight:
-                getAttemptWeight(
-                    selected,
-                    selectedAttempt
-                ),
+        attempt:
+            selectedAttempt?.attemptNo,
 
-            declaredWeight:
+        weight:
+            getAttemptWeight(
+                selected,
                 selectedAttempt
-                    ?.declaredWeight,
+            ),
 
-            declaredAt:
-                selectedAttempt
-                    ?.declaredAt,
+        declaredWeight:
+            selectedAttempt
+                ?.declaredWeight,
 
-            lot:
-                selected.lotNumber,
-        }
-    );
+        previousAttempt:
+            selectedPreviousAttempt
+                ?.attemptNo ?? null,
+
+        previousAttemptResult:
+            selectedPreviousAttempt
+                ?.result ?? null,
+
+        previousAttemptCompletedAt:
+            selectedPreviousAttempt
+                ?.completedAt ?? null,
+
+        lot:
+            selected.lotNumber,
+    });
 
 
     return selected;
