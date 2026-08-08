@@ -10,8 +10,23 @@ const processLift = async ({
     result,
 }) => {
 
+    // -----------------------------------
+    // Validate result
+    // -----------------------------------
+
+    if (
+        result !== "GOOD" &&
+        result !== "NO_LIFT"
+    ) {
+        throw new Error(
+            "Invalid lift result."
+        );
+    }
+
     const competitionEntry =
-        await CompetitionEntry.findById(entryId);
+        await CompetitionEntry.findById(
+            entryId
+        );
 
     if (!competitionEntry) {
         throw new Error(
@@ -19,8 +34,14 @@ const processLift = async ({
         );
     }
 
+    // -----------------------------------
+    // Find the current attempt
+    // -----------------------------------
+
     const currentAttempt =
-        getCurrentAttempt(competitionEntry);
+        getCurrentAttempt(
+            competitionEntry
+        );
 
     if (currentAttempt.completed) {
         throw new Error(
@@ -28,36 +49,115 @@ const processLift = async ({
         );
     }
 
+    // -----------------------------------
+    // Select correct attempt array
+    // -----------------------------------
+
     const attempts =
         currentAttempt.phase === "SNATCH"
             ? competitionEntry.snatchAttempts
             : competitionEntry.cleanJerkAttempts;
 
-    const attempt = attempts.find(
-        (item) =>
-            item.attemptNo ===
-            currentAttempt.attemptNo
-    );
+    const attempt =
+        attempts.find(
+            (item) =>
+                item.attemptNo ===
+                currentAttempt.attemptNo
+        );
 
     if (!attempt) {
-        throw new Error("Attempt not found.");
+        throw new Error(
+            "Attempt not found."
+        );
     }
+
+    // -----------------------------------
+    // Result can only be recorded for
+    // a declared attempt
+    // -----------------------------------
+
+    if (
+        attempt.declaredWeight == null
+    ) {
+        throw new Error(
+            "Cannot record lift result before declaration."
+        );
+    }
+
+    // -----------------------------------
+    // Save official result
+    // -----------------------------------
 
     attempt.result = result;
 
     await competitionEntry.save();
 
-    await updateCompetitionResults(entryId);
+    console.log(
+        "===== PROCESS LIFT ====="
+    );
+
+    console.log(
+        "Entry:",
+        competitionEntry._id.toString()
+    );
+
+    console.log(
+        "Phase:",
+        currentAttempt.phase
+    );
+
+    console.log(
+        "Attempt:",
+        currentAttempt.attemptNo
+    );
+
+    console.log(
+        "Declared Weight:",
+        attempt.declaredWeight
+    );
+
+    console.log(
+        "Result:",
+        result
+    );
+
+    // -----------------------------------
+    // Update athlete results
+    // -----------------------------------
+
+    await updateCompetitionResults(
+        entryId
+    );
+
+    // -----------------------------------
+    // Advance competition
+    //
+    // advanceCompetition() determines
+    // whether:
+    //
+    // 1. The athlete returns for the
+    //    next declared attempt.
+    //
+    // 2. Another athlete goes next.
+    //
+    // 3. Platform remains empty waiting
+    //    for a declaration.
+    //
+    // 4. Phase changes to Clean & Jerk.
+    // -----------------------------------
 
     await advanceCompetition(
         competitionId,
-        gender
+        gender.toLowerCase()
     );
+
+    // -----------------------------------
+    // Return updated athlete
+    // -----------------------------------
 
     return await CompetitionEntry.findById(
         entryId
     );
-
 };
 
 export default processLift;

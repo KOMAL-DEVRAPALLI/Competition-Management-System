@@ -5,7 +5,8 @@ import selectNextAthlete from "./selectNextAthlete.js";
 
 const updateCurrentPlatformAthlete = async (
     competitionId,
-    gender
+    gender,
+    preferredEntryId = null
 ) => {
 
     gender = gender.toLowerCase();
@@ -21,11 +22,55 @@ const updateCurrentPlatformAthlete = async (
         );
     }
 
+    console.log(
+        "===== UPDATE CURRENT PLATFORM START ====="
+    );
+
+    console.log(
+        "Competition:",
+        competitionId.toString()
+    );
+
+    console.log(
+        "Gender:",
+        gender
+    );
+
+    console.log(
+        "Preferred Entry:",
+        preferredEntryId?.toString()
+    );
+
+    console.log(
+        "Current Entry BEFORE:",
+        session.currentEntryId?.toString()
+    );
+
+    console.log(
+        "Prepare Entry BEFORE:",
+        session.prepareEntryId?.toString()
+    );
+
+    console.log(
+        "Current Phase:",
+        session.currentPhase
+    );
+
     // ---------------------------------
     // Platform already occupied
-    // Do NOT replace current athlete
     // ---------------------------------
+
     if (session.currentEntryId) {
+
+        console.log(
+            "Platform already occupied."
+        );
+
+        console.log(
+            "Current Entry:",
+            session.currentEntryId.toString()
+        );
+
         return session;
     }
 
@@ -36,27 +81,81 @@ const updateCurrentPlatformAthlete = async (
         session.selectedWeightCategories
     );
 
-    const eligibleEntries = entries.filter((entry) => {
+    console.log(
+        "Total Entries:",
+        entries.length
+    );
 
-        const attempt = getCurrentAttempt(
-            entry.competitionEntry
-        );
+    // ---------------------------------
+    // Find all athletes whose current
+    // attempt is declared
+    // ---------------------------------
 
-        return (
-            !attempt.completed &&
-            attempt.phase === session.currentPhase &&
-            attempt.declaredWeight != null
-        );
+    const eligibleEntries =
+        entries.filter((entry) => {
 
-    });
+            const attempt =
+                getCurrentAttempt(
+                    entry.competitionEntry
+                );
+
+            const eligible =
+                !attempt.completed &&
+                attempt.phase ===
+                    session.currentPhase &&
+                attempt.declaredWeight != null;
+
+            if (eligible) {
+
+                console.log(
+                    "ELIGIBLE ATHLETE:",
+                    entry.entryId.toString()
+                );
+
+                console.log(
+                    "Name:",
+                    entry.name
+                );
+
+                console.log(
+                    "Phase:",
+                    attempt.phase
+                );
+
+                console.log(
+                    "Attempt:",
+                    attempt.attemptNo
+                );
+
+                console.log(
+                    "Declared Weight:",
+                    attempt.declaredWeight
+                );
+
+                console.log(
+                    "Declared At:",
+                    attempt.declaredAt
+                );
+
+            }
+
+            return eligible;
+
+        });
+
+    console.log(
+        "Eligible Entries:",
+        eligibleEntries.length
+    );
 
     // ---------------------------------
     // Nobody ready
     // ---------------------------------
+
     if (!eligibleEntries.length) {
 
         console.log(
-            "No athletes are ready for the platform."
+            "NO ATHLETE READY FOR PLATFORM."
         );
 
         session.currentEntryId = null;
@@ -64,32 +163,138 @@ const updateCurrentPlatformAthlete = async (
         await session.save();
 
         return session;
+    }
+
+    // ---------------------------------
+    // Verify preferred declared entry
+    // ---------------------------------
+
+    if (preferredEntryId) {
+
+        const preferredEntry =
+            eligibleEntries.find(
+                (entry) =>
+                    entry.entryId.toString() ===
+                    preferredEntryId.toString()
+            );
+
+        if (preferredEntry) {
+
+            console.log(
+                "PREFERRED ENTRY IS ELIGIBLE:"
+            );
+
+            console.log(
+                "Entry:",
+                preferredEntry.entryId.toString()
+            );
+
+            console.log(
+                "Name:",
+                preferredEntry.name
+            );
+
+            const preferredAttempt =
+                getCurrentAttempt(
+                    preferredEntry.competitionEntry
+                );
+
+            console.log(
+                "Attempt:",
+                preferredAttempt.attemptNo
+            );
+
+            console.log(
+                "Declared Weight:",
+                preferredAttempt.declaredWeight
+            );
+
+        } else {
+
+            console.log(
+                "PREFERRED ENTRY IS NOT ELIGIBLE."
+            );
+
+        }
 
     }
 
+    // ---------------------------------
+    // Select according to competition
+    // ordering
+    // ---------------------------------
+
     const nextAthlete =
         selectNextAthlete(
-            eligibleEntries,
-            null
+            eligibleEntries
         );
 
     if (!nextAthlete) {
 
-        session.currentEntryId = null;
-
-        await session.save();
-
-        return session;
+        throw new Error(
+            "Unable to determine next athlete."
+        );
 
     }
+
+    const selectedAttempt =
+        getCurrentAttempt(
+            nextAthlete.competitionEntry
+        );
+
+    console.log(
+        "===== SELECTED PLATFORM ATHLETE ====="
+    );
+
+    console.log(
+        "Entry:",
+        nextAthlete.entryId.toString()
+    );
+
+    console.log(
+        "Name:",
+        nextAthlete.name
+    );
+
+    console.log(
+        "Phase:",
+        selectedAttempt.phase
+    );
+
+    console.log(
+        "Attempt:",
+        selectedAttempt.attemptNo
+    );
+
+    console.log(
+        "Declared Weight:",
+        selectedAttempt.declaredWeight
+    );
+
+    // ---------------------------------
+    // Put selected athlete on platform
+    // ---------------------------------
 
     session.currentEntryId =
         nextAthlete.entryId;
 
     await session.save();
 
-    return session;
+    console.log(
+        "===== UPDATE CURRENT PLATFORM END ====="
+    );
 
+    console.log(
+        "Current Entry AFTER:",
+        session.currentEntryId?.toString()
+    );
+
+    console.log(
+        "Prepare Entry AFTER:",
+        session.prepareEntryId?.toString()
+    );
+
+    return session;
 };
 
 export default updateCurrentPlatformAthlete;

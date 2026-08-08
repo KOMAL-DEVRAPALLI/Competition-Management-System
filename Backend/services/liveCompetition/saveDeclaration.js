@@ -8,12 +8,19 @@ const saveDeclaration = async ({
     declaredWeight,
 }) => {
 
-    if (declaredWeight == null || declaredWeight <= 0) {
-        throw new Error("Invalid declared weight.");
+    if (
+        declaredWeight == null ||
+        declaredWeight <= 0
+    ) {
+        throw new Error(
+            "Invalid declared weight."
+        );
     }
 
     const competitionEntry =
-        await CompetitionEntry.findById(entryId);
+        await CompetitionEntry.findById(
+            entryId
+        );
 
     if (!competitionEntry) {
         throw new Error(
@@ -22,7 +29,9 @@ const saveDeclaration = async ({
     }
 
     const currentAttempt =
-        getCurrentAttempt(competitionEntry);
+        getCurrentAttempt(
+            competitionEntry
+        );
 
     if (currentAttempt.completed) {
         throw new Error(
@@ -42,8 +51,14 @@ const saveDeclaration = async ({
     );
 
     if (!attempt) {
-        throw new Error("Attempt not found.");
+        throw new Error(
+            "Attempt not found."
+        );
     }
+
+    // -----------------------------------
+    // Save declaration
+    // -----------------------------------
 
     attempt.declaredWeight =
         declaredWeight;
@@ -58,7 +73,8 @@ const saveDeclaration = async ({
     );
 
     const gender =
-        competitionEntry.athleteId?.personalInfo
+        competitionEntry.athleteId
+            ?.personalInfo
             ?.gender;
 
     if (!gender) {
@@ -67,46 +83,121 @@ const saveDeclaration = async ({
         );
     }
 
+    const normalizedGender =
+        gender.toLowerCase();
+
     console.log(
         "===== SAVE DECLARATION ====="
     );
 
     console.log(
         "Competition ID:",
-        competitionEntry.competitionId.toString()
+        competitionEntry
+            .competitionId
+            .toString()
+    );
+
+    console.log(
+        "Entry ID:",
+        competitionEntry
+            ._id
+            .toString()
     );
 
     console.log(
         "Gender:",
-        gender
+        normalizedGender
     );
 
-    // Remove athlete from Prepare Next Attempt
-    await LiveCompetition.findOneAndUpdate(
-        {
-            competitionId:
-                competitionEntry.competitionId,
-            gender: gender.toLowerCase(),
-            prepareEntryId:
-                competitionEntry._id,
-        },
-        {
-            $set: {
-                prepareEntryId: null,
-            },
-        }
+    console.log(
+        "Phase:",
+        currentAttempt.phase
     );
 
-    // If platform is empty, call next ready athlete
+    console.log(
+        "Attempt:",
+        currentAttempt.attemptNo
+    );
+
+    console.log(
+        "Declared Weight:",
+        declaredWeight
+    );
+
+    // -----------------------------------
+    // Try to put a ready athlete on the
+    // platform.
+    //
+    // If the platform is occupied,
+    // updateCurrentPlatformAthlete()
+    // will leave the current athlete
+    // unchanged.
+    // -----------------------------------
+
     await updateCurrentPlatformAthlete(
         competitionEntry.competitionId,
-        gender.toLowerCase()
+        normalizedGender,
+        competitionEntry._id
     );
+
+    // -----------------------------------
+    // Check the actual platform state
+    // after attempting to update it.
+    // -----------------------------------
+
+    const session =
+        await LiveCompetition.findOne({
+            competitionId:
+                competitionEntry
+                    .competitionId,
+
+            gender:
+                normalizedGender,
+        });
+
+    if (!session) {
+        throw new Error(
+            "Live competition session not found."
+        );
+    }
+
+    // -----------------------------------
+    // Only remove this athlete from
+    // Prepare if this athlete actually
+    // became the current platform athlete.
+    // -----------------------------------
+
+    if (
+        session.currentEntryId &&
+        session.currentEntryId
+            .toString() ===
+            competitionEntry._id
+                .toString()
+    ) {
+
+        session.prepareEntryId = null;
+
+        await session.save();
+
+        console.log(
+            "Athlete moved from Prepare to Platform."
+        );
+
+    } else {
+
+        console.log(
+            "Platform occupied."
+        );
+
+        console.log(
+            "Athlete remains available for next turn."
+        );
+
+    }
 
     return await CompetitionEntry.findById(
         entryId
     );
-
 };
 
 export default saveDeclaration;

@@ -19,6 +19,25 @@ const getLiveCompetition = async (
         );
     }
 
+    console.log(
+        "===== GET LIVE COMPETITION ====="
+    );
+
+    console.log(
+        "Current Entry ID:",
+        session.currentEntryId?.toString()
+    );
+
+    console.log(
+        "Prepare Entry ID:",
+        session.prepareEntryId?.toString()
+    );
+
+    console.log(
+        "Current Phase:",
+        session.currentPhase
+    );
+
     const entries = await buildWorkingSheetData(
         competitionId,
         gender,
@@ -32,55 +51,197 @@ const getLiveCompetition = async (
         );
     }
 
-    const currentEntry = entries.find(
-        (entry) =>
-            entry.entryId.toString() ===
-            session.currentEntryId?.toString()
-    );
+    // -----------------------------------
+    // Find CURRENT platform athlete
+    // -----------------------------------
 
-    const prepareEntry = entries.find(
-        (entry) =>
-            entry.entryId.toString() ===
-            session.prepareEntryId?.toString()
-    );
-
-    const eligibleEntries = entries.filter((entry) => {
-
-        const attempt = getCurrentAttempt(
-            entry.competitionEntry
-        );
-
-        return (
-            !attempt.completed &&
-            attempt.phase === session.currentPhase &&
-            attempt.declaredWeight != null &&
-            entry.entryId.toString() !==
-                session.currentEntryId?.toString()
-        );
-
-    });
-
-    const nextEntry = selectNextAthlete(
-        eligibleEntries,
+    const currentEntry =
         session.currentEntryId
+            ? entries.find(
+                  (entry) =>
+                      entry.entryId
+                          .toString() ===
+                      session.currentEntryId
+                          .toString()
+              )
+            : null;
+
+    // -----------------------------------
+    // Find PREPARE athlete
+    // -----------------------------------
+
+    const prepareEntry =
+        session.prepareEntryId
+            ? entries.find(
+                  (entry) =>
+                      entry.entryId
+                          .toString() ===
+                      session.prepareEntryId
+                          .toString()
+              )
+            : null;
+
+    // -----------------------------------
+    // Log current athlete state
+    // -----------------------------------
+
+    if (currentEntry) {
+
+        const currentAttempt =
+            getCurrentAttempt(
+                currentEntry.competitionEntry
+            );
+
+        console.log(
+            "CURRENT ATHLETE FOUND:"
+        );
+
+        console.log(
+            "Entry:",
+            currentEntry.entryId.toString()
+        );
+
+        console.log(
+            "Name:",
+            currentEntry.name
+        );
+
+        console.log(
+            "Phase:",
+            currentAttempt.phase
+        );
+
+        console.log(
+            "Attempt:",
+            currentAttempt.attemptNo
+        );
+
+        console.log(
+            "Declared Weight:",
+            currentAttempt.declaredWeight
+        );
+
+    } else {
+
+        console.log(
+            "NO CURRENT ATHLETE FOUND."
+        );
+
+    }
+
+    // -----------------------------------
+    // Find athletes eligible to become
+    // NEXT athlete.
+    //
+    // Current athlete is excluded here
+    // because they are already on platform.
+    // -----------------------------------
+
+    const eligibleEntries =
+        entries.filter((entry) => {
+
+            const attempt =
+                getCurrentAttempt(
+                    entry.competitionEntry
+                );
+
+            const isCurrent =
+                session.currentEntryId &&
+                entry.entryId.toString() ===
+                    session.currentEntryId.toString();
+
+            return (
+                !isCurrent &&
+                !attempt.completed &&
+                attempt.phase ===
+                    session.currentPhase &&
+                attempt.declaredWeight != null
+            );
+
+        });
+
+    console.log(
+        "Eligible Next Athletes:",
+        eligibleEntries.length
     );
+
+    // -----------------------------------
+    // Select NEXT athlete
+    // -----------------------------------
+
+    const nextEntry =
+        selectNextAthlete(
+            eligibleEntries
+        );
+
+    if (nextEntry) {
+
+        const nextAttempt =
+            getCurrentAttempt(
+                nextEntry.competitionEntry
+            );
+
+        console.log(
+            "NEXT ATHLETE:"
+        );
+
+        console.log(
+            "Entry:",
+            nextEntry.entryId.toString()
+        );
+
+        console.log(
+            "Name:",
+            nextEntry.name
+        );
+
+        console.log(
+            "Phase:",
+            nextAttempt.phase
+        );
+
+        console.log(
+            "Attempt:",
+            nextAttempt.attemptNo
+        );
+
+        console.log(
+            "Declared Weight:",
+            nextAttempt.declaredWeight
+        );
+
+    } else {
+
+        console.log(
+            "NO NEXT ATHLETE."
+        );
+
+    }
+
+    // -----------------------------------
+    // Athlete mapper
+    // -----------------------------------
 
     const mapAthlete = (
         athlete,
         status = "WAITING"
     ) => {
 
-        const attempt = getCurrentAttempt(
-            athlete.competitionEntry
-        );
+        const attempt =
+            getCurrentAttempt(
+                athlete.competitionEntry
+            );
 
         return {
 
-            entryId: athlete.entryId,
+            entryId:
+                athlete.entryId,
 
-            athleteId: athlete.athleteId,
+            athleteId:
+                athlete.athleteId,
 
-            name: athlete.name,
+            name:
+                athlete.name,
 
             registrationNo:
                 athlete.registrationNo,
@@ -129,69 +290,105 @@ const getLiveCompetition = async (
 
     };
 
-    const competitionResults = entries.map(
-        (entry) => {
+    // -----------------------------------
+    // Competition results
+    // -----------------------------------
 
-            const attempt =
-                getCurrentAttempt(
-                    entry.competitionEntry
+    const competitionResults =
+        entries.map(
+            (entry) => {
+
+                const attempt =
+                    getCurrentAttempt(
+                        entry.competitionEntry
+                    );
+
+                let status =
+                    "WAITING";
+
+                if (
+                    attempt.completed
+                ) {
+
+                    status =
+                        "COMPLETED";
+
+                } else if (
+                    session.currentEntryId &&
+                    entry.entryId.toString() ===
+                        session.currentEntryId
+                            .toString()
+                ) {
+
+                    status =
+                        "ON_PLATFORM";
+
+                } else if (
+                    nextEntry &&
+                    entry.entryId.toString() ===
+                        nextEntry.entryId
+                            .toString()
+                ) {
+
+                    status =
+                        "NEXT";
+
+                }
+
+                return mapAthlete(
+                    entry,
+                    status
                 );
 
-            let status = "WAITING";
-
-            if (attempt.completed) {
-
-                status = "COMPLETED";
-
-            } else if (
-                entry.entryId.toString() ===
-                session.currentEntryId?.toString()
-            ) {
-
-                status = "ON_PLATFORM";
-
-            } else if (
-                nextEntry &&
-                entry.entryId.toString() ===
-                nextEntry.entryId.toString()
-            ) {
-
-                status = "NEXT";
-
             }
-
-            return mapAthlete(
-                entry,
-                status
-            );
-
-        }
-    );
-
-    const declarationQueue = entries
-        .filter((entry) => {
-
-            const attempt = getCurrentAttempt(
-                entry.competitionEntry
-            );
-
-            return (
-                !attempt.completed &&
-                attempt.phase === session.currentPhase &&
-                entry.entryId.toString() !==
-                    session.currentEntryId?.toString() &&
-                entry.entryId.toString() !==
-                    session.prepareEntryId?.toString()
-            );
-
-        })
-        .map((entry) =>
-            mapAthlete(entry)
         );
 
-    return {
+    // -----------------------------------
+    // Declaration queue
+    // -----------------------------------
 
-        status: session.status,
+    const declarationQueue =
+        entries
+            .filter((entry) => {
+
+                const attempt =
+                    getCurrentAttempt(
+                        entry.competitionEntry
+                    );
+
+                const isCurrent =
+                    session.currentEntryId &&
+                    entry.entryId.toString() ===
+                        session.currentEntryId
+                            .toString();
+
+                const isPrepare =
+                    session.prepareEntryId &&
+                    entry.entryId.toString() ===
+                        session.prepareEntryId
+                            .toString();
+
+                return (
+                    !attempt.completed &&
+                    attempt.phase ===
+                        session.currentPhase &&
+                    !isCurrent &&
+                    !isPrepare
+                );
+
+            })
+            .map((entry) =>
+                mapAthlete(entry)
+            );
+
+    // -----------------------------------
+    // Final response
+    // -----------------------------------
+
+    const response = {
+
+        status:
+            session.status,
 
         sessionName:
             session.sessionName,
@@ -235,6 +432,38 @@ const getLiveCompetition = async (
 
     };
 
+    console.log(
+        "FINAL CURRENT ATHLETE:",
+        response.currentAthlete
+            ? {
+                  entryId:
+                      response.currentAthlete
+                          .entryId
+                          .toString(),
+
+                  name:
+                      response.currentAthlete
+                          .name,
+
+                  phase:
+                      response.currentAthlete
+                          .currentAttempt
+                          ?.phase,
+
+                  attempt:
+                      response.currentAthlete
+                          .currentAttempt
+                          ?.attemptNo,
+
+                  declaredWeight:
+                      response.currentAthlete
+                          .currentAttempt
+                          ?.declaredWeight,
+              }
+            : null
+    );
+
+    return response;
 };
 
 export default getLiveCompetition;
