@@ -39,6 +39,10 @@ const getLiveCompetition = async (
         session.currentPhase
     );
 
+    // -----------------------------------
+    // Load competition entries
+    // -----------------------------------
+
     const entries =
         await buildWorkingSheetData(
             competitionId,
@@ -69,7 +73,10 @@ const getLiveCompetition = async (
         attempt
     ) => {
 
-        if (!attempt || attempt.completed) {
+        if (
+            !attempt ||
+            attempt.completed
+        ) {
             return false;
         }
 
@@ -134,6 +141,7 @@ const getLiveCompetition = async (
 
     // -----------------------------------
     // Find last completed attempt
+    //
     // ONLY for display when platform
     // is temporarily empty.
     // -----------------------------------
@@ -337,8 +345,8 @@ const getLiveCompetition = async (
             "Declared Weight:",
             currentAttempt.declaredWeight
         );
-    }
-    else {
+
+    } else {
 
         console.log(
             "NO CURRENT ATHLETE FOUND."
@@ -494,8 +502,7 @@ const getLiveCompetition = async (
             nextEntry.openingCleanJerk
         );
 
-    }
-    else {
+    } else {
 
         console.log(
             "NO NEXT ATHLETE."
@@ -558,7 +565,7 @@ const getLiveCompetition = async (
         );
 
     // -----------------------------------
-    // Declaration queue
+    // DECLARATION QUEUE
     //
     // Queue contains athletes in the
     // current phase who still need
@@ -567,6 +574,13 @@ const getLiveCompetition = async (
     // Attempt 1 is already known from
     // opening weight, so it does not
     // need to wait for declaration.
+    //
+    // Attempt 2 / 3 appear ONLY when
+    // declaredWeight is missing.
+    //
+    // Current and prepare athletes
+    // are excluded because they have
+    // dedicated panels.
     // -----------------------------------
 
     const declarationQueue =
@@ -594,12 +608,30 @@ const getLiveCompetition = async (
                             .toString();
 
                     return (
+
+                        // Athlete must still be active
                         !attempt.completed &&
+
+                        // Must be in current phase
                         attempt.phase ===
                             session.currentPhase &&
+
+                        // Only S2/S3 or CJ2/CJ3
                         attempt.attemptNo > 1 &&
+
+                        // Declaration must NOT exist
+                        (
+                            attempt.declaredWeight ==
+                                null ||
+                            attempt.declaredWeight <= 0
+                        ) &&
+
+                        // Not current athlete
                         !isCurrent &&
+
+                        // Not prepare athlete
                         !isPrepare
+
                     );
                 }
             )
@@ -607,6 +639,29 @@ const getLiveCompetition = async (
                 (entry) =>
                     mapAthlete(entry)
             );
+
+    console.log(
+        "Declaration Queue:",
+        declarationQueue.map(
+            (athlete) => ({
+                entryId:
+                    athlete.entryId?.toString(),
+
+                name:
+                    athlete.name,
+
+                phase:
+                    athlete.currentAttempt?.phase,
+
+                attempt:
+                    athlete.currentAttempt?.attemptNo,
+
+                declaredWeight:
+                    athlete.currentAttempt
+                        ?.declaredWeight,
+            })
+        )
+    );
 
     // -----------------------------------
     // Final response
@@ -659,6 +714,10 @@ const getLiveCompetition = async (
         totalAthletes:
             competitionResults.length,
     };
+
+    // -----------------------------------
+    // Final debugging
+    // -----------------------------------
 
     console.log(
         "FINAL CURRENT ATHLETE:",
