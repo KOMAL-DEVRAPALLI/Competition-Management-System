@@ -56,8 +56,6 @@
 
     min-width: 1150px;
 
-    color: white;
-
 }
 
 
@@ -119,7 +117,7 @@
 
 
 /* =====================================
-   FIRST COLUMN - LOT
+   LOT NUMBER
 ===================================== */
 
 .scoreboard-table tbody tr td:first-child {
@@ -148,8 +146,7 @@
 }
 
 
-/* Ensure <strong> inside name
-   also follows row color */
+/* Make <strong> follow row text */
 
 .scoreboard-table tbody tr td:nth-child(2) strong {
 
@@ -159,7 +156,7 @@
 
 
 /* =====================================
-   HOVER ROW
+   NORMAL ROW HOVER
 ===================================== */
 
 .scoreboard-table tbody tr:hover td {
@@ -170,36 +167,14 @@
 
 }
 
-
-/* Name becomes black on hover */
-
 .scoreboard-table tbody tr:hover td:nth-child(2),
-
 .scoreboard-table tbody tr:hover td:nth-child(2) strong {
 
     color: black;
 
 }
 
-
-/* Lot becomes black on hover */
-
 .scoreboard-table tbody tr:hover td:first-child {
-
-    color: black;
-
-}
-
-
-/* Best results become black on hover */
-
-.scoreboard-table tbody tr:hover td:nth-child(9),
-
-.scoreboard-table tbody tr:hover td:nth-child(10),
-
-.scoreboard-table tbody tr:hover td:nth-child(11),
-
-.scoreboard-table tbody tr:hover td:nth-child(12) {
 
     color: black;
 
@@ -268,13 +243,11 @@
 
 
 /* =====================================
-   BEST LIFTS
+   BEST LIFTS / RESULTS
 ===================================== */
 
 .scoreboard-table td:nth-child(9),
-
 .scoreboard-table td:nth-child(10),
-
 .scoreboard-table td:nth-child(11) {
 
     font-weight: 700;
@@ -286,22 +259,27 @@
 
 /* =====================================
    CURRENT ATHLETE
+   YELLOW HIGHLIGHT
 ===================================== */
 
 .scoreboard-current-row td {
 
-    background: #dcfce7;
+    background: #fef08a;
 
-    color: #166534;
+    color: #111827;
 
     font-weight: 700;
 
 }
 
 
+/* Yellow left indicator */
+
 .scoreboard-current-row td:first-child {
 
-    border-left: 6px solid #16a34a;
+    border-left: 6px solid #eab308;
+
+    color: #111827;
 
 }
 
@@ -309,10 +287,21 @@
 /* Current athlete name */
 
 .scoreboard-current-row td:nth-child(2),
-
 .scoreboard-current-row td:nth-child(2) strong {
 
-    color: #166534;
+    color: #111827;
+
+}
+
+
+/* Current athlete result columns */
+
+.scoreboard-current-row td:nth-child(9),
+.scoreboard-current-row td:nth-child(10),
+.scoreboard-current-row td:nth-child(11),
+.scoreboard-current-row td:nth-child(12) {
+
+    color: #111827;
 
 }
 
@@ -327,9 +316,7 @@
 
 }
 
-
 .scoreboard-current-row:hover td:nth-child(2),
-
 .scoreboard-current-row:hover td:nth-child(2) strong {
 
     color: black;
@@ -339,29 +326,49 @@
 
 /* =====================================
    NEXT ATHLETE
+   LIGHT PINK HIGHLIGHT
 ===================================== */
 
 .scoreboard-next-row td {
 
-    background: #dbeafe;
+    background: #fce7f3;
 
-    color: #1e3a8a;
+    color: #111827;
+
+    font-weight: 600;
 
 }
 
+
+/* Pink left indicator */
 
 .scoreboard-next-row td:first-child {
 
-    border-left: 6px solid #2563eb;
+    border-left: 6px solid #ec4899;
+
+    color: #111827;
 
 }
 
 
-.scoreboard-next-row td:nth-child(2),
+/* Next athlete name */
 
+.scoreboard-next-row td:nth-child(2),
 .scoreboard-next-row td:nth-child(2) strong {
 
-    color: #1e3a8a;
+    color: #111827;
+
+}
+
+
+/* Next athlete result columns */
+
+.scoreboard-next-row td:nth-child(9),
+.scoreboard-next-row td:nth-child(10),
+.scoreboard-next-row td:nth-child(11),
+.scoreboard-next-row td:nth-child(12) {
+
+    color: #111827;
 
 }
 
@@ -376,9 +383,7 @@
 
 }
 
-
 .scoreboard-next-row:hover td:nth-child(2),
-
 .scoreboard-next-row:hover td:nth-child(2) strong {
 
     color: black;
@@ -409,9 +414,7 @@
 
 }
 
-
 .scoreboard-completed-row:hover td:nth-child(2),
-
 .scoreboard-completed-row:hover td:nth-child(2) strong {
 
     color: black;
