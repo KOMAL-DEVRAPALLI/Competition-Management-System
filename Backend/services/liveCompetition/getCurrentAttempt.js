@@ -1,32 +1,12 @@
 const getCurrentAttempt = (competitionEntry) => {
 
-    const findReadyAttempt = (attempts, phase) => {
-
-        for (const attempt of attempts) {
-
-            if (
-                attempt.result === "PENDING" &&
-                attempt.declaredWeight != null
-            ) {
-
-                return {
-                    completed: false,
-                    phase,
-                    attemptNo: attempt.attemptNo,
-                    declaredWeight: attempt.declaredWeight,
-                    declaredAt: attempt.declaredAt,
-                    result: attempt.result,
-                };
-
-            }
-
-        }
-
-        return null;
-
-    };
-
-    const findPendingAttempt = (attempts, phase) => {
+    // -----------------------------------
+    // Find the first incomplete attempt
+    // -----------------------------------
+    const findFirstIncompleteAttempt = (
+        attempts,
+        phase
+    ) => {
 
         for (const attempt of attempts) {
 
@@ -36,8 +16,10 @@ const getCurrentAttempt = (competitionEntry) => {
                     completed: false,
                     phase,
                     attemptNo: attempt.attemptNo,
-                    declaredWeight: attempt.declaredWeight,
-                    declaredAt: attempt.declaredAt,
+                    declaredWeight:
+                        attempt.declaredWeight,
+                    declaredAt:
+                        attempt.declaredAt,
                     result: attempt.result,
                 };
 
@@ -46,36 +28,47 @@ const getCurrentAttempt = (competitionEntry) => {
         }
 
         return null;
-
     };
 
-    let attempt = findReadyAttempt(
-        competitionEntry.snatchAttempts,
-        "SNATCH"
-    );
+    // -----------------------------------
+    // SNATCH
+    //
+    // Snatch always has priority.
+    // The athlete cannot move to
+    // Clean & Jerk while any Snatch
+    // attempt is still incomplete.
+    // -----------------------------------
 
-    if (attempt) return attempt;
+    let attempt =
+        findFirstIncompleteAttempt(
+            competitionEntry.snatchAttempts,
+            "SNATCH"
+        );
 
-    attempt = findReadyAttempt(
-        competitionEntry.cleanJerkAttempts,
-        "CLEAN_JERK"
-    );
+    if (attempt) {
+        return attempt;
+    }
 
-    if (attempt) return attempt;
+    // -----------------------------------
+    // CLEAN & JERK
+    //
+    // Reached only after all Snatch
+    // attempts are completed.
+    // -----------------------------------
 
-    attempt = findPendingAttempt(
-        competitionEntry.snatchAttempts,
-        "SNATCH"
-    );
+    attempt =
+        findFirstIncompleteAttempt(
+            competitionEntry.cleanJerkAttempts,
+            "CLEAN_JERK"
+        );
 
-    if (attempt) return attempt;
+    if (attempt) {
+        return attempt;
+    }
 
-    attempt = findPendingAttempt(
-        competitionEntry.cleanJerkAttempts,
-        "CLEAN_JERK"
-    );
-
-    if (attempt) return attempt;
+    // -----------------------------------
+    // COMPETITION COMPLETED
+    // -----------------------------------
 
     return {
         completed: true,
@@ -85,7 +78,6 @@ const getCurrentAttempt = (competitionEntry) => {
         declaredAt: null,
         result: null,
     };
-
 };
 
 export default getCurrentAttempt;
