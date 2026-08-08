@@ -8,10 +8,11 @@ const getLiveCompetition = async (
     gender
 ) => {
 
-    const session = await LiveCompetition.findOne({
-        competitionId,
-        gender,
-    });
+    const session =
+        await LiveCompetition.findOne({
+            competitionId,
+            gender,
+        });
 
     if (!session) {
         throw new Error(
@@ -38,18 +39,68 @@ const getLiveCompetition = async (
         session.currentPhase
     );
 
-    const entries = await buildWorkingSheetData(
-        competitionId,
-        gender,
-        true,
-        session.selectedWeightCategories
-    );
+    const entries =
+        await buildWorkingSheetData(
+            competitionId,
+            gender,
+            true,
+            session.selectedWeightCategories
+        );
 
     if (!entries.length) {
         throw new Error(
             "No athletes found."
         );
     }
+
+    // -----------------------------------
+    // Determine whether an attempt is
+    // ready to be lifted.
+    //
+    // Attempt 1:
+    // Opening weight is already known.
+    //
+    // Attempt 2 / 3:
+    // A new declaration is required.
+    // -----------------------------------
+
+    const isAttemptReady = (
+        entry,
+        attempt
+    ) => {
+
+        if (!attempt || attempt.completed) {
+            return false;
+        }
+
+        // -----------------------------------
+        // Attempt 1 uses opening weight
+        // -----------------------------------
+
+        if (
+            attempt.attemptNo === 1
+        ) {
+
+            const openingWeight =
+                attempt.phase === "SNATCH"
+                    ? entry.openingSnatch
+                    : entry.openingCleanJerk;
+
+            return (
+                openingWeight != null &&
+                openingWeight > 0
+            );
+        }
+
+        // -----------------------------------
+        // Attempt 2 / 3 require declaration
+        // -----------------------------------
+
+        return (
+            attempt.declaredWeight != null &&
+            attempt.declaredWeight > 0
+        );
+    };
 
     // -----------------------------------
     // CURRENT PLATFORM ATHLETE
@@ -82,12 +133,9 @@ const getLiveCompetition = async (
             : null;
 
     // -----------------------------------
-    // Find the last completed attempt
-    // for the athlete who just lifted.
-    //
-    // This is used ONLY for display
-    // while the platform is temporarily
-    // empty waiting for declaration.
+    // Find last completed attempt
+    // ONLY for display when platform
+    // is temporarily empty.
     // -----------------------------------
 
     const findLastCompletedAttempt = (
@@ -115,21 +163,27 @@ const getLiveCompetition = async (
                 );
 
         const allCompletedAttempts = [
+
             ...completedSnatches.map(
                 (attempt) => ({
-                    ...attempt.toObject?.() ??
-                        attempt,
+                    ...(
+                        attempt.toObject?.() ??
+                        attempt
+                    ),
                     phase: "SNATCH",
                 })
             ),
 
             ...completedCleanJerks.map(
                 (attempt) => ({
-                    ...attempt.toObject?.() ??
-                        attempt,
+                    ...(
+                        attempt.toObject?.() ??
+                        attempt
+                    ),
                     phase: "CLEAN_JERK",
                 })
             ),
+
         ];
 
         if (
@@ -138,9 +192,6 @@ const getLiveCompetition = async (
             return null;
         }
 
-        // Attempts are sequential, so the
-        // highest completed phase/attempt
-        // represents the latest completed lift.
         const phaseOrder = {
             SNATCH: 1,
             CLEAN_JERK: 2,
@@ -153,6 +204,7 @@ const getLiveCompetition = async (
                     phaseOrder[a.phase] !==
                     phaseOrder[b.phase]
                 ) {
+
                     return (
                         phaseOrder[a.phase] -
                         phaseOrder[b.phase]
@@ -163,7 +215,6 @@ const getLiveCompetition = async (
                     a.attemptNo -
                     b.attemptNo
                 );
-
             }
         );
 
@@ -172,7 +223,6 @@ const getLiveCompetition = async (
                 allCompletedAttempts.length - 1
             ] ?? null
         );
-
     };
 
     // -----------------------------------
@@ -246,7 +296,6 @@ const getLiveCompetition = async (
             status,
 
         };
-
     };
 
     // -----------------------------------
@@ -288,20 +337,16 @@ const getLiveCompetition = async (
             "Declared Weight:",
             currentAttempt.declaredWeight
         );
-
-    } else {
+    }
+    else {
 
         console.log(
             "NO CURRENT ATHLETE FOUND."
         );
-
     }
 
     // -----------------------------------
     // LAST COMPLETED LIFT
-    //
-    // Only create this when there is
-    // no athlete currently on platform.
     // -----------------------------------
 
     let lastLiftAthlete = null;
@@ -326,10 +371,12 @@ const getLiveCompetition = async (
                         completed: true,
 
                         phase:
-                            lastCompletedAttempt.phase,
+                            lastCompletedAttempt
+                                .phase,
 
                         attemptNo:
-                            lastCompletedAttempt.attemptNo,
+                            lastCompletedAttempt
+                                .attemptNo,
 
                         declaredWeight:
                             lastCompletedAttempt
@@ -342,76 +389,50 @@ const getLiveCompetition = async (
                         result:
                             lastCompletedAttempt
                                 .result,
-
                     }
                 );
-
-            console.log(
-                "===== LAST COMPLETED LIFT ====="
-            );
-
-            console.log(
-                "Entry:",
-                prepareEntry.entryId.toString()
-            );
-
-            console.log(
-                "Name:",
-                prepareEntry.name
-            );
-
-            console.log(
-                "Phase:",
-                lastCompletedAttempt.phase
-            );
-
-            console.log(
-                "Attempt:",
-                lastCompletedAttempt.attemptNo
-            );
-
-            console.log(
-                "Result:",
-                lastCompletedAttempt.result
-            );
-
-            console.log(
-                "Weight:",
-                lastCompletedAttempt.declaredWeight
-            );
-
         }
-
     }
 
     // -----------------------------------
-    // Find athletes eligible to become
-    // NEXT athlete
+    // FIND NEXT ATHLETE
+    //
+    // IMPORTANT:
+    //
+    // Attempt 1 can be ready from
+    // openingSnatch/openingCleanJerk.
+    //
+    // Attempt 2 / 3 need declaration.
     // -----------------------------------
 
     const eligibleEntries =
-        entries.filter((entry) => {
+        entries.filter(
+            (entry) => {
 
-            const attempt =
-                getCurrentAttempt(
-                    entry.competitionEntry
-                );
+                const attempt =
+                    getCurrentAttempt(
+                        entry.competitionEntry
+                    );
 
-            const isCurrent =
-                session.currentEntryId &&
-                entry.entryId.toString() ===
+                const isCurrent =
+                    session.currentEntryId &&
+                    entry.entryId
+                        .toString() ===
                     session.currentEntryId
                         .toString();
 
-            return (
-                !isCurrent &&
-                !attempt.completed &&
-                attempt.phase ===
-                    session.currentPhase &&
-                attempt.declaredWeight != null
-            );
-
-        });
+                return (
+                    !isCurrent &&
+                    !attempt.completed &&
+                    attempt.phase ===
+                        session.currentPhase &&
+                    isAttemptReady(
+                        entry,
+                        attempt
+                    )
+                );
+            }
+        );
 
     console.log(
         "Eligible Next Athletes:",
@@ -463,12 +484,22 @@ const getLiveCompetition = async (
             nextAttempt.declaredWeight
         );
 
-    } else {
+        console.log(
+            "Opening Snatch:",
+            nextEntry.openingSnatch
+        );
+
+        console.log(
+            "Opening Clean & Jerk:",
+            nextEntry.openingCleanJerk
+        );
+
+    }
+    else {
 
         console.log(
             "NO NEXT ATHLETE."
         );
-
     }
 
     // -----------------------------------
@@ -494,72 +525,87 @@ const getLiveCompetition = async (
                     status =
                         "COMPLETED";
 
-                } else if (
+                }
+                else if (
                     session.currentEntryId &&
-                    entry.entryId.toString() ===
-                        session.currentEntryId
-                            .toString()
+                    entry.entryId
+                        .toString() ===
+                    session.currentEntryId
+                        .toString()
                 ) {
 
                     status =
                         "ON_PLATFORM";
 
-                } else if (
+                }
+                else if (
                     nextEntry &&
-                    entry.entryId.toString() ===
-                        nextEntry.entryId
-                            .toString()
+                    entry.entryId
+                        .toString() ===
+                    nextEntry.entryId
+                        .toString()
                 ) {
 
                     status =
                         "NEXT";
-
                 }
 
                 return mapAthlete(
                     entry,
                     status
                 );
-
             }
         );
 
     // -----------------------------------
     // Declaration queue
+    //
+    // Queue contains athletes in the
+    // current phase who still need
+    // declaration for attempts 2/3.
+    //
+    // Attempt 1 is already known from
+    // opening weight, so it does not
+    // need to wait for declaration.
     // -----------------------------------
 
     const declarationQueue =
         entries
-            .filter((entry) => {
+            .filter(
+                (entry) => {
 
-                const attempt =
-                    getCurrentAttempt(
-                        entry.competitionEntry
-                    );
+                    const attempt =
+                        getCurrentAttempt(
+                            entry.competitionEntry
+                        );
 
-                const isCurrent =
-                    session.currentEntryId &&
-                    entry.entryId.toString() ===
+                    const isCurrent =
+                        session.currentEntryId &&
+                        entry.entryId
+                            .toString() ===
                         session.currentEntryId
                             .toString();
 
-                const isPrepare =
-                    session.prepareEntryId &&
-                    entry.entryId.toString() ===
+                    const isPrepare =
+                        session.prepareEntryId &&
+                        entry.entryId
+                            .toString() ===
                         session.prepareEntryId
                             .toString();
 
-                return (
-                    !attempt.completed &&
-                    attempt.phase ===
-                        session.currentPhase &&
-                    !isCurrent &&
-                    !isPrepare
-                );
-
-            })
-            .map((entry) =>
-                mapAthlete(entry)
+                    return (
+                        !attempt.completed &&
+                        attempt.phase ===
+                            session.currentPhase &&
+                        attempt.attemptNo > 1 &&
+                        !isCurrent &&
+                        !isPrepare
+                    );
+                }
+            )
+            .map(
+                (entry) =>
+                    mapAthlete(entry)
             );
 
     // -----------------------------------
@@ -580,7 +626,6 @@ const getLiveCompetition = async (
         currentPhase:
             session.currentPhase,
 
-        // REAL platform athlete
         currentAthlete:
             currentEntry
                 ? mapAthlete(
@@ -589,7 +634,6 @@ const getLiveCompetition = async (
                   )
                 : null,
 
-        // Athlete preparing next attempt
         prepareAthlete:
             prepareEntry
                 ? mapAthlete(
@@ -598,7 +642,6 @@ const getLiveCompetition = async (
                   )
                 : null,
 
-        // Last completed lift for display
         lastLiftAthlete,
 
         nextAthlete:
@@ -615,7 +658,6 @@ const getLiveCompetition = async (
 
         totalAthletes:
             competitionResults.length,
-
     };
 
     console.log(
