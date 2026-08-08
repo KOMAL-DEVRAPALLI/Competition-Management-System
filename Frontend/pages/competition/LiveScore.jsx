@@ -315,180 +315,73 @@ const LiveScore = () => {
     // NO AUTOMATIC ORDERING.
     // =====================================
 
-    const handleSelectAthlete =
-        async (athlete) => {
+   const handleSelectAthlete = async (athlete) => {
 
-        if (
-            !athlete ||
-            selectingAthlete
-        ) {
-            return;
-        }
+    if (!athlete || selectingAthlete) {
+        return;
+    }
 
+    if (currentAthlete) {
+        setLiftError(
+            "Declare the current athlete's next attempt before selecting another athlete."
+        );
+        return;
+    }
 
-        // =================================
-        // CURRENT ATHLETE SELECTION RULE
-        //
-        // The current athlete remains
-        // selected after GOOD / NO_LIFT.
-        //
-        // The official must declare their
-        // next attempt before switching
-        // to another athlete.
-        // =================================
+    try {
 
-        if (currentAthlete) {
+        setSelectingAthlete(true);
+        setLiftError("");
+        setLiftMessage("");
 
-            const currentAttempt =
-                currentAthlete.currentAttempt;
+        console.time("SELECT ATHLETE - POST");
 
-
-            const declarationSaved =
-                currentAttempt &&
-                currentAttempt.declaredWeight != null &&
-                Number(
-                    currentAttempt.declaredWeight
-                ) > 0;
-
-
-            if (!declarationSaved) {
-
-                setLiftError(
-                    "Declare the current athlete's next attempt before selecting another athlete."
-                );
-
-                return;
+        const response = await apiRequest(
+            SELECT_ATHLETE_URL,
+            "POST",
+            {
+                competitionId,
+                gender,
+                entryId: athlete.entryId,
             }
-        }
+        );
 
+        console.timeEnd("SELECT ATHLETE - POST");
 
-        // =================================
-        // VALID ATTEMPT
-        // =================================
+        console.log(
+            "SELECT ATHLETE RESPONSE:",
+            response.data
+        );
 
-        if (
-            !athlete.currentAttempt
-        ) {
+        setLiftMessage(
+            `${athlete.name} selected.`
+        );
 
-            setLiftError(
-                "This athlete does not have a valid current attempt."
-            );
+        console.time("SELECT ATHLETE - GET");
 
-            return;
-        }
+        await loadLiveCompetition();
 
+        console.timeEnd("SELECT ATHLETE - GET");
 
-        // =================================
-        // COMPLETED ATHLETE
-        // =================================
+    } catch (error) {
 
-        if (
-            athlete.currentAttempt.completed
-        ) {
+        console.error(
+            "Failed to select athlete:",
+            error
+        );
 
-            setLiftError(
-                "This athlete has completed the competition."
-            );
+        setLiftError(
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to select athlete."
+        );
 
-            return;
-        }
+    } finally {
 
+        setSelectingAthlete(false);
 
-        // =================================
-        // VERIFY PHASE
-        // =================================
-
-        if (
-            athlete.currentAttempt.phase !==
-            currentPhase
-        ) {
-
-            setLiftError(
-                `This athlete belongs to ${athlete.currentAttempt.phase}, while the live session is in ${currentPhase}.`
-            );
-
-            return;
-        }
-
-
-        // =================================
-        // SELECT ATHLETE
-        // =================================
-
-        try {
-
-            setSelectingAthlete(true);
-
-            setLiftError("");
-            setLiftMessage("");
-
-
-            console.log(
-                "===== OFFICIAL SELECT ATHLETE ====="
-            );
-
-            console.log(
-                "Entry ID:",
-                athlete.entryId
-            );
-
-            console.log(
-                "Name:",
-                athlete.name
-            );
-
-            console.log(
-                "Phase:",
-                athlete.currentAttempt.phase
-            );
-
-            console.log(
-                "Attempt:",
-                athlete.currentAttempt.attemptNo
-            );
-
-
-            await apiRequest(
-                SELECT_ATHLETE_URL,
-                "POST",
-                {
-                    competitionId,
-                    gender,
-                    entryId:
-                        athlete.entryId,
-                }
-            );
-
-
-            setLiftMessage(
-                `${athlete.name} selected.`
-            );
-
-
-            await loadLiveCompetition();
-
-        } catch (error) {
-
-            console.error(
-                "Failed to select athlete:",
-                error
-            );
-
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to select athlete."
-            );
-
-        } finally {
-
-            setSelectingAthlete(false);
-
-        }
-    };
+    }
+};
 
 
     // =====================================
