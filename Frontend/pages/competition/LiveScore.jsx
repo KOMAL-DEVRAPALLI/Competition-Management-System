@@ -482,8 +482,8 @@ const LiveScore = () => {
     // NO AUTOMATIC NEXT ATHLETE.
     // =====================================
 
-    const handleProcessLift =
-        async (result) => {
+   const handleProcessLift =
+    async (result) => {
 
         if (
             !currentAthlete ||
@@ -491,7 +491,6 @@ const LiveScore = () => {
         ) {
             return;
         }
-
 
         try {
 
@@ -501,34 +500,269 @@ const LiveScore = () => {
             setLiftError("");
 
 
-            console.log(
-                "===== PROCESS OFFICIAL RESULT ====="
+            // =====================================
+            // PROCESS LIFT
+            //
+            // Backend returns the updated athlete
+            // and live session.
+            // =====================================
+
+            const response =
+                await processLift({
+
+                    entryId:
+                        currentAthlete.entryId,
+
+                    competitionId,
+
+                    gender,
+
+                    result,
+
+                });
+
+
+            const data =
+                response?.data;
+
+
+            // =====================================
+            // SAFETY CHECK
+            // =====================================
+
+            if (
+                !data ||
+                !data.athlete
+            ) {
+
+                throw new Error(
+                    "Live scoring response is incomplete."
+                );
+
+            }
+
+
+            const updatedEntry =
+                data.athlete;
+
+
+            const nextAttempt =
+                data.nextAttempt ??
+                null;
+
+
+            // =====================================
+            // UPDATE CURRENT ATHLETE LOCALLY
+            //
+            // Do NOT perform another GET.
+            //
+            // Keep the display information that
+            // already exists in currentAthlete and
+            // replace only the data changed by the
+            // lift.
+            // =====================================
+
+            const updatedCurrentAthlete = {
+
+                ...currentAthlete,
+
+
+                // ---------------------------------
+                // Attempt data
+                // ---------------------------------
+
+                snatchAttempts:
+                    updatedEntry.snatchAttempts ??
+                    currentAthlete.snatchAttempts,
+
+                cleanJerkAttempts:
+                    updatedEntry.cleanJerkAttempts ??
+                    currentAthlete.cleanJerkAttempts,
+
+
+                // ---------------------------------
+                // Results
+                // ---------------------------------
+
+                bestSnatch:
+                    updatedEntry.results
+                        ?.bestSnatch ??
+                    currentAthlete.bestSnatch,
+
+                bestCleanJerk:
+                    updatedEntry.results
+                        ?.bestCleanJerk ??
+                    currentAthlete.bestCleanJerk,
+
+                total:
+                    updatedEntry.results
+                        ?.total ??
+                    currentAthlete.total,
+
+                place:
+                    updatedEntry.results
+                        ?.rank ??
+                    currentAthlete.place,
+
+
+                // ---------------------------------
+                // Next attempt
+                // ---------------------------------
+
+                currentAttempt:
+                    nextAttempt,
+
+            };
+
+
+            // =====================================
+            // UPDATE THE CURRENT ATHLETE
+            // IN THE OFFICIAL ATHLETE LIST
+            // =====================================
+
+            const updatedAthletes =
+                athletes.map(
+                    (athlete) => {
+
+                        if (
+                            athlete.entryId
+                                ?.toString() ===
+                            currentAthlete.entryId
+                                ?.toString()
+                        ) {
+
+                            return {
+
+                                ...athlete,
+
+                                ...updatedCurrentAthlete,
+
+                            };
+
+                        }
+
+
+                        return athlete;
+
+                    }
+                );
+
+
+            // =====================================
+            // UPDATE THE TV RESULT LIST
+            //
+            // Only the athlete who just lifted
+            // needs to change immediately.
+            // =====================================
+
+            const updatedCompetitionResults =
+                competitionResults.map(
+                    (athlete) => {
+
+                        if (
+                            athlete.entryId
+                                ?.toString() ===
+                            currentAthlete.entryId
+                                ?.toString()
+                        ) {
+
+                            return {
+
+                                ...athlete,
+
+                                ...updatedCurrentAthlete,
+
+                            };
+
+                        }
+
+
+                        return athlete;
+
+                    }
+                );
+
+
+            // =====================================
+            // DETERMINE WHETHER ANOTHER ATHLETE
+            // CAN BE SELECTED
+            // =====================================
+
+            let updatedCanSelect =
+                false;
+
+
+            if (
+                data.manualSelectionRequired
+            ) {
+
+                updatedCanSelect =
+                    true;
+
+            }
+            else if (
+                nextAttempt &&
+                nextAttempt.declaredWeight != null &&
+                Number(
+                    nextAttempt.declaredWeight
+                ) > 0
+            ) {
+
+                updatedCanSelect =
+                    true;
+
+            }
+
+
+            // =====================================
+            // UPDATE LIVE COMPETITION STATE
+            //
+            // ONE React state update.
+            //
+            // NO SECOND GET REQUEST.
+            // =====================================
+
+            setLiveCompetition(
+                (previous) => ({
+
+                    ...previous,
+
+                    currentAthlete:
+                        updatedCurrentAthlete,
+
+                    athletes:
+                        updatedAthletes,
+
+                    competitionResults:
+                        updatedCompetitionResults,
+
+                    canSelectAnotherAthlete:
+                        updatedCanSelect,
+
+                    currentPhase:
+                        data.session
+                            ?.currentPhase ??
+                        previous.currentPhase,
+
+                    status:
+                        data.session
+                            ?.status ??
+                        previous.status,
+
+                })
             );
 
-            console.log(
-                "Athlete:",
-                currentAthlete.name
-            );
 
-            console.log(
-                "Result:",
-                result
-            );
+            // =====================================
+            // CLEAR DECLARATION INPUT
+            // =====================================
+
+            setDeclaredWeight("");
 
 
-            await processLift({
-
-                entryId:
-                    currentAthlete.entryId,
-
-                competitionId,
-
-                gender,
-
-                result,
-
-            });
-
+            // =====================================
+            // SUCCESS MESSAGE
+            // =====================================
 
             setLiftMessage(
                 result === "GOOD"
@@ -536,11 +770,6 @@ const LiveScore = () => {
                     : "No Lift saved successfully."
             );
 
-
-            setDeclaredWeight("");
-
-
-            await loadLiveCompetition();
 
         } catch (error) {
 
@@ -563,6 +792,7 @@ const LiveScore = () => {
             setProcessingLift(false);
 
         }
+
     };
 
 

@@ -1,64 +1,181 @@
-import CompetitionEntry from "../../models/CompetitionEntry.js";
+import mongoose from "mongoose";
 
-import calculateBestSnatch from "./calculateBestSnatch.js";
-import calculateBestCleanJerk from "./calculateBestCleanCleanJerk.js";
-import calculateTotal from "./calculateTotal.js";
-import updateCategoryRanking from "./updateCategoryRanking.js";
+const attemptSchema = new mongoose.Schema(
+    {
+        attemptNo: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 3,
+        },
 
-const updateCompetitionResults = async (entryId) => {
+        declaredWeight: {
+            type: Number,
+            default: null,
+            min: 0,
+        },
 
-    const entry = await CompetitionEntry.findById(
-        entryId
-    );
+        declaredAt: {
+            type: Date,
+            default: null,
+        },
 
-    if (!entry) {
-        throw new Error(
-            "Competition entry not found."
-        );
+        result: {
+            type: String,
+            enum: ["PENDING", "GOOD", "NO_LIFT"],
+            default: "PENDING",
+        },
+    },
+    { _id: false }
+);
+
+const competitionEntrySchema = new mongoose.Schema(
+    {
+        competitionId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Competition",
+            required: true,
+        },
+
+        athleteId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Athlete",
+            required: true,
+        },
+        competitionCategory: {
+            ageCategory: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+        },
+        official: {
+            bodyWeight: {
+                type: Number,
+                default: null,
+                min: 0,
+            },
+            eligibleWeightCategories: {
+                type: [String],
+                trim: true,
+                default: [],
+            },
+            selectedWeightCategory: {
+                type: String,
+                trim: true,
+                default: null,
+            },
+            finalWeightCategory: {
+                type: String,
+                trim: true,
+                default: null,
+            },
+            lotNumber: {
+                type: Number,
+                default: null,
+                min: 1,
+            },
+            weighInCompletedAt: {
+                type: Date
+            },
+            weighedBy: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Admin",
+                default: null
+            }
+        },
+
+        opening: {
+            snatch: {
+                type: Number,
+                default: null,
+                min: 0,
+            },
+
+            cleanJerk: {
+                type: Number,
+                default: null,
+                min: 0,
+            },
+        },
+
+        snatchAttempts: {
+            type: [attemptSchema],
+            default: [
+                { attemptNo: 1 },
+                { attemptNo: 2 },
+                { attemptNo: 3 },
+            ],
+        },
+
+        cleanJerkAttempts: {
+            type: [attemptSchema],
+            default: [
+                { attemptNo: 1 },
+                { attemptNo: 2 },
+                { attemptNo: 3 },
+            ],
+        },
+
+        results: {
+            bestSnatch: {
+                type: Number,
+                default: 0,
+            },
+
+            bestCleanJerk: {
+                type: Number,
+                default: 0,
+            },
+
+            total: {
+                type: Number,
+                default: 0,
+            },
+
+            rank: {
+                type: Number,
+                default: null,
+            },
+        },
+
+        status: {
+            type: String,
+            enum: [
+                "PENDING",
+                "WEIGHED",
+                "READY",
+                "COMPETING",
+                "COMPLETED",
+            ],
+            default: "PENDING",
+        },
+
+        remarks: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+    },
+    {
+        timestamps: true,
     }
+);
 
-    const bestSnatch =
-        calculateBestSnatch(
-            entry.snatchAttempts
-        );
+competitionEntrySchema.index(
+    {
+        competitionId: 1,
+        athleteId: 1,
+        "competitionCategory.ageCategory": 1,
+    },
+    {
+        unique: true,
+    }
+);
 
-    const bestCleanJerk =
-        calculateBestCleanJerk(
-            entry.cleanJerkAttempts
-        );
+const CompetitionEntry = mongoose.model(
+    "CompetitionEntry",
+    competitionEntrySchema
+);
 
-    const total =
-        calculateTotal(
-            bestSnatch,
-            bestCleanJerk
-        );
-
-    entry.results.bestSnatch =
-        bestSnatch;
-
-    entry.results.bestCleanJerk =
-        bestCleanJerk;
-
-    entry.results.total =
-        total;
-
-    /*
-     * Save the calculated competition results.
-     */
-    await entry.save();
-
-    /*
-     * Recalculate ranking for the
-     * athlete's final weight category.
-     */
-    await updateCategoryRanking(
-        entryId
-    );
-
-    /*
-     * Return the updated entry.
-     */
-    return entry;
-};
-
-export default updateCompetitionResults;
+export default CompetitionEntry;

@@ -2,13 +2,14 @@ import LiveCompetition from "../../models/LiveCompetition.js";
 import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
 
+
 const getLiveCompetition = async (
     competitionId,
     gender
 ) => {
 
     // =====================================
-    // NORMALIZE GENDER
+    // VALIDATE INPUT
     // =====================================
 
     if (!competitionId) {
@@ -23,8 +24,14 @@ const getLiveCompetition = async (
         );
     }
 
+
+    // =====================================
+    // NORMALIZE GENDER
+    // =====================================
+
     const normalizedGender =
         gender.toLowerCase();
+
 
     // =====================================
     // FIND LIVE SESSION
@@ -36,11 +43,13 @@ const getLiveCompetition = async (
             gender: normalizedGender,
         });
 
+
     if (!session) {
         throw new Error(
             "Live competition has not been started."
         );
     }
+
 
     // =====================================
     // LOAD ALL ATHLETES
@@ -54,25 +63,53 @@ const getLiveCompetition = async (
             session.selectedWeightCategories
         );
 
+
     if (!entries.length) {
         throw new Error(
             "No athletes found."
         );
     }
 
+
+    // =====================================
+    // CURRENT ENTRY LOOKUP
+    //
+    // Map gives O(1) lookup instead of
+    // entries.find() every time.
+    // =====================================
+
+    const entryMap =
+        new Map(
+            entries.map(
+                (entry) => [
+                    entry.entryId.toString(),
+                    entry,
+                ]
+            )
+        );
+
+
+    const currentEntry =
+        session.currentEntryId
+            ? entryMap.get(
+                  session.currentEntryId
+                      .toString()
+              ) ?? null
+            : null;
+
+
     // =====================================
     // ATHLETE MAPPER
+    //
+    // currentAttempt is passed in instead
+    // of calculating it repeatedly.
     // =====================================
 
     const mapAthlete = (
         athlete,
+        currentAttempt,
         status = "WAITING"
     ) => {
-
-        const currentAttempt =
-            getCurrentAttempt(
-                athlete.competitionEntry
-            );
 
         return {
 
@@ -136,127 +173,226 @@ const getLiveCompetition = async (
 
     };
 
+
     // =====================================
-    // CURRENT ATHLETE
+    // BUILD BOTH LISTS IN ONE PASS
     //
-    // ONLY manually selected athlete.
+    // BEFORE:
     //
-    // If currentEntryId is null:
-    // currentAthlete = null
+    // entries.map() → competitionResults
+    // entries.map() → athletes
+    //
+    // NOW:
+    //
+    // ONE LOOP → both lists
+    //
+    // Also calculate currentAttempt only
+    // once for each athlete.
     // =====================================
 
-    const currentEntry =
-        session.currentEntryId
-            ? entries.find(
-                  (entry) =>
-                      entry.entryId
-                          .toString() ===
-                      session.currentEntryId
-                          .toString()
-              )
-            : null;
+    const competitionResults = [];
+    const athletes = [];
+
 
     // =====================================
-    // DETERMINE CURRENT ATHLETE'S
-    // SELECTION STATE
+    // CURRENT ATHLETE STATE
     // =====================================
 
-    let canSelectAnotherAthlete =
-        true;
+    let canSelectAnotherAthlete = true;
 
-    let currentAthleteAttempt =
-        null;
+    let currentAthleteAttempt = null;
 
-    if (currentEntry) {
 
-        currentAthleteAttempt =
+    // =====================================
+    // PROCESS ATHLETES ONCE
+    // =====================================
+
+    for (
+        const entry of entries
+    ) {
+
+        const attempt =
             getCurrentAttempt(
-                currentEntry.competitionEntry
+                entry.competitionEntry
             );
 
-        // ---------------------------------
-        // CURRENT ATHLETE HAS COMPLETED
-        // THE ENTIRE COMPETITION
-        //
-        // Another athlete can be selected.
-        // ---------------------------------
+
+        // =================================
+        // TV SCOREBOARD STATUS
+        // =================================
+
+        let scoreboardStatus =
+            "WAITING";
+
 
         if (
-            currentAthleteAttempt.completed
+            session.currentEntryId &&
+            entry.entryId
+                .toString() ===
+            session.currentEntryId
+                .toString()
         ) {
 
-            canSelectAnotherAthlete =
-                true;
+            scoreboardStatus =
+                "ON_PLATFORM";
+
+        }
+        else if (
+            attempt.completed
+        ) {
+
+            scoreboardStatus =
+                "COMPLETED";
 
         }
 
-        // ---------------------------------
-        // CURRENT ATHLETE'S NEXT ATTEMPT
-        // BELONGS TO A DIFFERENT PHASE
-        //
-        // Example:
-        //
-        // Session = SNATCH
-        // Athlete finished S3
-        // Athlete's next attempt = CJ1
-        //
-        // Do NOT force the athlete to remain
-        // selected because CJ has not started.
-        //
-        // Another Snatch athlete can be
-        // selected.
-        // ---------------------------------
 
+        // =================================
+        // OFFICIAL LIST STATUS
+        // =================================
+
+        let officialStatus =
+            "AVAILABLE";
+
+
+        if (
+            session.currentEntryId &&
+            entry.entryId
+                .toString() ===
+            session.currentEntryId
+                .toString()
+        ) {
+
+            officialStatus =
+                "ON_PLATFORM";
+
+        }
         else if (
-            currentAthleteAttempt.phase !==
+            attempt.completed
+        ) {
+
+            officialStatus =
+                "COMPLETED";
+
+        }
+        else if (
+            attempt.phase !==
             session.currentPhase
         ) {
 
-            canSelectAnotherAthlete =
-                true;
+            officialStatus =
+                "WRONG_PHASE";
 
         }
 
-        // ---------------------------------
-        // CURRENT ATHLETE STILL HAS AN
-        // ATTEMPT IN THE CURRENT PHASE
-        // ---------------------------------
 
-        else {
+        // =================================
+        // BUILD SCOREBOARD ENTRY
+        // =================================
 
-            const declaredWeight =
-                currentAthleteAttempt
-                    .declaredWeight;
+        competitionResults.push(
+            mapAthlete(
+                entry,
+                attempt,
+                scoreboardStatus
+            )
+        );
 
-            // ---------------------------------
-            // Next declaration has NOT been
-            // saved yet.
-            //
-            // Keep athlete selection locked.
-            // ---------------------------------
+
+        // =================================
+        // BUILD OFFICIAL ENTRY
+        // =================================
+
+        athletes.push(
+            mapAthlete(
+                entry,
+                attempt,
+                officialStatus
+            )
+        );
+
+
+        // =================================
+        // CURRENT ATHLETE
+        // =================================
+
+        if (
+            currentEntry &&
+            entry.entryId
+                .toString() ===
+            currentEntry.entryId
+                .toString()
+        ) {
+
+            currentAthleteAttempt =
+                attempt;
+
+
+            // -----------------------------
+            // CURRENT ATHLETE COMPLETED
+            // -----------------------------
 
             if (
-                declaredWeight == null ||
-                Number(declaredWeight) <= 0
+                attempt.completed
             ) {
 
                 canSelectAnotherAthlete =
-                    false;
+                    true;
 
             }
 
-            // ---------------------------------
-            // Next declaration has already
-            // been saved.
-            //
-            // Official can now select another
-            // athlete.
-            // ---------------------------------
 
-            else {
+            // -----------------------------
+            // NEXT ATTEMPT IS DIFFERENT
+            // PHASE
+            // -----------------------------
+
+            else if (
+                attempt.phase !==
+                session.currentPhase
+            ) {
 
                 canSelectAnotherAthlete =
                     true;
+
+            }
+
+
+            // -----------------------------
+            // CURRENT PHASE
+            // -----------------------------
+
+            else {
+
+                const declaredWeight =
+                    attempt.declaredWeight;
+
+
+                // -------------------------
+                // Declaration not saved
+                // -------------------------
+
+                if (
+                    declaredWeight == null ||
+                    Number(declaredWeight) <= 0
+                ) {
+
+                    canSelectAnotherAthlete =
+                        false;
+
+                }
+
+
+                // -------------------------
+                // Declaration saved
+                // -------------------------
+
+                else {
+
+                    canSelectAnotherAthlete =
+                        true;
+
+                }
 
             }
 
@@ -264,201 +400,20 @@ const getLiveCompetition = async (
 
     }
 
-    // =====================================
-    // TV SCOREBOARD
-    //
-    // COMPLETE COMPETITION LIST
-    // =====================================
-
-    const competitionResults =
-        entries.map(
-            (entry) => {
-
-                const attempt =
-                    getCurrentAttempt(
-                        entry.competitionEntry
-                    );
-
-                let status =
-                    "WAITING";
-
-                // ---------------------------------
-                // CURRENT ATHLETE
-                // ---------------------------------
-
-                if (
-                    session.currentEntryId &&
-                    entry.entryId
-                        .toString() ===
-                    session.currentEntryId
-                        .toString()
-                ) {
-
-                    status =
-                        "ON_PLATFORM";
-
-                }
-
-                // ---------------------------------
-                // COMPLETED ATHLETE
-                // ---------------------------------
-
-                else if (
-                    attempt.completed
-                ) {
-
-                    status =
-                        "COMPLETED";
-
-                }
-
-                return mapAthlete(
-                    entry,
-                    status
-                );
-
-            }
-        );
 
     // =====================================
-    // OFFICIAL ATHLETE LIST
-    //
-    // IMPORTANT:
-    //
-    // This is NOT a queue.
-    //
-    // It is the COMPLETE list of athletes.
-    //
-    // The official decides who goes next.
+    // CURRENT ATHLETE
     // =====================================
 
-    const athletes =
-        entries.map(
-            (entry) => {
+    const currentAthlete =
+        currentEntry
+            ? mapAthlete(
+                  currentEntry,
+                  currentAthleteAttempt,
+                  "ON_PLATFORM"
+              )
+            : null;
 
-                const attempt =
-                    getCurrentAttempt(
-                        entry.competitionEntry
-                    );
-
-                let status =
-                    "AVAILABLE";
-
-                // ---------------------------------
-                // CURRENT ATHLETE
-                // ---------------------------------
-
-                if (
-                    session.currentEntryId &&
-                    entry.entryId
-                        .toString() ===
-                    session.currentEntryId
-                        .toString()
-                ) {
-
-                    status =
-                        "ON_PLATFORM";
-
-                }
-
-                // ---------------------------------
-                // COMPLETED
-                // ---------------------------------
-
-                else if (
-                    attempt.completed
-                ) {
-
-                    status =
-                        "COMPLETED";
-
-                }
-
-                // ---------------------------------
-                // WRONG PHASE
-                //
-                // Keep athlete visible.
-                //
-                // selectOfficialAthlete()
-                // remains the final authority.
-                // ---------------------------------
-
-                else if (
-                    attempt.phase !==
-                    session.currentPhase
-                ) {
-
-                    status =
-                        "WRONG_PHASE";
-
-                }
-
-                return mapAthlete(
-                    entry,
-                    status
-                );
-
-            }
-        );
-
-    // =====================================
-    // DEBUG
-    // =====================================
-
-    console.log(
-        "===================================="
-    );
-
-    console.log(
-        "GET LIVE COMPETITION"
-    );
-
-    console.log(
-        "Competition ID:",
-        competitionId.toString()
-    );
-
-    console.log(
-        "Gender:",
-        normalizedGender
-    );
-
-    console.log(
-        "Current Phase:",
-        session.currentPhase
-    );
-
-    console.log(
-        "Current Entry:",
-        session.currentEntryId
-            ?.toString() ??
-        "NONE"
-    );
-
-    console.log(
-        "Current Athlete:",
-        currentEntry?.name ??
-        "NONE"
-    );
-
-    console.log(
-        "Current Athlete Attempt:",
-        currentAthleteAttempt
-    );
-
-    console.log(
-        "Can Select Another Athlete:",
-        canSelectAnotherAthlete
-    );
-
-    console.log(
-        "Total Athletes:",
-        athletes.length
-    );
-
-    console.log(
-        "===================================="
-    );
 
     // =====================================
     // FINAL RESPONSE
@@ -479,29 +434,19 @@ const getLiveCompetition = async (
             session.currentPhase,
 
         // ---------------------------------
-        // MANUALLY SELECTED ATHLETE
+        // CURRENT ATHLETE
         // ---------------------------------
 
-        currentAthlete:
-            currentEntry
-                ? mapAthlete(
-                      currentEntry,
-                      "ON_PLATFORM"
-                  )
-                : null,
+        currentAthlete,
 
         // ---------------------------------
-        // IMPORTANT:
-        //
-        // Frontend uses this to determine
-        // whether another athlete can be
-        // selected.
+        // SELECTION CONTROL
         // ---------------------------------
 
         canSelectAnotherAthlete,
 
         // ---------------------------------
-        // COMPLETE OFFICIAL ATHLETE LIST
+        // OFFICIAL ATHLETE LIST
         // ---------------------------------
 
         athletes,
@@ -514,11 +459,6 @@ const getLiveCompetition = async (
 
         // ---------------------------------
         // COMPATIBILITY
-        //
-        // Keep this temporarily so any
-        // old frontend code does not crash.
-        //
-        // It is NOT an automatic queue.
         // ---------------------------------
 
         declarationQueue:
@@ -532,6 +472,8 @@ const getLiveCompetition = async (
             athletes.length,
 
     };
+
 };
+
 
 export default getLiveCompetition;

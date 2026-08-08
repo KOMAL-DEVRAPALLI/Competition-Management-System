@@ -42,11 +42,8 @@ const processLift = async ({
 
 
     // =====================================
-    // LOAD ENTRY + SESSION IN PARALLEL
-    //
-    // These two queries are independent.
-    // Running them together reduces waiting
-    // time for every lift.
+    // LOAD ENTRY + LIVE SESSION
+    // IN PARALLEL
     // =====================================
 
     const [
@@ -67,7 +64,7 @@ const processLift = async ({
 
 
     // =====================================
-    // VALIDATE COMPETITION ENTRY
+    // VALIDATE ENTRY
     // =====================================
 
     if (!competitionEntry) {
@@ -78,7 +75,7 @@ const processLift = async ({
 
 
     // =====================================
-    // VALIDATE LIVE SESSION
+    // VALIDATE SESSION
     // =====================================
 
     if (!session) {
@@ -177,7 +174,15 @@ const processLift = async ({
 
 
     // =====================================
-    // SAVE RESULT
+    // SAVE RESULT IN MEMORY
+    //
+    // IMPORTANT:
+    //
+    // Do NOT save here.
+    //
+    // updateCompetitionResults()
+    // will calculate the results and perform
+    // the ONE CompetitionEntry save.
     // =====================================
 
     attempt.result =
@@ -187,27 +192,24 @@ const processLift = async ({
         new Date();
 
 
-    await competitionEntry.save();
-
-
     // =====================================
-    // UPDATE RESULTS + RANKING
+    // UPDATE RESULTS
     //
-    // updateCompetitionResults()
-    // returns the updated entry.
+    // The already-loaded document is passed
+    // directly.
     //
-    // Reuse that document instead of
-    // querying CompetitionEntry again here.
+    // No second findById().
+    // No duplicate CompetitionEntry.save().
     // =====================================
 
     const updatedEntry =
         await updateCompetitionResults(
-            entryId
+            competitionEntry
         );
 
 
     // =====================================
-    // DETERMINE ATHLETE'S NEXT ATTEMPT
+    // DETERMINE NEXT ATTEMPT
     // =====================================
 
     const nextAttempt =
@@ -219,8 +221,7 @@ const processLift = async ({
     // =====================================
     // CASE 1
     //
-    // ATHLETE HAS ANOTHER ATTEMPT
-    // IN THE SAME PHASE.
+    // SAME PHASE CONTINUES
     //
     // S1 → S2
     // S2 → S3
@@ -241,7 +242,6 @@ const processLift = async ({
 
         session.status =
             "RUNNING";
-
 
         await session.save();
 
@@ -270,11 +270,11 @@ const processLift = async ({
     //
     // ATHLETE FINISHED SNATCH
     //
-    // NEXT ATTEMPT IS CLEAN & JERK.
+    // NEXT PHASE = CLEAN & JERK
     //
-    // DO NOT START CJ FOR THIS ATHLETE
-    // UNTIL ENTIRE SNATCH SESSION IS
-    // COMPLETE.
+    // Do not start CJ for this athlete
+    // until ALL athletes have completed
+    // their Snatch attempts.
     // =====================================
 
     if (
@@ -287,8 +287,8 @@ const processLift = async ({
         // ---------------------------------
         // Load competition entries.
         //
-        // lean() is used because these
-        // documents are only being read.
+        // lean() because these documents
+        // are only being inspected.
         // ---------------------------------
 
         const sessionEntries =
@@ -305,8 +305,8 @@ const processLift = async ({
 
 
         // ---------------------------------
-        // Determine athletes in the
-        // live competition session.
+        // Determine athletes participating
+        // in this live session.
         // ---------------------------------
 
         const liveEntries =
@@ -369,8 +369,7 @@ const processLift = async ({
 
 
         // ---------------------------------
-        // Check whether ALL athletes have
-        // completed all Snatch attempts.
+        // CHECK ALL SNATCH COMPLETED
         // ---------------------------------
 
         const allSnatchCompleted =
@@ -402,8 +401,8 @@ const processLift = async ({
         //
         // Keep current athlete selected.
         //
-        // Another athlete can be selected
-        // manually by the official.
+        // Official may select another
+        // athlete manually.
         // =================================
 
         if (!allSnatchCompleted) {
@@ -416,7 +415,6 @@ const processLift = async ({
 
             session.status =
                 "RUNNING";
-
 
             await session.save();
 
@@ -444,15 +442,12 @@ const processLift = async ({
 
 
         // =================================
-        // ALL ATHLETES FINISHED SNATCH
+        // ALL SNATCH COMPLETED
         //
-        // Move competition phase to
-        // CLEAN & JERK.
+        // MOVE TO CLEAN & JERK.
         //
         // Keep current athlete selected.
-        //
-        // Official can manually select
-        // the first CJ athlete.
+        // Official chooses CJ athlete.
         // =================================
 
         session.currentPhase =
@@ -463,7 +458,6 @@ const processLift = async ({
 
         session.status =
             "RUNNING";
-
 
         await session.save();
 
@@ -493,12 +487,7 @@ const processLift = async ({
     // =====================================
     // CASE 3
     //
-    // ATHLETE COMPLETED ENTIRE
-    // COMPETITION.
-    //
-    // KEEP ATHLETE SELECTED.
-    //
-    // Official can select another athlete.
+    // ATHLETE COMPLETED ENTIRE COMPETITION
     // =====================================
 
     if (
@@ -510,7 +499,6 @@ const processLift = async ({
 
         session.status =
             "RUNNING";
-
 
         await session.save();
 
@@ -539,8 +527,6 @@ const processLift = async ({
 
     // =====================================
     // SAFETY FALLBACK
-    //
-    // Keep current athlete selected.
     // =====================================
 
     session.currentEntryId =
@@ -548,7 +534,6 @@ const processLift = async ({
 
     session.status =
         "RUNNING";
-
 
     await session.save();
 
