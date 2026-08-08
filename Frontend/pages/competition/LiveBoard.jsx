@@ -206,29 +206,27 @@ const LiveScoreBoard = () => {
 
                     <table className="score-table">
 
-                        <colgroup>
+    <colgroup>
+        <col className="col-lot" />
+        <col className="col-athlete" />
+        <col className="col-event" />
+        <col className="col-bw" />
 
-                            <col className="col-lot" />
-                            <col className="col-athlete" />
-                            <col className="col-event" />
-                            <col className="col-bw" />
+        <col className="col-attempt" />
+        <col className="col-attempt" />
+        <col className="col-attempt" />
+        <col className="col-best" />
 
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-                            <col className="col-best" />
+        <col className="col-attempt" />
+        <col className="col-attempt" />
+        <col className="col-attempt" />
+        <col className="col-best" />
 
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-                            <col className="col-best" />
+        <col className="col-total" />
+        <col className="col-rank" />
+    </colgroup>
 
-                            <col className="col-total" />
-                            <col className="col-rank" />
-
-                        </colgroup>
-
-                        <thead>
+    <thead>
 
                             <tr>
 

@@ -58,36 +58,18 @@
 
 .table-area {
     width: 100%;
-
     overflow-x: auto;
     overflow-y: auto;
-
     background: #081a33;
 }
 
-
-/* =========================================================
-   TABLE
-========================================================= */
-
 .score-table {
     width: 100%;
-
-    /*
-       The table must have enough space for
-       all 14 columns.
-    */
     min-width: 1150px;
-
     border-collapse: collapse;
-
-    /*
-       IMPORTANT:
-       Widths are controlled by <colgroup>
-       in LiveScoreBoard.jsx.
-    */
     table-layout: fixed;
 }
+
 
 
 /* =========================================================
@@ -130,10 +112,25 @@
 /* =========================================================
    TABLE HEADER
 ========================================================= */
+.score-table thead {
+    display: table-header-group;
+}
 
+.score-table tbody {
+    display: table-row-group;
+}
+
+.score-table tr {
+    display: table-row !important;
+}
+
+.score-table th,
+.score-table td {
+    display: table-cell !important;
+    box-sizing: border-box;
+}
 .score-table thead th {
     background: #1b3f6d;
-
     color: #ffffff;
 
     border: 1px solid #35567d;
@@ -144,12 +141,10 @@
     font-weight: 700;
 
     text-align: center;
-
     white-space: nowrap;
 
     position: sticky;
     top: 0;
-
     z-index: 10;
 }
 
@@ -171,10 +166,9 @@
 
     height: 34px;
 
-    box-sizing: border-box;
-
     white-space: nowrap;
 }
+
 
 
 /* =========================================================
@@ -202,40 +196,31 @@
 
 .category-row td {
     padding: 0 !important;
-
     border: 0 !important;
-
     background: transparent !important;
 }
 
 .category-header {
     width: 100%;
+    box-sizing: border-box;
 
     display: flex;
 
     justify-content: space-between;
-
     align-items: center;
 
-    box-sizing: border-box;
-
     padding: 10px 18px;
-
     margin: 12px 0 6px;
 
     background: #17365d;
 
     border-top: 3px solid #4f7db6;
-
     border-bottom: 2px solid #4f7db6;
 
     color: #ffd54f;
 
     font-size: 17px;
-
     font-weight: 700;
-
-    letter-spacing: 0.5px;
 }
 
 .category-left {
@@ -269,7 +254,6 @@
 
 .current-athlete-row td {
     color: #000000 !important;
-
     font-weight: 700;
 }
 
@@ -280,7 +264,6 @@
 
 .next-athlete-row td {
     border-top: 2px dashed #00ffff !important;
-
     border-bottom: 2px dashed #00ffff !important;
 }
 
@@ -291,11 +274,10 @@
 
 .current-attempt {
     background: #ff9800 !important;
-
     color: #000000 !important;
-
     font-weight: 700;
 }
+
 
 
 /* =========================================================
@@ -304,13 +286,11 @@
 
 .good-lift {
     color: #66ff33;
-
     font-weight: 700;
 }
 
 .no-lift {
     color: #ff4040;
-
     font-weight: 700;
 }
 
@@ -318,14 +298,8 @@
     color: #ffffff;
 }
 
-
-/* =========================================================
-   BEST LIFT
-========================================================= */
-
 .best-lift {
     color: #6dff6d;
-
     font-weight: 700;
 }
 
@@ -336,18 +310,11 @@
 
 .total-cell {
     color: #ffb400 !important;
-
     font-weight: 700;
 }
 
-
-/* =========================================================
-   RANK
-========================================================= */
-
 .rank-cell {
     color: #ffd54f !important;
-
     font-weight: 700;
 }
 
