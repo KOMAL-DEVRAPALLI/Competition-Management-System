@@ -554,32 +554,23 @@ const LiveScoreBoard = () => {
 
                         <colgroup>
 
-                            <col className="col-lot" />
+                          <col className="col-lot" />
 
-                            <col className="col-athlete" />
+<col className="col-athlete" />
 
-                            <col className="col-event" />
+<col className="col-attempt" />
+<col className="col-attempt" />
+<col className="col-attempt" />
+<col className="col-best" />
 
-                            <col className="col-bw" />
+<col className="col-attempt" />
+<col className="col-attempt" />
+<col className="col-attempt" />
+<col className="col-best" />
 
+<col className="col-total" />
 
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-
-                            <col className="col-best" />
-
-
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-                            <col className="col-attempt" />
-
-                            <col className="col-best" />
-
-
-                            <col className="col-total" />
-
-                            <col className="col-rank" />
+<col className="col-rank" />
 
                         </colgroup>
 
@@ -598,14 +589,6 @@ const LiveScoreBoard = () => {
 
                                 <th rowSpan="2">
                                     Athlete
-                                </th>
-
-                                <th rowSpan="2">
-                                    Event
-                                </th>
-
-                                <th rowSpan="2">
-                                    BW
                                 </th>
 
                                 <th colSpan="4">
@@ -694,7 +677,7 @@ const LiveScoreBoard = () => {
                                             <tr className="category-row">
 
                                                 <td
-                                                    colSpan="14"
+                                                    colSpan="12"
                                                 >
 
                                                     <div className="category-header">
@@ -790,27 +773,6 @@ const LiveScoreBoard = () => {
 
                                                                 </td>
 
-
-                                                                {/* EVENT */}
-
-                                                                <td>
-
-                                                                    {
-                                                                        athlete.event
-                                                                    }
-
-                                                                </td>
-
-
-                                                                {/* BODY WEIGHT */}
-
-                                                                <td>
-
-                                                                    {
-                                                                        athlete.bodyWeight
-                                                                    }
-
-                                                                </td>
 
 
                                                                 {/* =========================

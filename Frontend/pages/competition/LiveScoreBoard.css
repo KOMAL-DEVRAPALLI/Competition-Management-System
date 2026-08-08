@@ -23,7 +23,7 @@
 
     background: #0a2342;
 
-    padding: 14px 18px;
+    padding: 16px 20px;
 
     border-bottom: 2px solid #2d4f7c;
 }
@@ -35,7 +35,7 @@
 
     color: #ffffff;
 
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 900;
 
     letter-spacing: 1px;
@@ -51,11 +51,11 @@
     justify-content: center;
     align-items: center;
 
-    gap: 14px;
+    gap: 16px;
 
     color: #ffd54f;
 
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
 }
 
@@ -66,7 +66,6 @@
 
 .content {
     width: 100%;
-
     overflow: hidden;
 }
 
@@ -87,7 +86,12 @@
 .score-table {
     width: 100%;
 
-    min-width: 1150px;
+    /*
+       No Event / BW columns now.
+       12 columns total.
+    */
+
+    min-width: 1200px;
 
     border-collapse: collapse;
 
@@ -121,38 +125,40 @@
 
 /* =========================================================
    COLUMN WIDTHS
+=========================================================
+
+   Total = approximately 100%
+
+   Lot       = 5%
+   Athlete   = 25%
+   8 lifts   = 56%
+   Total     = 8%
+   Rank      = 6%
+
 ========================================================= */
 
 .score-table .col-lot {
-    width: 55px;
+    width: 5%;
 }
 
 .score-table .col-athlete {
-    width: 240px;
-}
-
-.score-table .col-event {
-    width: 80px;
-}
-
-.score-table .col-bw {
-    width: 75px;
+    width: 25%;
 }
 
 .score-table .col-attempt {
-    width: 65px;
+    width: 7%;
 }
 
 .score-table .col-best {
-    width: 70px;
+    width: 7%;
 }
 
 .score-table .col-total {
-    width: 75px;
+    width: 8%;
 }
 
 .score-table .col-rank {
-    width: 65px;
+    width: 6%;
 }
 
 
@@ -167,9 +173,9 @@
 
     border: 1px solid #35567d;
 
-    padding: 7px 5px;
+    padding: 12px 6px;
 
-    font-size: 14px;
+    font-size: 21px;
 
     font-weight: 900;
 
@@ -186,6 +192,19 @@
 
 
 /* =========================================================
+   SECOND HEADER ROW
+========================================================= */
+
+.score-table thead tr:nth-child(2) th {
+    font-size: 20px;
+
+    padding: 9px 5px;
+
+    height: 40px;
+}
+
+
+/* =========================================================
    TABLE BODY
 ========================================================= */
 
@@ -196,15 +215,25 @@
 
     text-align: center;
 
-    padding: 7px 5px;
+    padding: 10px 6px;
 
-    font-size: 14px;
+    font-size: 21px;
 
-    font-weight: 500;
+    font-weight: 700;
 
-    height: 34px;
+    height: 58px;
 
     white-space: nowrap;
+}
+
+
+/* =========================================================
+   LOT NUMBER
+========================================================= */
+
+.score-table tbody td:first-child {
+    font-size: 20px;
+    font-weight: 800;
 }
 
 
@@ -215,9 +244,11 @@
 .athlete-name {
     text-align: left !important;
 
-    padding-left: 10px !important;
+    padding-left: 14px !important;
 
-    font-weight: 700 !important;
+    font-weight: 800 !important;
+
+    font-size: 22px !important;
 
     white-space: nowrap;
 
@@ -250,7 +281,7 @@
 
     align-items: center;
 
-    padding: 9px 16px;
+    padding: 11px 18px;
 
     margin: 7px 0 4px;
 
@@ -262,7 +293,7 @@
 
     color: #ffd54f;
 
-    font-size: 16px;
+    font-size: 21px;
 
     font-weight: 800;
 }
@@ -274,7 +305,7 @@
 .category-left strong {
     color: #ffffff;
 
-    font-size: 17px;
+    font-size: 23px;
 }
 
 
@@ -285,13 +316,22 @@
 .current-athlete-row {
     background: #ffd54f !important;
 
-    scroll-margin-top: 100px;
+    scroll-margin-top: 120px;
 }
 
 .current-athlete-row td {
     color: #000000 !important;
 
-    font-weight: 800;
+    font-weight: 900;
+
+    font-size: 22px;
+}
+
+
+/* Keep current athlete name especially visible */
+
+.current-athlete-row .athlete-name {
+    font-size: 24px !important;
 }
 
 
@@ -310,7 +350,9 @@
 
     color: #000000 !important;
 
-    font-weight: 700;
+    font-weight: 800;
+
+    font-size: 21px;
 }
 
 
@@ -324,6 +366,8 @@
     color: #000000 !important;
 
     font-weight: 900 !important;
+
+    font-size: 24px !important;
 }
 
 .current-attempt span {
@@ -339,18 +383,24 @@
     color: #66ff33;
 
     font-weight: 900;
+
+    font-size: 22px;
 }
 
 .no-lift {
     color: #ff4040;
 
     font-weight: 900;
+
+    font-size: 22px;
 }
 
 .pending-lift {
     color: #ffffff;
 
-    font-weight: 700;
+    font-weight: 800;
+
+    font-size: 22px;
 }
 
 
@@ -362,6 +412,8 @@
     color: #6dff6d !important;
 
     font-weight: 900 !important;
+
+    font-size: 23px !important;
 }
 
 
@@ -373,6 +425,8 @@
     color: #ffb400 !important;
 
     font-weight: 900 !important;
+
+    font-size: 26px !important;
 }
 
 
@@ -384,6 +438,25 @@
     color: #ffd54f !important;
 
     font-weight: 900 !important;
+
+    font-size: 26px !important;
+}
+
+
+/* =========================================================
+   CURRENT ROW TOTAL / RANK
+========================================================= */
+
+.current-athlete-row .total-cell {
+    color: #000000 !important;
+
+    font-size: 28px !important;
+}
+
+.current-athlete-row .rank-cell {
+    color: #000000 !important;
+
+    font-size: 28px !important;
 }
 
 
@@ -428,15 +501,15 @@
 @media (max-width: 1200px) {
 
     .competition-title {
-        font-size: 24px;
+        font-size: 28px;
     }
 
     .header-info {
-        font-size: 14px;
+        font-size: 16px;
     }
 
     .score-table {
-        min-width: 1150px;
+        min-width: 1200px;
     }
 }
 
@@ -444,20 +517,20 @@
 @media (max-width: 900px) {
 
     .competition-title {
-        font-size: 20px;
+        font-size: 24px;
     }
 
     .header {
-        padding: 10px 12px;
+        padding: 12px 14px;
     }
 
     .header-info {
-        font-size: 13px;
+        font-size: 14px;
 
-        gap: 8px;
+        gap: 10px;
     }
 
     .score-table {
-        min-width: 1150px;
+        min-width: 1200px;
     }
 }
