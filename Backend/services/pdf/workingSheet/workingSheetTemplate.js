@@ -1,282 +1,249 @@
-import { workingSheetStyles } from "./WorkingSheetStyle.js";
+export const workingSheetStyles = () => `
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
-export const workingSheetTemplate = (competition, workingSheetData ,gender) => {
-    
-    return `
-<!DOCTYPE html>
-<html>
 
-<head>
+/* ===========================
+   A4 PAGE
+=========================== */
 
-<meta charset="UTF-8">
+@page {
+    size: A4 portrait;
+    margin: 12mm;
+}
 
-<title>
-${gender.toLowerCase() === "female"
-    ? "Women's Working Sheet"
-    : "Men's Working Sheet"}
-</title>
 
-<style>
+body {
+    font-size: 11px;
+    color: #000;
+}
 
-${workingSheetStyles()}
 
-</style>
+/* ===========================
+   CATEGORY PAGE
+=========================== */
 
-</head>
+.category-page {
+    width: 100%;
 
-<body>
+    page-break-inside: avoid;
+    break-inside: avoid;
 
-<div class="page">
+    page-break-after: always;
+    break-after: page;
+}
 
-    <div class="header">
 
-        <h2>SURAT DISTRICT WEIGHTLIFTING ASSOCIATION</h2>
+/*
+ * Do not create an unnecessary
+ * blank page after the last category.
+ */
 
-        <h3>
-    ${gender === "female"
-        ? "WOMEN'S WORKING SHEET"
-        : "MEN'S WORKING SHEET"}
-</h3>
+.category-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+}
 
-<h4>${competition.competitionName}</h4>
 
-       <p>
+/* ===========================
+   HEADER
+=========================== */
 
-    Venue : ${competition.venue}
-    <br>
-    Date : ${new Date().toLocaleDateString("en-IN")}
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+}
 
-</p>
 
-    </div>
+.header h2 {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
 
- ${workingSheetData.map(section => `
 
-<div class="weight-section">
+.header h3 {
+    font-size: 15px;
+    margin-bottom: 8px;
+}
 
-    <div class="class-title">
-        Class : ${section.class}
-    </div>
 
-    <table class="working-sheet-table">
+.header p {
+    font-size: 12px;
+    line-height: 1.5;
+}
 
-       <thead>
 
+/* ===========================
+   CLASS TITLE
+=========================== */
 
+.class-title {
+    border: 1.5px solid #000;
 
-                    <tr>
+    padding: 6px 10px;
 
+    font-weight: bold;
 
+    margin-bottom: 6px;
+}
 
-                        <th class="lot-col" rowspan="2">
 
-    Lot
+/* ===========================
+   WORKING SHEET TABLE
+=========================== */
 
-</th>
+table {
+    width: 100%;
 
+    border-collapse: collapse;
 
+    table-layout: fixed;
 
-<th class="sr-col" rowspan="2">
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
 
-    Sr.
 
-</th>
+th,
+td {
+    border: 1px solid #000;
 
+    text-align: center;
+    vertical-align: middle;
 
+    padding: 4px;
+}
 
-                        <th class="name-col" rowspan="2">
 
-                            Name of Competitor
+th {
+    font-weight: bold;
+}
 
-                        </th>
 
+tbody td {
+    height: 32px;
+}
 
 
-                        <th class="event-group" colspan="3">
+/* ===========================
+   COLUMN WIDTHS
+=========================== */
 
-                            Event
+.lot-col {
+    width: 40px;
 
-                        </th>
+    text-align: center;
 
+    font-weight: bold;
+}
 
 
-                        <th class="snatch-group" colspan="3">
+.sr-col {
+    width: 40px;
+}
 
-                            Snatch
 
-                        </th>
+.name-col {
+    width: 220px;
 
+    text-align: left;
 
+    padding-left: 8px;
+}
 
-                        <th class="cj-group" colspan="3">
 
-                            Clean & Jerk
+.event-col {
+    width: 28px;
+}
 
-                        </th>
 
+.attempt-col {
+    width: 38px;
+}
 
 
-                        <th class="maximum-group" colspan="2">
+.maximum-col {
+    width: 45px;
+}
 
-                            Maximum
 
-                        </th>
+.total-col {
+    width: 55px;
+}
 
 
+.place-col {
+    width: 55px;
+}
 
-                        <th class="total-col" rowspan="2">
 
-                            Total
+/* ===========================
+   HEADER GROUPS
+=========================== */
 
-                        </th>
+.event-group,
+.snatch-group,
+.cj-group,
+.maximum-group {
+    font-weight: bold;
+}
 
 
+/* ===========================
+   CHECK MARK
+=========================== */
 
-                        <th class="place-col" rowspan="2">
+.checkmark {
+    font-weight: bold;
+}
 
-                            Place
 
-                        </th>
+/* ===========================
+   SIGNATURE SECTION
+=========================== */
 
+.signature-row {
+    width: 100%;
 
+    display: flex;
 
-                    </tr>
+    justify-content: space-between;
 
+    align-items: flex-end;
 
+    margin-top: 45px;
 
-                    <tr>
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
 
 
+.signature {
+    width: 18%;
 
-                        <th class="event-col">YTH</th>
+    text-align: center;
 
-                        <th class="event-col">JR</th>
+    font-size: 11px;
+}
 
-                        <th class="event-col">SR</th>
 
+.signature-line {
+    border-top: 1px solid #000;
 
+    margin-bottom: 6px;
+}
 
-                        <th class="attempt-col">1</th>
 
-                        <th class="attempt-col">2</th>
+/* ===========================
+   EXPLICIT PAGE BREAK
+=========================== */
 
-                        <th class="attempt-col">3</th>
-
-
-
-                        <th class="attempt-col">1</th>
-
-                        <th class="attempt-col">2</th>
-
-                        <th class="attempt-col">3</th>
-
-
-
-                        <th class="maximum-col">S</th>
-
-                        <th class="maximum-col">C&amp;J</th>
-
-
-
-                    </tr>
-
-
-
-                </thead>
-
-        <tbody>
-
-            ${section.athletes.map(athlete => `
-
-            <tr>
-
-                <td class="lot-col">
-                    ${athlete.lotNumber ?? ""}
-                </td>
-
-                <td class="sr-col">
-                    ${athlete.serialNo}
-                </td>
-
-                <td class="name-col">
-                    ${athlete.name}
-                </td>
-
-                <td class="event-col checkmark">
-    ${athlete.isYouth ? "✓" : ""}
-</td>
-
-<td class="event-col checkmark">
-    ${athlete.isJunior ? "✓" : ""}
-</td>
-
-<td class="event-col checkmark">
-    ${athlete.isSenior ? "✓" : ""}
-</td>
-
-                <td class="attempt-col">
-                    ${athlete.openingSnatch ?? ""}
-                </td>
-
-                <td class="attempt-col"></td>
-                <td class="attempt-col"></td>
-
-                <td class="attempt-col">
-                    ${athlete.openingCleanJerk ?? ""}
-                </td>
-
-                <td class="attempt-col"></td>
-                <td class="attempt-col"></td>
-
-                <td class="maximum-col"></td>
-                <td class="maximum-col"></td>
-
-                <td class="total-col"></td>
-                <td class="place-col"></td>
-
-            </tr>
-
-            `).join("")}
-
-        </tbody>
-
-    </table>
-
-</div>
-
-`).join("")}
-  <div class="footer">
-
-    <div class="signature">
-        <div class="signature-line"></div>
-        <p>Scorer</p>
-    </div>
-
-    <div class="signature">
-        <div class="signature-line"></div>
-        <p>Organizer</p>
-    </div>
-
-    <div class="signature">
-        <div class="signature-line"></div>
-        <p>Side Referee</p>
-    </div>
-
-    <div class="signature">
-        <div class="signature-line"></div>
-        <p>Side Referee</p>
-    </div>
-
-    <div class="signature">
-        <div class="signature-line"></div>
-        <p>Chief Referee</p>
-    </div>
-
-</div>
-
-   </div>                   
-</body>
-
-</html>
+.page-break {
+    page-break-after: always;
+    break-after: page;
+}
 `;
-};
