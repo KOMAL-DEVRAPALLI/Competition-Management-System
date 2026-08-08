@@ -1,19 +1,47 @@
-import "./CompetitionPanel.css"
+import "./CompetitionPanel.css";
+
 const CurrentAthletePanel = ({
     currentAthlete,
-    currentAttempt,
-    currentWeight,
+
     declaredWeight,
-    isAttemptOne,
-    savingDeclaration,
-    processingLift,
-    onDeclaredWeightChange,
+    setDeclaredWeight,
+
     onSaveDeclaration,
     onProcessLift,
+
+    savingDeclaration,
+    processingLift,
 }) => {
 
+    // =====================================
+    // CURRENT ATTEMPT
+    // =====================================
+
+    const currentAttempt =
+        currentAthlete?.currentAttempt ?? null;
+
+
+    // =====================================
+    // CURRENT WEIGHT
+    //
+    // This is the currently declared weight.
+    // =====================================
+
+    const currentWeight =
+        currentAttempt?.declaredWeight;
+
+
+    // =====================================
+    // RENDER
+    // =====================================
+
     return (
+
         <section className="live-score-current">
+
+            {/* =================================
+                HEADER
+            ================================= */}
 
             <div className="live-score-current-header">
 
@@ -21,13 +49,21 @@ const CurrentAthletePanel = ({
                     Current Athlete
                 </h2>
 
+
                 {currentAthlete && (
+
                     <span>
                         ON PLATFORM
                     </span>
+
                 )}
 
             </div>
+
+
+            {/* =================================
+                EMPTY PLATFORM
+            ================================= */}
 
             {!currentAthlete ? (
 
@@ -36,6 +72,7 @@ const CurrentAthletePanel = ({
                     <h2>
                         PLATFORM EMPTY
                     </h2>
+
 
                     <p>
                         Official must manually
@@ -48,9 +85,9 @@ const CurrentAthletePanel = ({
 
                 <div className="current-athlete-panel">
 
-                    {/* =========================
+                    {/* =============================
                         ATHLETE INFORMATION
-                    ========================= */}
+                    ============================= */}
 
                     <div className="current-athlete-main">
 
@@ -60,153 +97,215 @@ const CurrentAthletePanel = ({
                                 ATHLETE
                             </div>
 
+
                             <h1>
-                                {currentAthlete.name}
+                                {
+                                    currentAthlete.name
+                                }
                             </h1>
 
                         </div>
 
+
+                        {/* =============================
+                            ATHLETE META
+                        ============================= */}
+
                         <div className="current-athlete-meta">
 
+                            {/* LOT */}
+
                             <div>
+
                                 <strong>
                                     Lot
                                 </strong>
 
+
                                 <span>
                                     {
                                         currentAthlete
-                                            .lotNumber
+                                            .lotNumber ??
+                                        "-"
                                     }
                                 </span>
+
                             </div>
 
+
+                            {/* ATTEMPT */}
+
                             <div>
+
                                 <strong>
                                     Attempt
                                 </strong>
 
+
                                 <span>
+
                                     {
-                                        currentAttempt
-                                            ?.phase
+                                        currentAttempt?.phase
                                     }{" "}
+
                                     {
                                         currentAttempt
                                             ?.attemptNo
                                     }
+
                                 </span>
+
                             </div>
 
+
+                            {/* WEIGHT */}
+
                             <div>
+
                                 <strong>
                                     Weight
                                 </strong>
 
+
                                 <span>
+
                                     {
                                         currentWeight ??
                                         "-"
                                     } kg
+
                                 </span>
+
                             </div>
 
                         </div>
 
                     </div>
 
-                    {/* =========================
+
+                    {/* =============================
                         DECLARATION
-                    ========================= */}
+                    ============================= */}
 
                     <div className="current-athlete-declaration">
 
-                        <label>
+                        <label htmlFor="declared-weight">
+
                             Declared Weight (kg)
+
                         </label>
+
 
                         <div className="declaration-control">
 
                             <input
+                                id="declared-weight"
                                 type="number"
                                 min="1"
+                                step="1"
+
                                 value={
-                                    declaredWeight
+                                    declaredWeight ?? ""
                                 }
+
                                 disabled={
-                                    isAttemptOne ||
                                     savingDeclaration ||
                                     processingLift
                                 }
-                                onChange={(event) =>
-                                    onDeclaredWeightChange(
+
+                                onChange={(event) => {
+
+                                    setDeclaredWeight(
                                         event.target.value
-                                    )
-                                }
+                                    );
+
+                                }}
+
                             />
+
 
                             <button
                                 type="button"
+
                                 onClick={
                                     onSaveDeclaration
                                 }
+
                                 disabled={
-                                    isAttemptOne ||
                                     savingDeclaration ||
                                     processingLift ||
                                     !declaredWeight
                                 }
                             >
-                                {savingDeclaration
-                                    ? "Saving..."
-                                    : "Save Declaration"}
+
+                                {
+                                    savingDeclaration
+                                        ? "Saving..."
+                                        : "Save Declaration"
+                                }
+
                             </button>
 
                         </div>
 
-                        {isAttemptOne && (
-                            <small>
-                                Attempt 1 uses the
-                                opening weight.
-                            </small>
-                        )}
+
+                        {/* =============================
+                            DECLARATION INFORMATION
+                        ============================= */}
+
+                        <small>
+
+                            Enter or modify the declared
+                            weight before the lift.
+
+                        </small>
 
                     </div>
 
-                    {/* =========================
+
+                    {/* =============================
                         LIFT CONTROLS
-                    ========================= */}
+                    ============================= */}
 
                     <div className="lift-decision">
 
                         <button
                             type="button"
                             className="good-btn"
+
                             disabled={
                                 processingLift
                             }
+
                             onClick={() =>
                                 onProcessLift(
                                     "GOOD"
                                 )
                             }
                         >
+
                             GOOD LIFT
+
                         </button>
+
 
                         <button
                             type="button"
                             className="no-lift-btn"
+
                             disabled={
                                 processingLift
                             }
+
                             onClick={() =>
                                 onProcessLift(
                                     "NO_LIFT"
                                 )
                             }
                         >
+
                             NO LIFT
+
                         </button>
 
                     </div>
@@ -216,7 +315,9 @@ const CurrentAthletePanel = ({
             )}
 
         </section>
+
     );
 };
+
 
 export default CurrentAthletePanel;
