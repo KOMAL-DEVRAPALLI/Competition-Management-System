@@ -1,6 +1,7 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
 import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
+import selectNextAthlete from "./selectNextAthlete.js";
 
 const updateCurrentPlatformAthlete = async (
     competitionId,
@@ -60,6 +61,7 @@ const updateCurrentPlatformAthlete = async (
         session.currentPhase
     );
 
+
     // -----------------------------------
     // Platform already occupied
     //
@@ -82,26 +84,6 @@ const updateCurrentPlatformAthlete = async (
         return session;
     }
 
-    // -----------------------------------
-    // We only allow an explicitly declared
-    // athlete to become current.
-    //
-    // No preferredEntryId means:
-    // DO NOT automatically select anyone.
-    // -----------------------------------
-
-    if (!preferredEntryId) {
-
-        console.log(
-            "NO EXPLICIT DECLARATION."
-        );
-
-        console.log(
-            "PLATFORM REMAINS EMPTY."
-        );
-
-        return session;
-    }
 
     // -----------------------------------
     // Load competition entries
@@ -120,136 +102,280 @@ const updateCurrentPlatformAthlete = async (
         entries.length
     );
 
+
     // -----------------------------------
-    // Find the EXACT declared athlete
+    // Find currently declared athletes
+    //
+    // IMPORTANT:
+    //
+    // Attempt 1 with only opening weight
+    // is NOT considered declared.
+    //
+    // It becomes eligible only after the
+    // official saves the declaration.
+    //
+    // Attempt 2 / 3 also require
+    // declaredWeight.
     // -----------------------------------
 
-    const preferredEntry =
-        entries.find(
-            (entry) =>
-                entry.entryId.toString() ===
-                preferredEntryId.toString()
+    const declaredEntries =
+        entries.filter(
+            (entry) => {
+
+                const attempt =
+                    getCurrentAttempt(
+                        entry.competitionEntry
+                    );
+
+                if (
+                    attempt.completed
+                ) {
+                    return false;
+                }
+
+                if (
+                    attempt.phase !==
+                    session.currentPhase
+                ) {
+                    return false;
+                }
+
+                const isDeclared =
+                    attempt.declaredWeight != null &&
+                    attempt.declaredWeight > 0;
+
+                if (isDeclared) {
+
+                    console.log(
+                        "DECLARED ATHLETE:",
+                        {
+                            name:
+                                entry.name,
+
+                            entryId:
+                                entry.entryId
+                                    .toString(),
+
+                            phase:
+                                attempt.phase,
+
+                            attempt:
+                                attempt.attemptNo,
+
+                            declaredWeight:
+                                attempt.declaredWeight,
+
+                            declaredAt:
+                                attempt.declaredAt,
+
+                            lot:
+                                entry.lotNumber,
+                        }
+                    );
+
+                }
+
+                return isDeclared;
+            }
         );
 
-    if (!preferredEntry) {
+
+    console.log(
+        "TOTAL DECLARED ATHLETES:",
+        declaredEntries.length
+    );
+
+
+    // -----------------------------------
+    // Nobody has declared
+    // -----------------------------------
+
+    if (
+        !declaredEntries.length
+    ) {
+
+        console.log(
+            "NO DECLARED ATHLETE."
+        );
+
+        console.log(
+            "PLATFORM REMAINS EMPTY."
+        );
+
+        return session;
+    }
+
+
+    // -----------------------------------
+    // Check preferred declaration
+    //
+    // The preferred athlete is the athlete
+    // whose declaration triggered this
+    // function.
+    //
+    // BUT:
+    //
+    // preferredEntryId does NOT automatically
+    // give that athlete platform priority.
+    //
+    // They must compete against all other
+    // declared athletes according to the
+    // calling-order rules.
+    // -----------------------------------
+
+    if (preferredEntryId) {
+
+        const preferredEntry =
+            declaredEntries.find(
+                (entry) =>
+                    entry.entryId
+                        .toString() ===
+                    preferredEntryId
+                        .toString()
+            );
+
+        if (preferredEntry) {
+
+            const preferredAttempt =
+                getCurrentAttempt(
+                    preferredEntry
+                        .competitionEntry
+                );
+
+            console.log(
+                "===== PREFERRED DECLARATION ====="
+            );
+
+            console.log(
+                "Name:",
+                preferredEntry.name
+            );
+
+            console.log(
+                "Entry:",
+                preferredEntry.entryId
+                    .toString()
+            );
+
+            console.log(
+                "Attempt:",
+                preferredAttempt.attemptNo
+            );
+
+            console.log(
+                "Declared Weight:",
+                preferredAttempt.declaredWeight
+            );
+
+        } else {
+
+            console.log(
+                "PREFERRED ENTRY NOT IN DECLARED LIST."
+            );
+        }
+    }
+
+
+    // -----------------------------------
+    // Select according to competition
+    // calling order
+    //
+    // selectNextAthlete() now decides:
+    //
+    // 1. Lowest weight
+    // 2. Lowest attempt number
+    // 3. Previous attempt sequence
+    // 4. Lowest lot number
+    // -----------------------------------
+
+    const nextAthlete =
+        selectNextAthlete(
+            declaredEntries
+        );
+
+    if (!nextAthlete) {
 
         throw new Error(
-            "Declared athlete is not part of this live competition."
+            "Unable to determine next athlete."
         );
     }
 
-    // -----------------------------------
-    // Get current attempt
-    // -----------------------------------
 
-    const currentAttempt =
+    const selectedAttempt =
         getCurrentAttempt(
-            preferredEntry.competitionEntry
+            nextAthlete.competitionEntry
         );
 
+
     console.log(
-        "===== DECLARED ATHLETE CHECK ====="
+        "===== PLATFORM ATHLETE SELECTED ====="
     );
 
     console.log(
         "Entry:",
-        preferredEntry.entryId
+        nextAthlete.entryId
             .toString()
     );
 
     console.log(
         "Name:",
-        preferredEntry.name
+        nextAthlete.name
     );
 
     console.log(
         "Phase:",
-        currentAttempt.phase
+        selectedAttempt.phase
     );
 
     console.log(
         "Attempt:",
-        currentAttempt.attemptNo
+        selectedAttempt.attemptNo
     );
 
     console.log(
         "Declared Weight:",
-        currentAttempt.declaredWeight
+        selectedAttempt.declaredWeight
     );
 
     console.log(
-        "Result:",
-        currentAttempt.result
+        "Declared At:",
+        selectedAttempt.declaredAt
     );
 
-    // -----------------------------------
-    // Validate current attempt
-    // -----------------------------------
+    console.log(
+        "Lot:",
+        nextAthlete.lotNumber
+    );
 
-    if (
-        currentAttempt.completed
-    ) {
-
-        throw new Error(
-            "Declared athlete has completed the competition."
-        );
-    }
-
-    if (
-        currentAttempt.phase !==
-        session.currentPhase
-    ) {
-
-        throw new Error(
-            `Phase mismatch. Competition is in ${session.currentPhase}, but declared athlete is in ${currentAttempt.phase}.`
-        );
-    }
 
     // -----------------------------------
-    // Explicit declaration is required
-    // -----------------------------------
-
-    if (
-        currentAttempt.declaredWeight ==
-            null ||
-        currentAttempt.declaredWeight <= 0
-    ) {
-
-        throw new Error(
-            "Athlete has not declared a valid weight."
-        );
-    }
-
-    // -----------------------------------
-    // Put EXACT declared athlete
-    // on the platform.
-    //
-    // Do NOT call selectNextAthlete().
-    // The official declaration is
-    // authoritative.
+    // Put selected athlete on platform
     // -----------------------------------
 
     session.currentEntryId =
-        preferredEntry.entryId;
+        nextAthlete.entryId;
+
 
     // -----------------------------------
-    // If this athlete was the one waiting
-    // in Prepare, remove them from Prepare.
+    // Remove selected athlete from
+    // Prepare if applicable
     // -----------------------------------
 
     if (
         session.prepareEntryId &&
         session.prepareEntryId
             .toString() ===
-            preferredEntry.entryId
-                .toString()
+        nextAthlete.entryId
+            .toString()
     ) {
 
         session.prepareEntryId =
             null;
     }
 
+
     await session.save();
+
 
     console.log(
         "===== ATHLETE MOVED TO PLATFORM ====="
@@ -267,10 +393,6 @@ const updateCurrentPlatformAthlete = async (
             ?.toString() ?? "NONE"
     );
 
-    console.log(
-        "Declared Weight:",
-        currentAttempt.declaredWeight
-    );
 
     return session;
 };
