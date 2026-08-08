@@ -262,11 +262,24 @@
    NEXT ATHLETE
 ========================================================= */
 
+/* =========================================================
+   NEXT ATHLETE
+========================================================= */
+
+.next-athlete-row {
+    background: #dbe8f8 !important;
+}
+
 .next-athlete-row td {
     border-top: 2px dashed #00ffff !important;
     border-bottom: 2px dashed #00ffff !important;
+    color: #000000 !important;
+    font-weight: 700;
 }
 
+.next-athlete-row td span {
+    color: #000000 !important;
+}
 
 /* =========================================================
    CURRENT ATTEMPT
