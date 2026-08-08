@@ -27,6 +27,10 @@ const advanceCompetition = async (
     const previousCurrentEntryId =
         session.currentEntryId;
 
+    // -----------------------------------
+    // Get current competition entries
+    // -----------------------------------
+
     const entries =
         await buildWorkingSheetData(
             competitionId,
@@ -43,7 +47,7 @@ const advanceCompetition = async (
 
     // -----------------------------------
     // Check whether an athlete still has
-    // an incomplete attempt in a phase.
+    // a pending attempt in a phase.
     // -----------------------------------
 
     const hasPendingAttemptInPhase = (
@@ -60,7 +64,6 @@ const advanceCompetition = async (
             (attempt) =>
                 attempt.result === "PENDING"
         );
-
     };
 
     // -----------------------------------
@@ -79,18 +82,35 @@ const advanceCompetition = async (
                     phase
                 )
         );
-
     };
 
     // -----------------------------------
-    // Get athletes whose CURRENT attempt
-    // is ready for the platform.
+    // IMPORTANT
     //
-    // Attempt 1:
-    // Uses opening weight.
+    // After a lift is completed, an
+    // athlete is eligible for the
+    // platform ONLY when their current
+    // attempt has a declaration.
     //
-    // Attempt 2 / 3:
-    // Must have a declared weight.
+    // We DO NOT use opening weight here.
+    //
+    // Opening weight is only used by
+    // startLiveCompetition.js for the
+    // initial athlete.
+    //
+    // Therefore:
+    //
+    // Attempt 1 + declaredWeight null
+    //      => NOT READY
+    //
+    // Attempt 1 + declaredWeight 30
+    //      => READY
+    //
+    // Attempt 2 + declaredWeight null
+    //      => NOT READY
+    //
+    // Attempt 2 + declaredWeight 35
+    //      => READY
     // -----------------------------------
 
     const getEligibleEntries = (
@@ -114,51 +134,39 @@ const advanceCompetition = async (
                     return false;
                 }
 
-                // -----------------------------------
-                // Attempt 1
-                // -----------------------------------
-
-                if (
-                    attempt.attemptNo === 1
-                ) {
-
-                    const openingWeight =
-                        attempt.phase === "SNATCH"
-                            ? entry.openingSnatch
-                            : entry.openingCleanJerk;
-
-                    return (
-                        openingWeight != null &&
-                        openingWeight > 0
-                    );
-
-                }
-
-                // -----------------------------------
-                // Attempt 2 / 3
-                // -----------------------------------
-
-                return (
+                const eligible =
                     attempt.declaredWeight != null &&
-                    attempt.declaredWeight > 0
+                    attempt.declaredWeight > 0;
+
+                console.log(
+                    "ELIGIBILITY CHECK:",
+                    entry.name,
+                    "| Phase:",
+                    attempt.phase,
+                    "| Attempt:",
+                    attempt.attemptNo,
+                    "| Declared:",
+                    attempt.declaredWeight,
+                    "| Eligible:",
+                    eligible
                 );
 
+                return eligible;
             }
         );
-
     };
 
     // -----------------------------------
     // Determine PREPARE athlete.
     //
-    // The previous athlete stays in
-    // PREPARE if they still have another
-    // attempt in the current phase.
+    // Previous athlete remains in PREPARE
+    // only if another attempt exists in
+    // the current phase.
     //
-    // They do NOT automatically get the
-    // platform. Once they declare, they
-    // re-enter the normal competition
-    // order.
+    // They do NOT automatically return to
+    // the platform.
+    //
+    // They must declare their next attempt.
     // -----------------------------------
 
     const getPrepareEntryId = (
@@ -225,7 +233,7 @@ const advanceCompetition = async (
     );
 
     // -----------------------------------
-    // Debug athletes
+    // DEBUG EVERY ATHLETE
     // -----------------------------------
 
     entries.forEach((entry) => {
@@ -247,22 +255,22 @@ const advanceCompetition = async (
 
         console.log(
             "Current Phase:",
-            attempt.phase
+            attempt?.phase
         );
 
         console.log(
             "Current Attempt:",
-            attempt.attemptNo
+            attempt?.attemptNo
         );
 
         console.log(
             "Declared Weight:",
-            attempt.declaredWeight
+            attempt?.declaredWeight
         );
 
         console.log(
             "Declared At:",
-            attempt.declaredAt
+            attempt?.declaredAt
         );
 
     });
@@ -294,8 +302,7 @@ const advanceCompetition = async (
         } else {
 
             // -----------------------------------
-            // Every athlete completed all
-            // Snatch attempts.
+            // Every athlete completed Snatch.
             // -----------------------------------
 
             console.log(
@@ -313,9 +320,7 @@ const advanceCompetition = async (
                 getPendingEntries(
                     "CLEAN_JERK"
                 );
-
         }
-
     }
 
     // -----------------------------------
@@ -348,11 +353,13 @@ const advanceCompetition = async (
 
             return session;
         }
-
     }
 
     // -----------------------------------
-    // Find athletes ready for platform
+    // Find athletes whose CURRENT attempt
+    // is ACTUALLY DECLARED.
+    //
+    // This is the critical rule.
     // -----------------------------------
 
     const eligibleEntries =
@@ -365,7 +372,7 @@ const advanceCompetition = async (
     );
 
     console.log(
-        "ELIGIBLE ATHLETES:",
+        "ELIGIBLE DECLARED ATHLETES:",
         eligibleEntries.length
     );
 
@@ -383,23 +390,24 @@ const advanceCompetition = async (
                 "| Attempt:",
                 attempt.attemptNo,
                 "| Declared:",
-                attempt.declaredWeight,
-                "| Opening:",
-                attempt.phase === "SNATCH"
-                    ? entry.openingSnatch
-                    : entry.openingCleanJerk
+                attempt.declaredWeight
             );
-
         }
     );
 
     // -----------------------------------
-    // Nobody is currently ready.
+    // NOBODY HAS DECLARED
     //
-    // Platform becomes empty.
+    // IMPORTANT:
     //
-    // Previous athlete goes to Prepare
-    // if another attempt remains.
+    // Do NOT put another athlete on the
+    // platform just because they have an
+    // opening weight.
+    //
+    // Platform remains EMPTY.
+    //
+    // Previous athlete becomes PREPARE
+    // if they have another attempt.
     // -----------------------------------
 
     if (
@@ -415,13 +423,17 @@ const advanceCompetition = async (
             );
 
         console.log(
-            "===== WAITING FOR DECLARATION ====="
+            "===================================="
+        );
+
+        console.log(
+            "WAITING FOR DECLARATION"
         );
 
         console.log(
             "Previous Current:",
             previousCurrentEntryId
-                ?.toString()
+                ?.toString() ?? "NONE"
         );
 
         console.log(
@@ -440,27 +452,27 @@ const advanceCompetition = async (
     }
 
     // -----------------------------------
+    // SELECT NEXT ATHLETE
+    //
     // IMPORTANT:
     //
-    // DO NOT exclude previousCurrentEntryId.
+    // Previous athlete is NOT excluded.
     //
-    // If the previous athlete has declared
-    // their next attempt, they are now part
-    // of the normal competition order.
+    // If they declared their next attempt,
+    // they compete again according to the
+    // normal weight/order rules.
     //
     // Example:
     //
-    // Athlete 1 Attempt 2 = 25 kg
-    // Athlete 2 Attempt 1 = 30 kg
+    // Patel Attempt 2 = 25 kg
+    // Sahil Attempt 1 = 30 kg
     //
-    // Athlete 1 must be selected.
+    // Patel gets selected.
     //
-    // But:
+    // Patel Attempt 2 = 35 kg
+    // Sahil Attempt 1 = 30 kg
     //
-    // Athlete 1 Attempt 2 = 35 kg
-    // Athlete 2 Attempt 1 = 30 kg
-    //
-    // Athlete 2 must be selected.
+    // Sahil gets selected.
     // -----------------------------------
 
     const nextAthlete =
@@ -473,7 +485,6 @@ const advanceCompetition = async (
         throw new Error(
             "Unable to determine next athlete."
         );
-
     }
 
     const nextAttempt =
@@ -482,7 +493,24 @@ const advanceCompetition = async (
         );
 
     // -----------------------------------
-    // Safety check
+    // Final safety check
+    //
+    // NEVER allow an undeclared attempt
+    // onto the platform.
+    // -----------------------------------
+
+    if (
+        nextAttempt.declaredWeight == null ||
+        nextAttempt.declaredWeight <= 0
+    ) {
+
+        throw new Error(
+            `Safety error: ${nextAthlete.name} was selected without a valid declared weight.`
+        );
+    }
+
+    // -----------------------------------
+    // Phase safety check
     // -----------------------------------
 
     if (
@@ -493,7 +521,6 @@ const advanceCompetition = async (
         throw new Error(
             `Phase mismatch. Competition is in ${session.currentPhase}, but selected athlete is in ${nextAttempt.phase}.`
         );
-
     }
 
     // -----------------------------------
@@ -524,7 +551,7 @@ const advanceCompetition = async (
     console.log(
         "Previous Current:",
         previousCurrentEntryId
-            ?.toString()
+            ?.toString() ?? "NONE"
     );
 
     console.log(
