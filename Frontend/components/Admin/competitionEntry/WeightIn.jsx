@@ -53,7 +53,14 @@ const WeighInSection = ({ athlete, setAthlete }) => {
 
                 const response = await previewWeighIn(previewData);
 
-                setPreviewEntries(response.data);
+                setPreviewEntries(
+                    response.data.map((entry) => ({
+                        ...entry,
+                        assignedCategory:
+                            entry.assignedCategory ??
+                            entry.eligibleCategories[0],
+                    }))
+                );
 
 
             } catch (error) {
@@ -67,38 +74,57 @@ const WeighInSection = ({ athlete, setAthlete }) => {
     }, [official.bodyWeight, athlete]);
 
     const handleSave = async () => {
-        try {
-            setSaving(true)
-            const selectedCategories = previewEntries.reduce((acc, entry) => {
-                acc[entry.entryId] = entry.assignedCategory
-                return acc
-            }, {})
-            console.log("Preview Entries:", previewEntries);
+    try {
+        setSaving(true);
 
+        console.log("Preview Entries:", previewEntries);
 
-            console.log("Selected Categories:", selectedCategories);
-            const saveData = {
-                competitionId: athlete.competition,
-                athleteId: athlete._id,
-                bodyWeight: Number(official.bodyWeight),
-                lotNumber: Number(official.lotNumber),
-                selectedCategories,
-            };
-            const response = await saveWeighIn(saveData)
-            setAthlete(response.data.athlete)
+        const selectedCategories = previewEntries.reduce(
+            (acc, entry) => {
+                acc[String(entry.entryId)] =
+                    entry.assignedCategory ??
+                    entry.eligibleCategories?.[0] ??
+                    "";
 
-            alert("Weigh-in saved successfully!")
-        } catch (error) {
-            console.error(error);
-            alert(
-                error.response?.data?.message ||
-                error.message
-            );
-        }
-        finally {
-            setSaving(false)
-        }
-    };
+                return acc;
+            },
+            {}
+        );
+
+        console.log(
+            "Selected Categories:",
+            selectedCategories
+        );
+
+        const saveData = {
+            competitionId: athlete.competition,
+            athleteId: athlete._id,
+            bodyWeight: Number(official.bodyWeight),
+            lotNumber: Number(official.lotNumber),
+            selectedCategories,
+        };
+
+        console.log("Save Data:", saveData);
+
+        const response = await saveWeighIn(saveData);
+
+        setAthlete(response.data.athlete);
+
+        alert("Weigh-in saved successfully!");
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            error.response?.data?.message ||
+            error.message
+        );
+
+    } finally {
+        setSaving(false);
+    }
+};
 
     return (
 
@@ -144,35 +170,45 @@ const WeighInSection = ({ athlete, setAthlete }) => {
 
                                 <label>Weight Categories</label>
                                 {previewEntry.requiresSelection ? (
-                                    <select
-                                        value={previewEntry.assignedCategory || ""}
-                                        onChange={(e) => {
-                                            setPreviewEntries((prevEntries) =>
-                                                prevEntries.map((entry) => {
-                                                    if (entry.entryId === previewEntry.entryId) {
-                                                        return {
-                                                            ...entry,
-                                                            assignedCategory: e.target.value
-                                                        }
-                                                    }
+                                   <select
+    value={
+        previewEntry.assignedCategory ??
+        previewEntry.eligibleCategories[0]
+    }
+    onChange={(e) => {
 
-                                                    return entry
-                                                })
-                                            );
-                                        }}
-                                    >
-                                        {previewEntry.eligibleCategories.map((category) => (
-                                            <option
-                                                key={category}
-                                                value={category}
-                                            >
+        const value = e.target.value;
 
-                                                {category}
-                                            </option>
+        setPreviewEntries((prevEntries) =>
+            prevEntries.map((entry) => {
 
-                                        ))}
+                if (entry.entryId === previewEntry.entryId) {
+                    return {
+                        ...entry,
+                        assignedCategory: value,
+                    };
+                }
 
-                                    </select>
+                return entry;
+
+            })
+        );
+
+    }}
+>
+
+    {previewEntry.eligibleCategories.map((category) => (
+
+        <option
+            key={category}
+            value={category}
+        >
+            {category}
+        </option>
+
+    ))}
+
+</select>
                                 ) : (
                                     <input
                                         readOnly
