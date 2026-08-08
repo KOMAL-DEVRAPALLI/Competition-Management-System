@@ -12,7 +12,7 @@ const buildWorkingSheetData = async (
     // =====================================
 
     const normalizedGender =
-        gender?.toLowerCase();
+        String(gender ?? "").trim().toLowerCase();
 
     const normalizedCategories =
         Array.isArray(selectedWeightCategories)
@@ -23,46 +23,27 @@ const buildWorkingSheetData = async (
                 .filter(Boolean)
             : [];
 
+
     // =====================================
-    // BUILD MONGODB QUERY
+    // LOAD COMPETITION ENTRIES
     //
-    // Filter as early as possible instead
-    // of loading every competition entry
-    // and filtering everything in JavaScript.
-    // =====================================
-
-    const query = {
-        competitionId,
-
-        "official.finalWeightCategory": {
-            $exists: true,
-            $nin: ["", null],
-        },
-
-        "opening.snatch": {
-            $ne: null,
-        },
-
-        "opening.cleanJerk": {
-            $ne: null,
-        },
-    };
-
-    // =====================================
-    // FETCH ONLY REQUIRED DATA
+    // IMPORTANT:
     //
-    // We do not need the complete Athlete
-    // document or every CompetitionEntry
-    // field for the working sheet.
+    // Only filter by competitionId here.
+    //
+    // Do NOT add opening/final-category
+    // filters to MongoDB because that changes
+    // the previous working behavior.
     // =====================================
 
     const entries =
         await CompetitionEntry
-            .find(query)
+            .find({
+                competitionId,
+            })
             .select(
                 [
                     "_id",
-                    "competitionId",
                     "athleteId",
 
                     "competitionCategory.ageCategory",
@@ -90,56 +71,79 @@ const buildWorkingSheetData = async (
             })
             .lean();
 
+
     // =====================================
-    // BUILD ROWS
+    // GROUP ROWS
     // =====================================
 
     const groupedRows = {};
+
 
     for (const entry of entries) {
 
         const athlete =
             entry.athleteId;
 
-        // ---------------------------------
-        // Safety checks
-        // ---------------------------------
+
+        // =================================
+        // SAFETY CHECK
+        // =================================
 
         if (!athlete) {
             continue;
         }
 
+
         const athleteGender =
             athlete.personalInfo?.gender;
 
+
         const rawWeightCategory =
-            entry.official
-                ?.finalWeightCategory;
+            entry.official?.finalWeightCategory;
+
+
+        // =================================
+        // REQUIRED EXISTING DATA
+        //
+        // Same business rules as before.
+        // =================================
 
         if (
+            !entry.opening?.snatch ||
+            !entry.opening?.cleanJerk ||
             !athleteGender ||
             !rawWeightCategory
         ) {
             continue;
         }
 
-        // ---------------------------------
-        // Gender filter
-        // ---------------------------------
+
+        // =================================
+        // GENDER FILTER
+        // =================================
 
         if (
-            athleteGender.toLowerCase() !==
+            athleteGender
+                .toLowerCase() !==
             normalizedGender
         ) {
             continue;
         }
 
-        // ---------------------------------
-        // Session category filter
-        // ---------------------------------
+
+        // =================================
+        // WEIGHT CATEGORY
+        // =================================
 
         const displayWeightCategory =
             rawWeightCategory.trim();
+
+
+        // =================================
+        // SESSION CATEGORY FILTER
+        //
+        // Empty array = ALL categories.
+        // =================================
 
         if (
             normalizedCategories.length > 0 &&
@@ -150,25 +154,28 @@ const buildWorkingSheetData = async (
             continue;
         }
 
-        // ---------------------------------
-        // Normalize category
-        // ---------------------------------
+
+        // =================================
+        // NORMALIZE WEIGHT CATEGORY
+        // =================================
 
         const normalizedWeight =
             displayWeightCategory
                 .toLowerCase()
                 .replace(/\s+/g, "");
 
-        // ---------------------------------
-        // Unique athlete/category key
-        // ---------------------------------
+
+        // =================================
+        // UNIQUE ATHLETE/CATEGORY KEY
+        // =================================
 
         const key =
             `${athlete._id}-${normalizedWeight}`;
 
-        // ---------------------------------
-        // Create row
-        // ---------------------------------
+
+        // =================================
+        // CREATE ROW
+        // =================================
 
         if (!groupedRows[key]) {
 
@@ -190,7 +197,8 @@ const buildWorkingSheetData = async (
                 weightCategory:
                     normalizedWeight,
 
-                displayWeightCategory,
+                displayWeightCategory:
+                    displayWeightCategory,
 
                 name:
                     athlete.personalInfo
@@ -233,14 +241,12 @@ const buildWorkingSheetData = async (
                     entry.results
                         ?.rank ?? "",
 
-                // Keep the same structure
-                // expected by the live-scoring
-                // services.
                 competitionEntry:
                     entry,
 
             };
         }
+
 
         // =================================
         // AGE CATEGORY FLAGS
@@ -250,27 +256,42 @@ const buildWorkingSheetData = async (
             entry.competitionCategory
                 ?.ageCategory;
 
+
         if (age === "Youth") {
-            groupedRows[key].isYouth = true;
+
+            groupedRows[key]
+                .isYouth = true;
+
         }
+
 
         if (age === "Junior") {
-            groupedRows[key].isJunior = true;
+
+            groupedRows[key]
+                .isJunior = true;
+
         }
+
 
         if (age === "Senior") {
-            groupedRows[key].isSenior = true;
+
+            groupedRows[key]
+                .isSenior = true;
+
         }
+
     }
 
+
     // =====================================
-    // CONVERT OBJECT → ARRAY
+    // OBJECT → ARRAY
     // =====================================
 
     const rows =
         Object.values(
             groupedRows
         );
+
 
     // =====================================
     // SORT
@@ -288,55 +309,69 @@ const buildWorkingSheetData = async (
                 b.weightCategory
             );
 
-        if (weightA !== weightB) {
+
+        if (
+            weightA !==
+            weightB
+        ) {
+
             return (
                 weightA -
                 weightB
             );
+
         }
+
 
         return (
             (a.lotNumber ?? 9999) -
             (b.lotNumber ?? 9999)
         );
+
     });
+
 
     // =====================================
     // FLAT MODE
     //
-    // Live competition uses flat=true.
-    // Return immediately so we don't perform
-    // unnecessary grouping work.
+    // Used by live scoring.
     // =====================================
 
     if (flat) {
+
         return rows;
+
     }
+
 
     // =====================================
     // GROUPED MODE
     //
-    // Used by working-sheet generation.
+    // Used by working-sheet PDF.
     // =====================================
 
     const grouped = {};
 
+
     for (const row of rows) {
 
-        if (
-            !grouped[
-                row.weightCategory
-            ]
-        ) {
-            grouped[
-                row.weightCategory
-            ] = [];
+        const category =
+            row.weightCategory;
+
+
+        if (!grouped[category]) {
+
+            grouped[category] = [];
+
         }
 
-        grouped[
-            row.weightCategory
-        ].push(row);
+
+        grouped[category].push(
+            row
+        );
+
     }
+
 
     // =====================================
     // FINAL WORKING SHEET STRUCTURE
@@ -374,5 +409,6 @@ const buildWorkingSheetData = async (
         })
     );
 };
+
 
 export default buildWorkingSheetData;

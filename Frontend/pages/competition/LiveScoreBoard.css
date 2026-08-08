@@ -4,351 +4,400 @@
 
 .scoreboard {
     width: 100%;
-    min-height: 100vh;
-    background: #081a33;
-    overflow: hidden;
     box-sizing: border-box;
+    background: #081a33;
+    color: #ffffff;
+    padding: 0;
+    overflow: hidden;
 }
+
 
 /* =========================================================
    HEADER
 ========================================================= */
 
-.header {
+.scoreboard-header {
     width: 100%;
     box-sizing: border-box;
+
     background: #0a2342;
-    padding: 8px 15px;
+
+    padding: 14px 18px;
+
+    border-top: 2px solid #17365d;
     border-bottom: 2px solid #2d4f7c;
 }
 
-.competition-title {
+.scoreboard-header h2 {
     margin: 0;
-    text-align: center;
+
     color: #ffffff;
+
     font-size: 24px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    white-space: nowrap;
+    font-weight: 800;
+
+    letter-spacing: 0.5px;
 }
 
-.header-info {
-    margin-top: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    color: #ffd54f;
-    font-size: 15px;
-    font-weight: 600;
-}
 
 /* =========================================================
-   CONTENT
+   TABLE WRAPPER
 ========================================================= */
 
-.content {
+.scoreboard-wrapper {
     width: 100%;
-    overflow: hidden;
-}
 
-.table-area {
-    width: 100%;
     overflow-x: auto;
     overflow-y: auto;
+
     background: #081a33;
+
+    box-sizing: border-box;
 }
+
 
 /* =========================================================
    TABLE
 ========================================================= */
 
-.score-table {
+.scoreboard-table {
     width: 100%;
     min-width: 1150px;
+
     border-collapse: collapse;
+
     table-layout: fixed;
 }
 
-/* Keep real table layout */
-
-.score-table thead {
-    display: table-header-group;
-}
-
-.score-table tbody {
-    display: table-row-group;
-}
-
-.score-table tr {
-    display: table-row !important;
-}
-
-.score-table th,
-.score-table td {
-    display: table-cell !important;
-    box-sizing: border-box;
-}
-
-/* =========================================================
-   COLUMN WIDTHS
-========================================================= */
-
-.score-table th:nth-child(1),
-.score-table td:nth-child(1) {
-    width: 60px;
-}
-
-.score-table th:nth-child(2),
-.score-table td:nth-child(2) {
-    width: 240px;
-}
-
-.score-table th:nth-child(3),
-.score-table td:nth-child(3) {
-    width: 70px;
-}
-
-.score-table th:nth-child(4),
-.score-table td:nth-child(4) {
-    width: 70px;
-}
-
-.score-table th:nth-child(n+5):nth-child(-n+12),
-.score-table td:nth-child(n+5):nth-child(-n+12) {
-    width: 65px;
-}
-
-.score-table th:nth-child(13),
-.score-table td:nth-child(13) {
-    width: 75px;
-}
-
-.score-table th:nth-child(14),
-.score-table td:nth-child(14) {
-    width: 65px;
-}
 
 /* =========================================================
    TABLE HEADER
 ========================================================= */
 
-.score-table thead th {
+.scoreboard-table thead {
+    display: table-header-group;
+}
+
+.scoreboard-table thead tr {
+    display: table-row;
+}
+
+.scoreboard-table thead th {
+    display: table-cell;
+
     background: #1b3f6d;
+
     color: #ffffff;
 
     border: 1px solid #35567d;
 
-    padding: 6px 4px;
+    padding: 9px 6px;
 
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
 
     text-align: center;
+
     white-space: nowrap;
 
     position: sticky;
     top: 0;
+
     z-index: 10;
+
+    box-sizing: border-box;
 }
+
 
 /* =========================================================
    TABLE BODY
 ========================================================= */
 
-.score-table tbody td {
+.scoreboard-table tbody {
+    display: table-row-group;
+}
+
+.scoreboard-table tbody tr {
+    display: table-row;
+}
+
+.scoreboard-table tbody td {
+    display: table-cell;
+
     border: 1px solid #35567d;
 
     color: #ffffff;
 
-    text-align: center;
+    padding: 8px 6px;
 
-    padding: 6px 5px;
+    height: 38px;
 
     font-size: 13px;
 
-    height: 34px;
+    text-align: center;
 
     white-space: nowrap;
+
+    box-sizing: border-box;
 }
+
+
+/* =========================================================
+   COLUMN WIDTHS
+========================================================= */
+
+/* Lot */
+
+.scoreboard-table th:nth-child(1),
+.scoreboard-table td:nth-child(1) {
+    width: 60px;
+}
+
+
+/* Name */
+
+.scoreboard-table th:nth-child(2),
+.scoreboard-table td:nth-child(2) {
+    width: 240px;
+}
+
+
+/* S1 */
+
+.scoreboard-table th:nth-child(3),
+.scoreboard-table td:nth-child(3) {
+    width: 70px;
+}
+
+
+/* S2 */
+
+.scoreboard-table th:nth-child(4),
+.scoreboard-table td:nth-child(4) {
+    width: 70px;
+}
+
+
+/* S3 */
+
+.scoreboard-table th:nth-child(5),
+.scoreboard-table td:nth-child(5) {
+    width: 70px;
+}
+
+
+/* CJ1 */
+
+.scoreboard-table th:nth-child(6),
+.scoreboard-table td:nth-child(6) {
+    width: 70px;
+}
+
+
+/* CJ2 */
+
+.scoreboard-table th:nth-child(7),
+.scoreboard-table td:nth-child(7) {
+    width: 70px;
+}
+
+
+/* CJ3 */
+
+.scoreboard-table th:nth-child(8),
+.scoreboard-table td:nth-child(8) {
+    width: 70px;
+}
+
+
+/* Best Snatch */
+
+.scoreboard-table th:nth-child(9),
+.scoreboard-table td:nth-child(9) {
+    width: 80px;
+}
+
+
+/* Best Clean & Jerk */
+
+.scoreboard-table th:nth-child(10),
+.scoreboard-table td:nth-child(10) {
+    width: 85px;
+}
+
+
+/* Total */
+
+.scoreboard-table th:nth-child(11),
+.scoreboard-table td:nth-child(11) {
+    width: 75px;
+}
+
+
+/* Rank */
+
+.scoreboard-table th:nth-child(12),
+.scoreboard-table td:nth-child(12) {
+    width: 65px;
+}
+
 
 /* =========================================================
    ATHLETE NAME
 ========================================================= */
 
-.athlete-name {
-    text-align: left !important;
+.scoreboard-table td:nth-child(2) {
+    text-align: left;
 
-    padding-left: 10px !important;
+    padding-left: 10px;
 
     font-weight: 600;
-
-    white-space: nowrap;
 
     overflow: hidden;
 
     text-overflow: ellipsis;
 }
 
-/* =========================================================
-   CATEGORY ROW
-========================================================= */
-
-.category-row td {
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-}
-
-.category-header {
-    width: 100%;
-    box-sizing: border-box;
-
-    display: flex;
-
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 10px 18px;
-    margin: 12px 0 6px;
-
-    background: #17365d;
-
-    border-top: 3px solid #4f7db6;
-    border-bottom: 2px solid #4f7db6;
-
-    color: #ffd54f;
-
-    font-size: 17px;
-    font-weight: 700;
-}
-
-.category-left {
-    color: #ffd54f;
-}
-
-.category-left strong {
-    color: #ffffff;
-    font-size: 18px;
-}
-
-.category-right {
-    color: #ffffff;
-}
-
-.category-right strong {
-    color: #ffffff;
-    font-size: 16px;
-}
 
 /* =========================================================
    CURRENT ATHLETE
 ========================================================= */
 
-.current-athlete-row {
-    background: #ffd54f !important;
+.scoreboard-current-row {
+    background: #ffd54f;
 }
 
-.current-athlete-row td {
-    color: #000000 !important;
+.scoreboard-current-row td {
+    color: #000000;
+
     font-weight: 700;
+
+    border-color: #e0b800;
 }
+
 
 /* =========================================================
-   NEXT ATHLETE
+   COMPLETED ATHLETE
 ========================================================= */
 
-.next-athlete-row {
-    background: #dbe8f8 !important;
+.scoreboard-completed-row {
+    background: #102d4d;
 }
 
-.next-athlete-row td {
-    border-top: 2px dashed #00ffff !important;
-    border-bottom: 2px dashed #00ffff !important;
-
-    color: #000000 !important;
-    font-weight: 700;
+.scoreboard-completed-row td {
+    color: #b8c7d9;
 }
 
-.next-athlete-row td span {
-    color: #000000 !important;
-}
 
 /* =========================================================
-   CURRENT ATTEMPT
+   ATTEMPT VALUES
 ========================================================= */
 
-.current-attempt {
-    background: #ff9800 !important;
-    color: #000000 !important;
-    font-weight: 700;
+.scoreboard-table td {
+    vertical-align: middle;
 }
 
-.current-attempt span {
-    color: #000000 !important;
-}
 
 /* =========================================================
-   LIFT RESULTS
+   GOOD LIFT
 ========================================================= */
 
-.good-lift {
+.scoreboard-table td .good-lift {
     color: #66ff33;
-    font-weight: 700;
+
+    font-weight: 800;
 }
 
-.no-lift {
+
+/* =========================================================
+   NO LIFT
+========================================================= */
+
+.attempt-no-lift {
     color: #ff4040;
-    font-weight: 700;
+
+    font-weight: 800;
+
+    text-decoration: line-through;
 }
 
-.pending-lift {
+
+/* =========================================================
+   PENDING LIFT
+========================================================= */
+
+.scoreboard-table td .pending-lift {
     color: #ffffff;
+
+    font-weight: 600;
 }
+
 
 /* =========================================================
    BEST LIFT
 ========================================================= */
 
-.best-lift {
-    color: #6dff6d !important;
-    font-weight: 700;
+.scoreboard-table td strong {
+    font-weight: 800;
 }
 
+
 /* =========================================================
-   TOTAL
+   EMPTY SCOREBOARD
 ========================================================= */
 
-.total-cell {
-    color: #ffb400 !important;
-    font-weight: 700;
+.no-scoreboard-data {
+    padding: 25px !important;
+
+    color: #aebed0 !important;
+
+    text-align: center !important;
+
+    font-size: 15px !important;
+
+    font-weight: 600;
 }
 
-/* =========================================================
-   RANK
-========================================================= */
-
-.rank-cell {
-    color: #ffd54f !important;
-    font-weight: 700;
-}
 
 /* =========================================================
-   MOBILE / SMALL SCREEN
+   RESPONSIVE
 ========================================================= */
 
 @media (max-width: 900px) {
 
-    .competition-title {
-        font-size: 19px;
+    .scoreboard-header {
+        padding: 12px 14px;
     }
 
-    .header-info {
-        font-size: 13px;
-        gap: 10px;
+    .scoreboard-header h2 {
+        font-size: 20px;
     }
 
-    .score-table {
+    .scoreboard-table {
         min-width: 1150px;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .scoreboard-header h2 {
+        font-size: 18px;
+    }
+
+    .scoreboard-table thead th {
+        font-size: 12px;
+
+        padding: 7px 5px;
+    }
+
+    .scoreboard-table tbody td {
+        font-size: 12px;
+
+        padding: 7px 5px;
     }
 }
