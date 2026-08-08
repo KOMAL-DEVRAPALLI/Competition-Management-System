@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import {
@@ -149,13 +149,62 @@ const LiveScore = () => {
 
     // =====================================
     // SYNC DECLARATION INPUT
+    //
+    // IMPORTANT:
+    //
+    // Do NOT depend on [currentAthlete].
+    // The live scoreboard refreshes every second,
+    // so the currentAthlete object is recreated
+    // even when the same attempt is still active.
+    //
+    // If we synced on every object change,
+    // whatever the official is typing would be
+    // overwritten every second.
     // =====================================
 
+    const currentEntryId =
+        currentAthlete?.entryId?.toString() ?? null;
+
+    const currentAttemptNo =
+        currentAthlete?.currentAttempt?.attemptNo ?? null;
+
+    const currentAttemptPhase =
+        currentAthlete?.currentAttempt?.phase ?? null;
+
+    const declarationKey =
+        currentEntryId &&
+        currentAttemptNo &&
+        currentAttemptPhase
+            ? `${currentEntryId}-${currentAttemptPhase}-${currentAttemptNo}`
+            : null;
+
+    const lastDeclarationKey =
+        useRef(null);
+
     useEffect(() => {
-        if (!currentAthlete) {
-            setDeclaredWeight("");
+
+        // Platform became empty.
+        if (!currentAthlete || !declarationKey) {
+
+            if (lastDeclarationKey.current !== null) {
+                lastDeclarationKey.current = null;
+                setDeclaredWeight("");
+            }
+
             return;
         }
+
+        // Same athlete + same attempt:
+        // NEVER overwrite what the official is typing.
+        if (
+            lastDeclarationKey.current ===
+            declarationKey
+        ) {
+            return;
+        }
+
+        lastDeclarationKey.current =
+            declarationKey;
 
         const attempt =
             currentAthlete.currentAttempt;
@@ -165,22 +214,20 @@ const LiveScore = () => {
             return;
         }
 
-        // Existing declaration
+        // Existing saved declaration.
         if (
             attempt.declaredWeight != null &&
-            attempt.declaredWeight > 0
+            Number(attempt.declaredWeight) > 0
         ) {
             setDeclaredWeight(
                 attempt.declaredWeight
             );
-
             return;
         }
 
-        // Attempt 1 uses opening weight
-        if (
-            attempt.attemptNo === 1
-        ) {
+        // Attempt 1 uses opening weight.
+        if (attempt.attemptNo === 1) {
+
             const openingWeight =
                 attempt.phase === "SNATCH"
                     ? currentAthlete.openingSnatch
@@ -193,10 +240,13 @@ const LiveScore = () => {
             return;
         }
 
-        // Attempt 2 / 3
+        // New attempt 2 / 3 starts empty.
         setDeclaredWeight("");
 
-    }, [currentAthlete]);
+    }, [
+        declarationKey,
+        currentAthlete,
+    ]);
 
     // =====================================
     // START COMPETITION
@@ -399,9 +449,13 @@ const LiveScore = () => {
                     "Declaration saved successfully."
                 );
 
-                await loadLiveCompetition(
-                    false
-                );
+                // IMPORTANT:
+                // Do not reload the live competition here.
+                //
+                // The 1-second live refresh will pick up the
+                // saved declaration from the backend. More
+                // importantly, we keep the local input stable
+                // immediately after saving.
 
             } catch (error) {
                 console.error(
@@ -464,7 +518,11 @@ const LiveScore = () => {
                         : "No Lift saved successfully."
                 );
 
+                // The lift has finished. The next attempt
+                // (if any) must get a fresh declaration field.
                 setDeclaredWeight("");
+
+                lastDeclarationKey.current = null;
 
                 await loadLiveCompetition(
                     false
