@@ -202,17 +202,17 @@ ${workingSheetStyles()}
                     ${athlete.name}
                 </td>
 
-                <td class="event-col">
-                    ${athlete.isYouth ? "&#10003;" : ""}
-                </td>
+                <td class="event-col checkmark">
+    ${athlete.isYouth ? "✓" : ""}
+</td>
 
-                <td class="event-col">
-                    ${athlete.isJunior ? "&#10003;" : ""}
-                </td>
+<td class="event-col checkmark">
+    ${athlete.isJunior ? "✓" : ""}
+</td>
 
-                <td class="event-col">
-                    ${athlete.isSenior ? "&#10003;" : ""}
-                </td>
+<td class="event-col checkmark">
+    ${athlete.isSenior ? "✓" : ""}
+</td>
 
                 <td class="attempt-col">
                     ${athlete.openingSnatch ?? ""}
