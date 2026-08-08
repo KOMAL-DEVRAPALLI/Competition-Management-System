@@ -110,62 +110,71 @@ console.log(
 
     const mapAthlete = (athlete) => ({
 
-        entryId:
-            athlete.entryId,
+    entryId:
+        athlete.entryId,
 
-        athleteId:
-            athlete.athleteId,
+    athleteId:
+        athlete.athleteId,
 
-        name:
-            athlete.name,
+    name:
+        athlete.name,
 
-        registrationNo:
-            athlete.registrationNo,
+    registrationNo:
+        athlete.registrationNo,
 
-        lotNumber:
-            athlete.lotNumber,
+    lotNumber:
+        athlete.lotNumber,
 
-        bodyWeight:
-            athlete.bodyWeight,
+    event:
+        athlete.isYouth
+            ? "Y"
+            : athlete.isJunior
+            ? "J"
+            : athlete.isSenior
+            ? "S"
+            : "",
 
-        weightCategory:
-            athlete.weightCategory,
+    bodyWeight:
+        athlete.bodyWeight,
 
-        openingSnatch:
-            athlete.openingSnatch,
+    weightCategory:
+        athlete.weightCategory,
 
-        openingCleanJerk:
-            athlete.openingCleanJerk,
+    openingSnatch:
+        athlete.openingSnatch,
 
-        bestSnatch:
-            athlete.bestSnatch,
+    openingCleanJerk:
+        athlete.openingCleanJerk,
 
-        bestCleanJerk:
-            athlete.bestCleanJerk,
+    bestSnatch:
+        athlete.bestSnatch,
 
-        total:
-            athlete.total,
+    bestCleanJerk:
+        athlete.bestCleanJerk,
 
-        place:
-            athlete.place,
+    total:
+        athlete.total,
 
-        currentAttempt:
-            getCurrentAttempt(
-                athlete.competitionEntry
-            ),
+    place:
+        athlete.place,
 
-        snatchAttempts:
+    currentAttempt:
+        getCurrentAttempt(
             athlete.competitionEntry
-                .snatchAttempts,
+        ),
 
-        cleanJerkAttempts:
-            athlete.competitionEntry
-                .cleanJerkAttempts,
+    snatchAttempts:
+        athlete.competitionEntry
+            .snatchAttempts,
 
-        competitionEntry:
-            athlete.competitionEntry,
+    cleanJerkAttempts:
+        athlete.competitionEntry
+            .cleanJerkAttempts,
 
-    });
+    competitionEntry:
+        athlete.competitionEntry,
+
+});
 
     const currentAthlete =
         entries.find(
