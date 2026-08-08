@@ -10,42 +10,46 @@ const startLiveCompetition = async ({
     selectedWeightCategories = [],
 }) => {
 
-    let entries = await buildWorkingSheetData(
-    competitionId,
-    gender,
-    true
-);
+    let entries =
+        await buildWorkingSheetData(
+            competitionId,
+            gender,
+            true
+        );
 
-console.log(
-    "Selected Categories:",
-    selectedWeightCategories
-);
-
-console.log(
-    "Before Filter:",
-    entries.map((athlete) => ({
-        name: athlete.name,
-        category: athlete.weightCategory,
-    }))
-);
-
-if (selectedWeightCategories.length > 0) {
-
-    entries = entries.filter((athlete) =>
-        selectedWeightCategories.includes(
-            athlete.weightCategory
-        )
+    console.log(
+        "Selected Categories:",
+        selectedWeightCategories
     );
 
-}
+    console.log(
+        "Before Filter:",
+        entries.map((athlete) => ({
+            name: athlete.name,
+            category: athlete.weightCategory,
+        }))
+    );
 
-console.log(
-    "After Filter:",
-    entries.map((athlete) => ({
-        name: athlete.name,
-        category: athlete.weightCategory,
-    }))
-);
+    if (
+        selectedWeightCategories.length > 0
+    ) {
+
+        entries = entries.filter(
+            (athlete) =>
+                selectedWeightCategories.includes(
+                    athlete.weightCategory
+                )
+        );
+
+    }
+
+    console.log(
+        "After Filter:",
+        entries.map((athlete) => ({
+            name: athlete.name,
+            category: athlete.weightCategory,
+        }))
+    );
 
     if (!entries.length) {
         throw new Error(
@@ -53,13 +57,22 @@ console.log(
         );
     }
 
+    // -----------------------------------
+    // Remove previous live session
+    // -----------------------------------
+
     await LiveCompetition.deleteMany({
         competitionId,
         gender,
     });
 
-    const eligibleEntries = entries.filter(
-        (athlete) => {
+    // -----------------------------------
+    // Find athletes who can start
+    // in Snatch
+    // -----------------------------------
+
+    const eligibleEntries =
+        entries.filter((athlete) => {
 
             const attempt =
                 getCurrentAttempt(
@@ -71,8 +84,11 @@ console.log(
                 attempt.phase === "SNATCH"
             );
 
-        }
-    );
+        });
+
+    // -----------------------------------
+    // Select first athlete
+    // -----------------------------------
 
     const firstAthlete =
         selectNextAthlete(
@@ -84,6 +100,43 @@ console.log(
             "Unable to determine first athlete."
         );
     }
+
+    console.log(
+        "===== FIRST ATHLETE SELECTED ====="
+    );
+
+    console.log(
+        "Entry ID:",
+        firstAthlete.entryId?.toString()
+    );
+
+    console.log(
+        "Name:",
+        firstAthlete.name
+    );
+
+    console.log(
+        "Lot Number:",
+        firstAthlete.lotNumber
+    );
+
+    console.log(
+        "Phase:",
+        getCurrentAttempt(
+            firstAthlete.competitionEntry
+        ).phase
+    );
+
+    console.log(
+        "Attempt:",
+        getCurrentAttempt(
+            firstAthlete.competitionEntry
+        ).attemptNo
+    );
+
+    // -----------------------------------
+    // Create live competition session
+    // -----------------------------------
 
     const session =
         await LiveCompetition.create({
@@ -108,73 +161,142 @@ console.log(
 
         });
 
+    // -----------------------------------
+    // Verify created Mongoose document
+    // -----------------------------------
+
+    console.log(
+        "===== LIVE SESSION CREATED ====="
+    );
+
+    console.log(
+        "Session ID:",
+        session._id.toString()
+    );
+
+    console.log(
+        "Created Current Entry ID:",
+        session.currentEntryId?.toString()
+    );
+
+    console.log(
+        "Created Prepare Entry ID:",
+        session.prepareEntryId?.toString()
+    );
+
+    console.log(
+        "Created Phase:",
+        session.currentPhase
+    );
+
+    // -----------------------------------
+    // Verify actual MongoDB document
+    // -----------------------------------
+
+    const savedSession =
+        await LiveCompetition.findById(
+            session._id
+        );
+
+    console.log(
+        "===== LIVE SESSION FROM DATABASE ====="
+    );
+
+    console.log(
+        "DB Session ID:",
+        savedSession?._id?.toString()
+    );
+
+    console.log(
+        "DB Current Entry ID:",
+        savedSession?.currentEntryId?.toString()
+    );
+
+    console.log(
+        "DB Prepare Entry ID:",
+        savedSession?.prepareEntryId?.toString()
+    );
+
+    console.log(
+        "DB Current Phase:",
+        savedSession?.currentPhase
+    );
+
+    // -----------------------------------
+    // Map athlete for response
+    // -----------------------------------
+
     const mapAthlete = (athlete) => ({
 
-    entryId:
-        athlete.entryId,
+        entryId:
+            athlete.entryId,
 
-    athleteId:
-        athlete.athleteId,
+        athleteId:
+            athlete.athleteId,
 
-    name:
-        athlete.name,
+        name:
+            athlete.name,
 
-    registrationNo:
-        athlete.registrationNo,
+        registrationNo:
+            athlete.registrationNo,
 
-    lotNumber:
-        athlete.lotNumber,
+        lotNumber:
+            athlete.lotNumber,
 
-    event:
-        athlete.isYouth
-            ? "Y"
-            : athlete.isJunior
-            ? "J"
-            : athlete.isSenior
-            ? "S"
-            : "",
+        event:
+            athlete.isYouth
+                ? "Y"
+                : athlete.isJunior
+                ? "J"
+                : athlete.isSenior
+                ? "S"
+                : "",
 
-    bodyWeight:
-        athlete.bodyWeight,
+        bodyWeight:
+            athlete.bodyWeight,
 
-    weightCategory:
-        athlete.weightCategory,
+        weightCategory:
+            athlete.weightCategory,
 
-    openingSnatch:
-        athlete.openingSnatch,
+        openingSnatch:
+            athlete.openingSnatch,
 
-    openingCleanJerk:
-        athlete.openingCleanJerk,
+        openingCleanJerk:
+            athlete.openingCleanJerk,
 
-    bestSnatch:
-        athlete.bestSnatch,
+        bestSnatch:
+            athlete.bestSnatch,
 
-    bestCleanJerk:
-        athlete.bestCleanJerk,
+        bestCleanJerk:
+            athlete.bestCleanJerk,
 
-    total:
-        athlete.total,
+        total:
+            athlete.total,
 
-    place:
-        athlete.place,
+        place:
+            athlete.place,
 
-    currentAttempt:
-        getCurrentAttempt(
+        currentAttempt:
+            getCurrentAttempt(
+                athlete.competitionEntry
+            ),
+
+        snatchAttempts:
             athlete.competitionEntry
-        ),
+                .snatchAttempts,
 
-    snatchAttempts:
-        athlete.competitionEntry
-            .snatchAttempts,
+        cleanJerkAttempts:
+            athlete.competitionEntry
+                .cleanJerkAttempts,
 
-    cleanJerkAttempts:
-        athlete.competitionEntry
-            .cleanJerkAttempts,
+        competitionEntry:
+            athlete.competitionEntry,
 
-    competitionEntry:
-        athlete.competitionEntry,
+    });
 
-});
+    // -----------------------------------
+    // Find current athlete
+    // -----------------------------------
 
     const currentAthlete =
         entries.find(
@@ -183,28 +305,37 @@ console.log(
                 session.currentEntryId.toString()
         );
 
-    const queue = entries
-        .filter((athlete) => {
+    // -----------------------------------
+    // Build declaration queue
+    // -----------------------------------
 
-            if (
-                athlete.entryId.toString() ===
-                session.currentEntryId.toString()
-            ) {
-                return false;
-            }
+    const queue =
+        entries
+            .filter((athlete) => {
 
-            const attempt =
-                getCurrentAttempt(
-                    athlete.competitionEntry
+                if (
+                    athlete.entryId.toString() ===
+                    session.currentEntryId.toString()
+                ) {
+                    return false;
+                }
+
+                const attempt =
+                    getCurrentAttempt(
+                        athlete.competitionEntry
+                    );
+
+                return (
+                    !attempt.completed &&
+                    attempt.declaredWeight != null
                 );
 
-            return (
-                !attempt.completed &&
-                attempt.declaredWeight != null
-            );
+            })
+            .map(mapAthlete);
 
-        })
-        .map(mapAthlete);
+    // -----------------------------------
+    // Return session
+    // -----------------------------------
 
     return {
 
