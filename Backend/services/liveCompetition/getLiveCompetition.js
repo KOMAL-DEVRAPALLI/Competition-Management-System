@@ -52,7 +52,7 @@ const getLiveCompetition = async (
     }
 
     // -----------------------------------
-    // Find CURRENT platform athlete
+    // CURRENT PLATFORM ATHLETE
     // -----------------------------------
 
     const currentEntry =
@@ -67,7 +67,7 @@ const getLiveCompetition = async (
             : null;
 
     // -----------------------------------
-    // Find PREPARE athlete
+    // PREPARE ATHLETE
     // -----------------------------------
 
     const prepareEntry =
@@ -82,7 +82,175 @@ const getLiveCompetition = async (
             : null;
 
     // -----------------------------------
-    // Log current athlete state
+    // Find the last completed attempt
+    // for the athlete who just lifted.
+    //
+    // This is used ONLY for display
+    // while the platform is temporarily
+    // empty waiting for declaration.
+    // -----------------------------------
+
+    const findLastCompletedAttempt = (
+        competitionEntry
+    ) => {
+
+        const completedSnatches =
+            competitionEntry.snatchAttempts
+                .filter(
+                    (attempt) =>
+                        attempt.result ===
+                            "GOOD" ||
+                        attempt.result ===
+                            "NO_LIFT"
+                );
+
+        const completedCleanJerks =
+            competitionEntry.cleanJerkAttempts
+                .filter(
+                    (attempt) =>
+                        attempt.result ===
+                            "GOOD" ||
+                        attempt.result ===
+                            "NO_LIFT"
+                );
+
+        const allCompletedAttempts = [
+            ...completedSnatches.map(
+                (attempt) => ({
+                    ...attempt.toObject?.() ??
+                        attempt,
+                    phase: "SNATCH",
+                })
+            ),
+
+            ...completedCleanJerks.map(
+                (attempt) => ({
+                    ...attempt.toObject?.() ??
+                        attempt,
+                    phase: "CLEAN_JERK",
+                })
+            ),
+        ];
+
+        if (
+            !allCompletedAttempts.length
+        ) {
+            return null;
+        }
+
+        // Attempts are sequential, so the
+        // highest completed phase/attempt
+        // represents the latest completed lift.
+        const phaseOrder = {
+            SNATCH: 1,
+            CLEAN_JERK: 2,
+        };
+
+        allCompletedAttempts.sort(
+            (a, b) => {
+
+                if (
+                    phaseOrder[a.phase] !==
+                    phaseOrder[b.phase]
+                ) {
+                    return (
+                        phaseOrder[a.phase] -
+                        phaseOrder[b.phase]
+                    );
+                }
+
+                return (
+                    a.attemptNo -
+                    b.attemptNo
+                );
+
+            }
+        );
+
+        return (
+            allCompletedAttempts[
+                allCompletedAttempts.length - 1
+            ] ?? null
+        );
+
+    };
+
+    // -----------------------------------
+    // Athlete mapper
+    // -----------------------------------
+
+    const mapAthlete = (
+        athlete,
+        status = "WAITING",
+        overrideAttempt = null
+    ) => {
+
+        const attempt =
+            overrideAttempt ??
+            getCurrentAttempt(
+                athlete.competitionEntry
+            );
+
+        return {
+
+            entryId:
+                athlete.entryId,
+
+            athleteId:
+                athlete.athleteId,
+
+            name:
+                athlete.name,
+
+            registrationNo:
+                athlete.registrationNo,
+
+            lotNumber:
+                athlete.lotNumber,
+
+            bodyWeight:
+                athlete.bodyWeight,
+
+            weightCategory:
+                athlete.weightCategory,
+
+            openingSnatch:
+                athlete.openingSnatch,
+
+            openingCleanJerk:
+                athlete.openingCleanJerk,
+
+            bestSnatch:
+                athlete.bestSnatch,
+
+            bestCleanJerk:
+                athlete.bestCleanJerk,
+
+            total:
+                athlete.total,
+
+            place:
+                athlete.place,
+
+            currentAttempt:
+                attempt,
+
+            snatchAttempts:
+                athlete.competitionEntry
+                    .snatchAttempts,
+
+            cleanJerkAttempts:
+                athlete.competitionEntry
+                    .cleanJerkAttempts,
+
+            status,
+
+        };
+
+    };
+
+    // -----------------------------------
+    // CURRENT ATHLETE LOG
     // -----------------------------------
 
     if (currentEntry) {
@@ -130,11 +298,95 @@ const getLiveCompetition = async (
     }
 
     // -----------------------------------
-    // Find athletes eligible to become
-    // NEXT athlete.
+    // LAST COMPLETED LIFT
     //
-    // Current athlete is excluded here
-    // because they are already on platform.
+    // Only create this when there is
+    // no athlete currently on platform.
+    // -----------------------------------
+
+    let lastLiftAthlete = null;
+
+    if (
+        !currentEntry &&
+        prepareEntry
+    ) {
+
+        const lastCompletedAttempt =
+            findLastCompletedAttempt(
+                prepareEntry.competitionEntry
+            );
+
+        if (lastCompletedAttempt) {
+
+            lastLiftAthlete =
+                mapAthlete(
+                    prepareEntry,
+                    "LAST_LIFT",
+                    {
+                        completed: true,
+
+                        phase:
+                            lastCompletedAttempt.phase,
+
+                        attemptNo:
+                            lastCompletedAttempt.attemptNo,
+
+                        declaredWeight:
+                            lastCompletedAttempt
+                                .declaredWeight,
+
+                        declaredAt:
+                            lastCompletedAttempt
+                                .declaredAt,
+
+                        result:
+                            lastCompletedAttempt
+                                .result,
+
+                    }
+                );
+
+            console.log(
+                "===== LAST COMPLETED LIFT ====="
+            );
+
+            console.log(
+                "Entry:",
+                prepareEntry.entryId.toString()
+            );
+
+            console.log(
+                "Name:",
+                prepareEntry.name
+            );
+
+            console.log(
+                "Phase:",
+                lastCompletedAttempt.phase
+            );
+
+            console.log(
+                "Attempt:",
+                lastCompletedAttempt.attemptNo
+            );
+
+            console.log(
+                "Result:",
+                lastCompletedAttempt.result
+            );
+
+            console.log(
+                "Weight:",
+                lastCompletedAttempt.declaredWeight
+            );
+
+        }
+
+    }
+
+    // -----------------------------------
+    // Find athletes eligible to become
+    // NEXT athlete
     // -----------------------------------
 
     const eligibleEntries =
@@ -148,7 +400,8 @@ const getLiveCompetition = async (
             const isCurrent =
                 session.currentEntryId &&
                 entry.entryId.toString() ===
-                    session.currentEntryId.toString();
+                    session.currentEntryId
+                        .toString();
 
             return (
                 !isCurrent &&
@@ -217,78 +470,6 @@ const getLiveCompetition = async (
         );
 
     }
-
-    // -----------------------------------
-    // Athlete mapper
-    // -----------------------------------
-
-    const mapAthlete = (
-        athlete,
-        status = "WAITING"
-    ) => {
-
-        const attempt =
-            getCurrentAttempt(
-                athlete.competitionEntry
-            );
-
-        return {
-
-            entryId:
-                athlete.entryId,
-
-            athleteId:
-                athlete.athleteId,
-
-            name:
-                athlete.name,
-
-            registrationNo:
-                athlete.registrationNo,
-
-            lotNumber:
-                athlete.lotNumber,
-
-            bodyWeight:
-                athlete.bodyWeight,
-
-            weightCategory:
-                athlete.weightCategory,
-
-            openingSnatch:
-                athlete.openingSnatch,
-
-            openingCleanJerk:
-                athlete.openingCleanJerk,
-
-            bestSnatch:
-                athlete.bestSnatch,
-
-            bestCleanJerk:
-                athlete.bestCleanJerk,
-
-            total:
-                athlete.total,
-
-            place:
-                athlete.place,
-
-            currentAttempt:
-                attempt,
-
-            snatchAttempts:
-                athlete.competitionEntry
-                    .snatchAttempts,
-
-            cleanJerkAttempts:
-                athlete.competitionEntry
-                    .cleanJerkAttempts,
-
-            status,
-
-        };
-
-    };
 
     // -----------------------------------
     // Competition results
@@ -399,6 +580,7 @@ const getLiveCompetition = async (
         currentPhase:
             session.currentPhase,
 
+        // REAL platform athlete
         currentAthlete:
             currentEntry
                 ? mapAthlete(
@@ -407,6 +589,7 @@ const getLiveCompetition = async (
                   )
                 : null,
 
+        // Athlete preparing next attempt
         prepareAthlete:
             prepareEntry
                 ? mapAthlete(
@@ -414,6 +597,9 @@ const getLiveCompetition = async (
                       "PREPARE"
                   )
                 : null,
+
+        // Last completed lift for display
+        lastLiftAthlete,
 
         nextAthlete:
             nextEntry
@@ -457,6 +643,42 @@ const getLiveCompetition = async (
 
                   declaredWeight:
                       response.currentAthlete
+                          .currentAttempt
+                          ?.declaredWeight,
+              }
+            : null
+    );
+
+    console.log(
+        "FINAL LAST LIFT:",
+        response.lastLiftAthlete
+            ? {
+                  entryId:
+                      response.lastLiftAthlete
+                          .entryId
+                          .toString(),
+
+                  name:
+                      response.lastLiftAthlete
+                          .name,
+
+                  phase:
+                      response.lastLiftAthlete
+                          .currentAttempt
+                          ?.phase,
+
+                  attempt:
+                      response.lastLiftAthlete
+                          .currentAttempt
+                          ?.attemptNo,
+
+                  result:
+                      response.lastLiftAthlete
+                          .currentAttempt
+                          ?.result,
+
+                  declaredWeight:
+                      response.lastLiftAthlete
                           .currentAttempt
                           ?.declaredWeight,
               }

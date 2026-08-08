@@ -17,12 +17,25 @@ const CurrentAthleteCard = ({
 
     }
 
+    // -----------------------------------
+    // Determine whether this is the
+    // actual platform athlete or the
+    // previous completed lift.
+    // -----------------------------------
+
+    const isLastLift =
+        currentAthlete.status ===
+        "LAST_LIFT";
+
     const weightOnBar =
-        currentAthlete.currentAttempt.declaredWeight ??
+        currentAthlete.currentAttempt
+            ?.declaredWeight ??
         (
-            currentAthlete.currentAttempt.attemptNo === 1
+            currentAthlete.currentAttempt
+                ?.attemptNo === 1
                 ? (
-                    currentAthlete.currentAttempt.phase === "SNATCH"
+                    currentAthlete.currentAttempt
+                        ?.phase === "SNATCH"
                         ? currentAthlete.openingSnatch
                         : currentAthlete.openingCleanJerk
                 )
@@ -35,7 +48,11 @@ const CurrentAthleteCard = ({
 
             <div className="current-athlete-header">
 
-                <h2>Current Lift</h2>
+                <h2>
+                    {isLastLift
+                        ? "Last Lift"
+                        : "Current Lift"}
+                </h2>
 
             </div>
 
@@ -43,7 +60,9 @@ const CurrentAthleteCard = ({
 
                 <div className="current-athlete-row">
 
-                    <span>Lot Number</span>
+                    <span>
+                        Lot Number
+                    </span>
 
                     <strong>
                         {currentAthlete.lotNumber}
@@ -53,7 +72,9 @@ const CurrentAthleteCard = ({
 
                 <div className="current-athlete-row">
 
-                    <span>Name</span>
+                    <span>
+                        Name
+                    </span>
 
                     <strong>
                         {currentAthlete.name}
@@ -63,19 +84,31 @@ const CurrentAthleteCard = ({
 
                 <div className="current-athlete-row">
 
-                    <span>Current Attempt</span>
+                    <span>
+                        {isLastLift
+                            ? "Completed Attempt"
+                            : "Current Attempt"}
+                    </span>
 
                     <strong>
-                        {currentAthlete.currentAttempt.phase}
+
+                        {currentAthlete.currentAttempt
+                            ?.phase}
+
                         {" "}
-                        {currentAthlete.currentAttempt.attemptNo}
+
+                        {currentAthlete.currentAttempt
+                            ?.attemptNo}
+
                     </strong>
 
                 </div>
 
                 <div className="current-athlete-row">
 
-                    <span>Weight On Bar</span>
+                    <span>
+                        Weight On Bar
+                    </span>
 
                     <strong>
 
@@ -87,6 +120,25 @@ const CurrentAthleteCard = ({
 
                 </div>
 
+                {isLastLift && (
+
+                    <div className="current-athlete-row">
+
+                        <span>
+                            Result
+                        </span>
+
+                        <strong>
+                            {currentAthlete.currentAttempt
+                                ?.result === "GOOD"
+                                ? "GOOD LIFT"
+                                : "NO LIFT"}
+                        </strong>
+
+                    </div>
+
+                )}
+
             </div>
 
             <div className="current-athlete-actions">
@@ -94,7 +146,10 @@ const CurrentAthleteCard = ({
                 <button
                     className="good-lift-btn"
                     onClick={onGoodLift}
-                    disabled={processingLift}
+                    disabled={
+                        processingLift ||
+                        isLastLift
+                    }
                 >
 
                     {processingLift
@@ -106,7 +161,10 @@ const CurrentAthleteCard = ({
                 <button
                     className="no-lift-btn"
                     onClick={onNoLift}
-                    disabled={processingLift}
+                    disabled={
+                        processingLift ||
+                        isLastLift
+                    }
                 >
 
                     {processingLift
@@ -120,6 +178,7 @@ const CurrentAthleteCard = ({
         </div>
 
     );
+
 };
 
 export default CurrentAthleteCard;

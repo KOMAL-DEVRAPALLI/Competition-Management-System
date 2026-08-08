@@ -42,6 +42,7 @@ const LiveScore = () => {
 
     const {
         currentAthlete,
+        lastLiftAthlete,
         prepareAthlete,
         nextAthlete,
         declarationQueue,
@@ -50,6 +51,20 @@ const LiveScore = () => {
         currentPhase,
         totalAthletes,
     } = liveCompetition || {};
+
+    // -----------------------------------
+    // Athlete displayed in Current Lift
+    //
+    // Real platform athlete has priority.
+    //
+    // If platform is temporarily empty,
+    // show the last completed lift.
+    // -----------------------------------
+
+    const displayedAthlete =
+        currentAthlete ||
+        lastLiftAthlete ||
+        null;
 
     // -----------------------------------
     // Initial live competition load
@@ -97,11 +112,14 @@ const LiveScore = () => {
                     "GET"
                 );
 
+            const newLiveCompetition =
+                response.data;
+
             setLiveCompetition(
-                response.data
+                newLiveCompetition
             );
 
-            return response.data;
+            return newLiveCompetition;
 
         } catch (error) {
 
@@ -181,6 +199,8 @@ const LiveScore = () => {
     const handleProcessLift =
         async (result) => {
 
+            // Only the REAL platform athlete
+            // can have a lift processed.
             if (
                 !currentAthlete ||
                 processingLift
@@ -195,7 +215,7 @@ const LiveScore = () => {
             try {
 
                 // -----------------------------------
-                // 1. Save official lift result
+                // Save official result
                 // -----------------------------------
 
                 await processLift({
@@ -212,8 +232,8 @@ const LiveScore = () => {
                 });
 
                 // -----------------------------------
-                // 2. Confirm immediately that the
-                // official result was saved.
+                // Tell official that the result
+                // was successfully saved.
                 // -----------------------------------
 
                 setLiftMessage(
@@ -223,14 +243,7 @@ const LiveScore = () => {
                 );
 
                 // -----------------------------------
-                // 3. Refresh complete live state.
-                //
-                // This gets:
-                // currentAthlete
-                // prepareAthlete
-                // nextAthlete
-                // declarationQueue
-                // competitionResults
+                // Refresh live state
                 // -----------------------------------
 
                 try {
@@ -268,55 +281,6 @@ const LiveScore = () => {
             } finally {
 
                 setProcessingLift(false);
-
-            }
-
-        };
-
-    // -----------------------------------
-    // Current / next athlete declaration
-    // -----------------------------------
-
-    const handleCurrentDeclaration =
-        async () => {
-
-            if (!nextAthlete) {
-                return;
-            }
-
-            try {
-
-                setLiftError("");
-                setLiftMessage("");
-
-                await saveDeclaredWeight({
-
-                    entryId:
-                        nextAthlete.entryId,
-
-                    declaredWeight:
-                        Number(
-                            declaredWeight
-                        ),
-
-                });
-
-                await loadLiveCompetition();
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to save declaration:",
-                    error
-                );
-
-                setLiftError(
-                    error.response
-                        ?.data
-                        ?.message ||
-                    error.message ||
-                    "Failed to save declaration."
-                );
 
             }
 
@@ -460,7 +424,7 @@ const LiveScore = () => {
 
                     <CurrentAthleteCard
                         currentAthlete={
-                            currentAthlete
+                            displayedAthlete
                         }
 
                         processingLift={
