@@ -1,4 +1,5 @@
 export const workingSheetStyles = () => `
+
 * {
     margin: 0;
     padding: 0;
@@ -13,7 +14,15 @@ export const workingSheetStyles = () => `
 
 @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 10mm;
+}
+
+
+html,
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 
@@ -39,8 +48,8 @@ body {
 
 
 /*
- * Do not create an unnecessary
- * blank page after the last category.
+ * Prevent an unnecessary blank page
+ * after the final category.
  */
 
 .category-page:last-child {
@@ -54,26 +63,27 @@ body {
 =========================== */
 
 .header {
+    width: 100%;
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 
 .header h2 {
     font-size: 18px;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 
 .header h3 {
     font-size: 15px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 
 .header p {
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.4;
 }
 
 
@@ -82,11 +92,14 @@ body {
 =========================== */
 
 .class-title {
+    width: 100%;
+
     border: 1.5px solid #000;
 
     padding: 6px 10px;
 
     font-weight: bold;
+    font-size: 12px;
 
     margin-bottom: 6px;
 }
@@ -96,20 +109,24 @@ body {
    WORKING SHEET TABLE
 =========================== */
 
-table {
+.working-sheet-table {
     width: 100%;
 
     border-collapse: collapse;
 
-    table-layout: fixed;
+    /*
+     * Auto allows the browser to use the
+     * specified column widths more naturally.
+     */
+    table-layout: auto;
 
     page-break-inside: avoid;
     break-inside: avoid;
 }
 
 
-th,
-td {
+.working-sheet-table th,
+.working-sheet-table td {
     border: 1px solid #000;
 
     text-align: center;
@@ -119,12 +136,17 @@ td {
 }
 
 
-th {
+.working-sheet-table th {
     font-weight: bold;
+    line-height: 1.1;
 }
 
 
-tbody td {
+/*
+ * Space for officials to write attempts.
+ */
+
+.working-sheet-table tbody td {
     height: 32px;
 }
 
@@ -133,51 +155,98 @@ tbody td {
    COLUMN WIDTHS
 =========================== */
 
+/*
+ * Lot number
+ */
+
 .lot-col {
-    width: 40px;
+    width: 42px;
+    min-width: 42px;
 
     text-align: center;
-
     font-weight: bold;
 }
 
 
+/*
+ * Serial number
+ */
+
 .sr-col {
-    width: 40px;
+    width: 42px;
+    min-width: 42px;
 }
 
 
+/*
+ * Competitor name
+ */
+
 .name-col {
-    width: 220px;
+    width: 225px;
+    min-width: 225px;
 
     text-align: left;
 
     padding-left: 8px;
+
+    white-space: normal;
 }
 
+
+/*
+ * YTH / JR / SR
+ *
+ * Increased from 28px so the
+ * event cells are easier to read/write.
+ */
 
 .event-col {
-    width: 28px;
+    width: 34px;
+    min-width: 34px;
 }
 
+
+/*
+ * Snatch and Clean & Jerk attempts
+ *
+ * These are intentionally wider because
+ * officials need to write attempt weights.
+ */
 
 .attempt-col {
-    width: 38px;
+    width: 42px;
+    min-width: 42px;
 }
 
+
+/*
+ * Maximum S / C&J
+ */
 
 .maximum-col {
-    width: 45px;
+    width: 50px;
+    min-width: 50px;
 }
 
+
+/*
+ * Total
+ */
 
 .total-col {
-    width: 55px;
+    width: 58px;
+    min-width: 58px;
 }
 
 
+/*
+ * Place
+ */
+
 .place-col {
-    width: 55px;
+    width: 58px;
+    min-width: 58px;
 }
 
 
@@ -190,6 +259,7 @@ tbody td {
 .cj-group,
 .maximum-group {
     font-weight: bold;
+    text-align: center;
 }
 
 
@@ -199,6 +269,7 @@ tbody td {
 
 .checkmark {
     font-weight: bold;
+    font-size: 12px;
 }
 
 
@@ -215,7 +286,7 @@ tbody td {
 
     align-items: flex-end;
 
-    margin-top: 45px;
+    margin-top: 40px;
 
     page-break-inside: avoid;
     break-inside: avoid;
@@ -232,6 +303,8 @@ tbody td {
 
 
 .signature-line {
+    width: 100%;
+
     border-top: 1px solid #000;
 
     margin-bottom: 6px;
@@ -239,11 +312,32 @@ tbody td {
 
 
 /* ===========================
-   EXPLICIT PAGE BREAK
+   PAGE BREAK
 =========================== */
 
 .page-break {
     page-break-after: always;
     break-after: page;
+}
+
+
+/* ===========================
+   PRINT SAFETY
+=========================== */
+
+@media print {
+
+    .category-page {
+        page-break-inside: avoid;
+    }
+
+    .working-sheet-table {
+        page-break-inside: avoid;
+    }
+
+    .signature-row {
+        page-break-inside: avoid;
+    }
+
 }
 `;

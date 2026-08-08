@@ -5,19 +5,45 @@ import calculateBestCleanJerk from "./calculateBestCleanJerk.js";
 import calculateTotal from "./calculateTotal.js";
 import updateCategoryRanking from "./updateCategoryRanking.js";
 
-const updateCompetitionResults = async (entryId) => {
 
-    const entry = await CompetitionEntry.findById(entryId);
+const updateCompetitionResults = async (
+    competitionEntry
+) => {
 
-    if (!entry) {
-        throw new Error("Competition entry not found.");
+    // =====================================
+    // VALIDATE ENTRY
+    // =====================================
+
+    if (!competitionEntry) {
+        throw new Error(
+            "Competition entry not found."
+        );
     }
 
+
+    // =====================================
+    // CALCULATE BEST SNATCH
+    // =====================================
+
     const bestSnatch =
-        calculateBestSnatch(entry.snatchAttempts);
+        calculateBestSnatch(
+            competitionEntry.snatchAttempts
+        );
+
+
+    // =====================================
+    // CALCULATE BEST CLEAN & JERK
+    // =====================================
 
     const bestCleanJerk =
-        calculateBestCleanJerk(entry.cleanJerkAttempts);
+        calculateBestCleanJerk(
+            competitionEntry.cleanJerkAttempts
+        );
+
+
+    // =====================================
+    // CALCULATE TOTAL
+    // =====================================
 
     const total =
         calculateTotal(
@@ -25,14 +51,48 @@ const updateCompetitionResults = async (entryId) => {
             bestCleanJerk
         );
 
-    entry.results.bestSnatch = bestSnatch;
-    entry.results.bestCleanJerk = bestCleanJerk;
-    entry.results.total = total;
 
-    await entry.save();
-        await updateCategoryRanking(entryId);
-    return entry;
+    // =====================================
+    // UPDATE RESULTS IN MEMORY
+    // =====================================
+
+    competitionEntry.results.bestSnatch =
+        bestSnatch;
+
+    competitionEntry.results.bestCleanJerk =
+        bestCleanJerk;
+
+    competitionEntry.results.total =
+        total;
+
+
+    // =====================================
+    // SAVE ENTRY
+    //
+    // This is the only save required for
+    // the CompetitionEntry in the optimized
+    // processLift flow.
+    // =====================================
+
+    await competitionEntry.save();
+
+
+    // =====================================
+    // UPDATE CATEGORY RANKING
+    // =====================================
+
+    await updateCategoryRanking(
+        competitionEntry._id
+    );
+
+
+    // =====================================
+    // RETURN UPDATED ENTRY
+    // =====================================
+
+    return competitionEntry;
 
 };
+
 
 export default updateCompetitionResults;
