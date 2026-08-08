@@ -44,16 +44,15 @@ const LiveScore = () => {
         useState("");
 
     const {
-        currentAthlete,
-        lastLiftAthlete,
-        prepareAthlete,
-        nextAthlete,
-        declarationQueue,
-        competitionResults,
-        status,
-        currentPhase,
-        totalAthletes,
-    } = liveCompetition || {};
+    currentAthlete,
+    prepareAthlete,
+    nextAthlete,
+    declarationQueue,
+    competitionResults,
+    status,
+    currentPhase,
+    totalAthletes,
+} = liveCompetition || {};
 
     // -----------------------------------
     // DISPLAYED LIFT
@@ -65,10 +64,8 @@ const LiveScore = () => {
     // platform is temporarily empty.
     // -----------------------------------
 
-    const displayedAthlete =
-        currentAthlete ??
-        lastLiftAthlete ??
-        null;
+   const displayedAthlete =
+    currentAthlete ?? null;
 
     // -----------------------------------
     // Initial live competition load
