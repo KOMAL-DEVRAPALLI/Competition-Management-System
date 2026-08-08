@@ -13,7 +13,7 @@ export const workingSheetStyles = () => `
 =========================== */
 
 @page {
-    size: A4 portrait;
+    size: A4 landscape;
     margin: 10mm;
 }
 
