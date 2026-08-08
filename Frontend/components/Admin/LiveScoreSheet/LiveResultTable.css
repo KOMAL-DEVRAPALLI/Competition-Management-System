@@ -2,255 +2,438 @@
    LIVE SCOREBOARD
 ===================================== */
 
-.scoreboard{
+.scoreboard {
 
-    background:#ffffff;
+    background: #ffffff;
 
-    border-radius:16px;
+    border-radius: 16px;
 
-    padding:28px;
+    padding: 28px;
 
-    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
 
-    overflow-x:auto;
+    overflow-x: auto;
 
 }
+
 
 /* =====================================
    HEADER
 ===================================== */
 
-.scoreboard-header{
+.scoreboard-header {
 
-    border-bottom:3px solid #2563eb;
+    border-bottom: 3px solid #2563eb;
 
-    padding-bottom:16px;
+    padding-bottom: 16px;
 
-    margin-bottom:24px;
+    margin-bottom: 24px;
+
+}
+
+.scoreboard-header h2 {
+
+    margin: 0;
+
+    font-size: 28px;
+
+    font-weight: 700;
+
+    color: #111827;
 
 }
 
-.scoreboard-header h2{
-
-    margin:0;
-
-    font-size:28px;
-
-    font-weight:700;
-
-    color:#111827;
-
-}
 
 /* =====================================
    TABLE
 ===================================== */
 
-.scoreboard-table{
+.scoreboard-table {
 
-    width:100%;
+    width: 100%;
 
-    border-collapse:collapse;
+    border-collapse: collapse;
 
-    min-width:1150px;
+    min-width: 1150px;
+
+    color: white;
+
+}
+
+
+/* =====================================
+   TABLE HEADER
+===================================== */
+
+.scoreboard-table thead th {
+
+    background: #2563eb;
+
+    color: white;
+
+    padding: 14px;
+
+    text-align: center;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+}
+
+
+/* =====================================
+   TABLE BODY
+===================================== */
+
+.scoreboard-table tbody tr {
+
+    transition:
+        background-color .2s ease,
+        color .2s ease;
+
+}
+
+
+/* =====================================
+   NORMAL ROW
+===================================== */
+
+.scoreboard-table tbody tr td {
+
+    padding: 14px;
+
+    border-bottom: 1px solid #d1d5db;
+
+    text-align: center;
+
+    font-size: 15px;
+
+    color: white;
+
+    background: #0b1f3a;
+
+}
+
+
+/* =====================================
+   FIRST COLUMN - LOT
+===================================== */
+
+.scoreboard-table tbody tr td:first-child {
+
+    font-weight: 700;
+
+    color: white;
+
+}
+
+
+/* =====================================
+   ATHLETE NAME
+===================================== */
+
+.scoreboard-table tbody tr td:nth-child(2) {
+
+    text-align: left;
+
+    font-weight: 600;
+
+    color: white;
+
+    min-width: 220px;
+
+}
+
+
+/* Ensure <strong> inside name
+   also follows row color */
+
+.scoreboard-table tbody tr td:nth-child(2) strong {
+
+    color: inherit;
+
+}
+
+
+/* =====================================
+   HOVER ROW
+===================================== */
+
+.scoreboard-table tbody tr:hover td {
+
+    background: white;
 
     color: black;
 
 }
 
-/* =====================================
-   HEADER
-===================================== */
 
-.scoreboard-table thead th{
+/* Name becomes black on hover */
 
-    background:#2563eb;
+.scoreboard-table tbody tr:hover td:nth-child(2),
 
-    color:white;
+.scoreboard-table tbody tr:hover td:nth-child(2) strong {
 
-    padding:14px;
-
-    text-align:center;
-
-    font-size:15px;
-
-    font-weight:700;
-
-    white-space:nowrap;
+    color: black;
 
 }
 
-/* =====================================
-   BODY
-===================================== */
 
-.scoreboard-table tbody tr{
+/* Lot becomes black on hover */
 
-    transition:.2s;
+.scoreboard-table tbody tr:hover td:first-child {
 
-}
-
-.scoreboard-table tbody tr:hover{
-
-    background:#f8fafc;
+    color: black;
 
 }
 
-.scoreboard-table td{
 
-    padding:14px;
+/* Best results become black on hover */
 
-    border-bottom:1px solid #e5e7eb;
+.scoreboard-table tbody tr:hover td:nth-child(9),
 
-    text-align:center;
+.scoreboard-table tbody tr:hover td:nth-child(10),
 
-    font-size:15px;
+.scoreboard-table tbody tr:hover td:nth-child(11),
 
-    color:#374151;
+.scoreboard-table tbody tr:hover td:nth-child(12) {
 
-}
-
-.scoreboard-table td:first-child{
-
-    font-weight:700;
+    color: black;
 
 }
 
-.scoreboard-table td:nth-child(2){
-
-    text-align:left;
-
-    font-weight:600;
-
-    color:#111827;
-
-    min-width:220px;
-
-}
 
 /* =====================================
    ATTEMPTS
 ===================================== */
 
-.attempt-good{
+.attempt-good {
 
-    display:inline-block;
+    display: inline-block;
 
-    min-width:52px;
+    min-width: 52px;
 
-    padding:6px 10px;
+    padding: 6px 10px;
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    background:#dcfce7;
+    background: #dcfce7;
 
-    color:#15803d;
+    color: #15803d !important;
 
-    font-weight:700;
-
-}
-
-.attempt-fail{
-
-    display:inline-block;
-
-    min-width:52px;
-
-    padding:6px 10px;
-
-    border-radius:8px;
-
-    background:#fee2e2;
-
-    color:#b91c1c;
-
-    font-weight:700;
+    font-weight: 700;
 
 }
 
-.attempt-pending{
 
-    display:inline-block;
+.attempt-fail {
 
-    min-width:52px;
+    display: inline-block;
 
-    padding:6px 10px;
+    min-width: 52px;
 
-    border-radius:8px;
+    padding: 6px 10px;
 
-    background:#f3f4f6;
+    border-radius: 8px;
 
-    color:#6b7280;
+    background: #fee2e2;
 
-    font-weight:600;
+    color: #b91c1c !important;
+
+    font-weight: 700;
 
 }
+
+
+.attempt-pending {
+
+    display: inline-block;
+
+    min-width: 52px;
+
+    padding: 6px 10px;
+
+    border-radius: 8px;
+
+    background: #f3f4f6;
+
+    color: #6b7280 !important;
+
+    font-weight: 600;
+
+}
+
 
 /* =====================================
    BEST LIFTS
 ===================================== */
 
 .scoreboard-table td:nth-child(9),
+
 .scoreboard-table td:nth-child(10),
-.scoreboard-table td:nth-child(11){
 
-    font-weight:700;
+.scoreboard-table td:nth-child(11) {
 
-    color:#111827;
+    font-weight: 700;
+
+    color: white;
 
 }
+
 
 /* =====================================
    CURRENT ATHLETE
 ===================================== */
 
-.scoreboard-current-row td{
+.scoreboard-current-row td {
 
-    background:#dcfce7;
+    background: #dcfce7;
 
-    font-weight:700;
+    color: #166534;
 
-}
-
-.scoreboard-current-row td:first-child{
-
-    border-left:6px solid #16a34a;
+    font-weight: 700;
 
 }
 
-.scoreboard-next-row td{
 
-    background:#dbeafe;
+.scoreboard-current-row td:first-child {
 
-}
-
-.scoreboard-next-row td:first-child{
-
-    border-left:6px solid #2563eb;
+    border-left: 6px solid #16a34a;
 
 }
 
-.scoreboard-completed-row td{
 
-    opacity:.65;
+/* Current athlete name */
+
+.scoreboard-current-row td:nth-child(2),
+
+.scoreboard-current-row td:nth-child(2) strong {
+
+    color: #166534;
 
 }
+
+
+/* Current athlete hover */
+
+.scoreboard-current-row:hover td {
+
+    background: white;
+
+    color: black;
+
+}
+
+
+.scoreboard-current-row:hover td:nth-child(2),
+
+.scoreboard-current-row:hover td:nth-child(2) strong {
+
+    color: black;
+
+}
+
+
+/* =====================================
+   NEXT ATHLETE
+===================================== */
+
+.scoreboard-next-row td {
+
+    background: #dbeafe;
+
+    color: #1e3a8a;
+
+}
+
+
+.scoreboard-next-row td:first-child {
+
+    border-left: 6px solid #2563eb;
+
+}
+
+
+.scoreboard-next-row td:nth-child(2),
+
+.scoreboard-next-row td:nth-child(2) strong {
+
+    color: #1e3a8a;
+
+}
+
+
+/* Next athlete hover */
+
+.scoreboard-next-row:hover td {
+
+    background: white;
+
+    color: black;
+
+}
+
+
+.scoreboard-next-row:hover td:nth-child(2),
+
+.scoreboard-next-row:hover td:nth-child(2) strong {
+
+    color: black;
+
+}
+
+
+/* =====================================
+   COMPLETED ATHLETE
+===================================== */
+
+.scoreboard-completed-row td {
+
+    opacity: .65;
+
+}
+
+
+/* Completed row hover */
+
+.scoreboard-completed-row:hover td {
+
+    opacity: 1;
+
+    background: white;
+
+    color: black;
+
+}
+
+
+.scoreboard-completed-row:hover td:nth-child(2),
+
+.scoreboard-completed-row:hover td:nth-child(2) strong {
+
+    color: black;
+
+}
+
 
 /* =====================================
    RESPONSIVE
 ===================================== */
 
-@media(max-width:1200px){
+@media (max-width: 1200px) {
 
-    .scoreboard{
+    .scoreboard {
 
-        padding:18px;
+        padding: 18px;
 
     }
 
-    .scoreboard-table{
+    .scoreboard-table {
 
-        min-width:1100px;
+        min-width: 1100px;
 
     }
 
