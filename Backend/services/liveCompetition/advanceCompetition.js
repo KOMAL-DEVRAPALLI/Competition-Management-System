@@ -1,6 +1,7 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
 import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
+import selectNextAthlete from "./selectNextAthlete.js";
 
 const advanceCompetition = async (
     competitionId,
@@ -84,18 +85,10 @@ const advanceCompetition = async (
     };
 
     // -----------------------------------
-    // Determine PREPARE athlete
-    //
-    // The athlete who just lifted becomes
-    // PREPARE if another attempt remains
-    // in the CURRENT phase.
-    //
-    // IMPORTANT:
-    // They do NOT automatically return
-    // to the platform.
+    // Find an entry by ID
     // -----------------------------------
 
-    const getPrepareEntryId = (
+    const findEntryById = (
         entryId
     ) => {
 
@@ -103,15 +96,24 @@ const advanceCompetition = async (
             return null;
         }
 
-        const entry =
-            entries.find(
-                (item) =>
-                    item.entryId.toString() ===
-                    entryId.toString()
-            );
+        return entries.find(
+            (entry) =>
+                entry.entryId.toString() ===
+                entryId.toString()
+        );
+    };
+
+    // -----------------------------------
+    // Check whether current attempt has
+    // an official declaration
+    // -----------------------------------
+
+    const hasDeclaration = (
+        entry
+    ) => {
 
         if (!entry) {
-            return null;
+            return false;
         }
 
         const attempt =
@@ -119,20 +121,147 @@ const advanceCompetition = async (
                 entry.competitionEntry
             );
 
-        if (
-            !attempt ||
-            attempt.completed ||
-            attempt.phase !==
-                session.currentPhase
-        ) {
-            return null;
-        }
-
-        return entryId;
+        return (
+            !attempt.completed &&
+            attempt.phase ===
+                session.currentPhase &&
+            attempt.declaredWeight != null &&
+            attempt.declaredWeight > 0
+        );
     };
 
     // -----------------------------------
-    // Check current phase
+    // Find next DECLARED athlete
+    //
+    // Only athletes whose CURRENT attempt
+    // has an actual official declaration
+    // are considered here.
+    // -----------------------------------
+
+    const findNextDeclaredAthlete = () => {
+
+        const declaredEntries =
+            entries.filter(
+                (entry) => {
+
+                    const attempt =
+                        getCurrentAttempt(
+                            entry.competitionEntry
+                        );
+
+                    const isCurrent =
+                        session.currentEntryId &&
+                        entry.entryId
+                            .toString() ===
+                        session.currentEntryId
+                            .toString();
+
+                    return (
+                        !isCurrent &&
+                        !attempt.completed &&
+                        attempt.phase ===
+                            session.currentPhase &&
+                        attempt.declaredWeight != null &&
+                        attempt.declaredWeight > 0
+                    );
+                }
+            );
+
+        if (!declaredEntries.length) {
+            return null;
+        }
+
+        return selectNextAthlete(
+            declaredEntries
+        );
+    };
+
+    // -----------------------------------
+    // Find next ATHLETE when nobody has
+    // declared yet.
+    //
+    // IMPORTANT:
+    //
+    // Only Attempt 1 athletes are included.
+    //
+    // Their opening weight is used only
+    // to establish the first-athlete
+    // ordering.
+    //
+    // It is NOT treated as an official
+    // declaration.
+    // -----------------------------------
+
+    const findNextUndeclaredAttemptOneAthlete =
+        () => {
+
+            const attemptOneEntries =
+                entries.filter(
+                    (entry) => {
+
+                        const attempt =
+                            getCurrentAttempt(
+                                entry.competitionEntry
+                            );
+
+                        const isCurrent =
+                            session.currentEntryId &&
+                            entry.entryId
+                                .toString() ===
+                            session.currentEntryId
+                                .toString();
+
+                        return (
+                            !isCurrent &&
+                            !attempt.completed &&
+                            attempt.phase ===
+                                session.currentPhase &&
+                            attempt.attemptNo === 1 &&
+                            attempt.declaredWeight ==
+                                null
+                        );
+                    }
+                );
+
+            if (
+                !attemptOneEntries.length
+            ) {
+                return null;
+            }
+
+            return selectNextAthlete(
+                attemptOneEntries
+            );
+        };
+
+    // -----------------------------------
+    // Determine whether previous athlete
+    // still has another attempt in the
+    // CURRENT phase.
+    // -----------------------------------
+
+    const previousEntry =
+        findEntryById(
+            previousCurrentEntryId
+        );
+
+    const previousAttempt =
+        previousEntry
+            ? getCurrentAttempt(
+                  previousEntry.competitionEntry
+              )
+            : null;
+
+    const previousHasAnotherAttempt =
+        Boolean(
+            previousAttempt &&
+            !previousAttempt.completed &&
+            previousAttempt.phase ===
+                session.currentPhase
+        );
+
+    // -----------------------------------
+    // Current phase pending athletes
     // -----------------------------------
 
     let pendingEntries =
@@ -157,6 +286,11 @@ const advanceCompetition = async (
         "Previous Current:",
         previousCurrentEntryId
             ?.toString() ?? "NONE"
+    );
+
+    console.log(
+        "Previous Has Another Attempt:",
+        previousHasAnotherAttempt
     );
 
     console.log(
@@ -186,12 +320,12 @@ const advanceCompetition = async (
         );
 
         console.log(
-            "Current Phase:",
+            "Phase:",
             attempt.phase
         );
 
         console.log(
-            "Current Attempt:",
+            "Attempt:",
             attempt.attemptNo
         );
 
@@ -207,8 +341,61 @@ const advanceCompetition = async (
 
     });
 
+    // =================================================
+    // STEP 1
+    //
+    // If the previous athlete still has another
+    // attempt in the same phase, they become PREPARE.
+    //
+    // DO NOT automatically put them on platform.
+    // =================================================
+
+    if (
+        previousHasAnotherAttempt
+    ) {
+
+        session.currentEntryId =
+            null;
+
+        session.prepareEntryId =
+            previousCurrentEntryId;
+
+        console.log(
+            "===== ATHLETE HAS ANOTHER ATTEMPT ====="
+        );
+
+        console.log(
+            "Current Platform:",
+            "NONE"
+        );
+
+        console.log(
+            "Prepare Entry:",
+            previousCurrentEntryId
+                ?.toString()
+        );
+
+        await session.save();
+
+        return session;
+    }
+
+    // =================================================
+    // STEP 2
+    //
+    // Previous athlete has completed the current phase.
+    //
+    // We now need to find another athlete.
+    // =================================================
+
+    session.currentEntryId =
+        null;
+
+    session.prepareEntryId =
+        null;
+
     // -----------------------------------
-    // SNATCH PHASE
+    // SNATCH
     // -----------------------------------
 
     if (
@@ -217,69 +404,212 @@ const advanceCompetition = async (
     ) {
 
         // -----------------------------------
-        // At least one Snatch attempt remains.
-        //
-        // Stay in Snatch.
+        // Are there still Snatch attempts
+        // remaining among ANY athletes?
         // -----------------------------------
+
+        pendingEntries =
+            getPendingEntries(
+                "SNATCH"
+            );
 
         if (
             pendingEntries.length > 0
         ) {
 
             console.log(
-                "SNATCH PHASE CONTINUES."
+                "SNATCH STILL HAS ATHLETES."
             );
 
+            // -----------------------------------
+            // First priority:
+            //
+            // An athlete who has already
+            // officially declared.
+            // -----------------------------------
+
+            const nextDeclaredAthlete =
+                findNextDeclaredAthlete();
+
+            if (
+                nextDeclaredAthlete
+            ) {
+
+                const nextAttempt =
+                    getCurrentAttempt(
+                        nextDeclaredAthlete
+                            .competitionEntry
+                    );
+
+                console.log(
+                    "===== NEXT DECLARED ATHLETE ====="
+                );
+
+                console.log(
+                    "Entry:",
+                    nextDeclaredAthlete
+                        .entryId
+                        .toString()
+                );
+
+                console.log(
+                    "Name:",
+                    nextDeclaredAthlete.name
+                );
+
+                console.log(
+                    "Attempt:",
+                    nextAttempt.attemptNo
+                );
+
+                console.log(
+                    "Declared Weight:",
+                    nextAttempt.declaredWeight
+                );
+
+                // -----------------------------------
+                // Declared athlete is ready for
+                // platform.
+                // -----------------------------------
+
+                session.currentEntryId =
+                    nextDeclaredAthlete.entryId;
+
+                session.prepareEntryId =
+                    null;
+
+                await session.save();
+
+                console.log(
+                    "===== NEXT ATHLETE MOVED TO PLATFORM ====="
+                );
+
+                console.log(
+                    "Current Entry:",
+                    session.currentEntryId
+                        .toString()
+                );
+
+                return session;
+            }
+
+            // -----------------------------------
+            // Nobody has declared.
+            //
+            // Find next Attempt 1 athlete using
+            // opening Snatch ordering.
+            //
+            // They become PREPARE, NOT CURRENT.
+            // -----------------------------------
+
+            const nextUndeclaredAthlete =
+                findNextUndeclaredAttemptOneAthlete();
+
+            if (
+                nextUndeclaredAthlete
+            ) {
+
+                console.log(
+                    "===== NEXT ATHLETE WAITING FOR DECLARATION ====="
+                );
+
+                console.log(
+                    "Entry:",
+                    nextUndeclaredAthlete
+                        .entryId
+                        .toString()
+                );
+
+                console.log(
+                    "Name:",
+                    nextUndeclaredAthlete.name
+                );
+
+                console.log(
+                    "Opening Snatch:",
+                    nextUndeclaredAthlete
+                        .openingSnatch
+                );
+
+                session.currentEntryId =
+                    null;
+
+                session.prepareEntryId =
+                    nextUndeclaredAthlete.entryId;
+
+                await session.save();
+
+                console.log(
+                    "Current Platform:",
+                    "NONE"
+                );
+
+                console.log(
+                    "Prepare Entry:",
+                    session.prepareEntryId
+                        .toString()
+                );
+
+                return session;
+            }
+
+            // -----------------------------------
+            // This means the remaining athletes
+            // are waiting for declarations on
+            // attempts 2/3.
+            //
+            // Do not automatically select them.
+            // -----------------------------------
+
+            console.log(
+                "SNATCH ATHLETES REMAIN,"
+            );
+
+            console.log(
+                "BUT NO ATHLETE IS READY/AVAILABLE FOR AUTOMATIC SELECTION."
+            );
+
+            await session.save();
+
+            return session;
         }
 
         // -----------------------------------
-        // All Snatch attempts completed.
+        // NO SNATCH ATTEMPTS REMAIN
         //
         // Move to Clean & Jerk.
         // -----------------------------------
 
-        else {
+        console.log(
+            "===== ALL SNATCH ATTEMPTS COMPLETED ====="
+        );
 
-            console.log(
-                "ALL SNATCH ATTEMPTS COMPLETED."
+        console.log(
+            "MOVING TO CLEAN & JERK."
+        );
+
+        session.currentPhase =
+            "CLEAN_JERK";
+
+        pendingEntries =
+            getPendingEntries(
+                "CLEAN_JERK"
             );
 
-            console.log(
-                "MOVING TO CLEAN & JERK."
-            );
+        // -----------------------------------
+        // Find a declared Clean & Jerk
+        // athlete, if one exists.
+        // -----------------------------------
 
-            session.currentPhase =
-                "CLEAN_JERK";
-
-            pendingEntries =
-                getPendingEntries(
-                    "CLEAN_JERK"
-                );
-        }
-    }
-
-    // -----------------------------------
-    // CLEAN & JERK PHASE
-    // -----------------------------------
-
-    else if (
-        session.currentPhase ===
-        "CLEAN_JERK"
-    ) {
+        const nextDeclaredCleanJerk =
+            findNextDeclaredAthlete();
 
         if (
-            pendingEntries.length === 0
+            nextDeclaredCleanJerk
         ) {
 
-            console.log(
-                "ALL CLEAN & JERK ATTEMPTS COMPLETED."
-            );
-
-            session.status =
-                "FINISHED";
-
             session.currentEntryId =
-                null;
+                nextDeclaredCleanJerk.entryId;
 
             session.prepareEntryId =
                 null;
@@ -288,84 +618,149 @@ const advanceCompetition = async (
 
             return session;
         }
+
+        // -----------------------------------
+        // Otherwise prepare the next
+        // Clean & Jerk Attempt 1 athlete.
+        // -----------------------------------
+
+        const nextCleanJerkAttemptOne =
+            findNextUndeclaredAttemptOneAthlete();
+
+        if (
+            nextCleanJerkAttemptOne
+        ) {
+
+            session.currentEntryId =
+                null;
+
+            session.prepareEntryId =
+                nextCleanJerkAttemptOne.entryId;
+
+            await session.save();
+
+            return session;
+        }
+
+        // -----------------------------------
+        // No Clean & Jerk athlete found.
+        // -----------------------------------
+
+        session.currentEntryId =
+            null;
+
+        session.prepareEntryId =
+            null;
+
+        await session.save();
+
+        return session;
+    }
+
+    // =================================================
+    // CLEAN & JERK
+    // =================================================
+
+    if (
+        session.currentPhase ===
+        "CLEAN_JERK"
+    ) {
+
+        pendingEntries =
+            getPendingEntries(
+                "CLEAN_JERK"
+            );
+
+        // -----------------------------------
+        // More Clean & Jerk attempts remain.
+        // -----------------------------------
+
+        if (
+            pendingEntries.length > 0
+        ) {
+
+            // -----------------------------------
+            // Already declared athlete first.
+            // -----------------------------------
+
+            const nextDeclaredAthlete =
+                findNextDeclaredAthlete();
+
+            if (
+                nextDeclaredAthlete
+            ) {
+
+                session.currentEntryId =
+                    nextDeclaredAthlete.entryId;
+
+                session.prepareEntryId =
+                    null;
+
+                await session.save();
+
+                return session;
+            }
+
+            // -----------------------------------
+            // Otherwise prepare Attempt 1
+            // athlete.
+            // -----------------------------------
+
+            const nextAttemptOneAthlete =
+                findNextUndeclaredAttemptOneAthlete();
+
+            if (
+                nextAttemptOneAthlete
+            ) {
+
+                session.currentEntryId =
+                    null;
+
+                session.prepareEntryId =
+                    nextAttemptOneAthlete.entryId;
+
+                await session.save();
+
+                return session;
+            }
+
+            // -----------------------------------
+            // Remaining athletes are waiting
+            // for declaration.
+            // -----------------------------------
+
+            await session.save();
+
+            return session;
+        }
+
+        // -----------------------------------
+        // EVERYTHING COMPLETED
+        // -----------------------------------
+
+        console.log(
+            "===== COMPETITION FINISHED ====="
+        );
+
+        session.currentEntryId =
+            null;
+
+        session.prepareEntryId =
+            null;
+
+        session.status =
+            "FINISHED";
+
+        await session.save();
+
+        return session;
     }
 
     // -----------------------------------
-    // IMPORTANT STATE RULE
-    //
-    // After EVERY completed lift:
-    //
-    // currentEntryId = null
-    //
-    // We DO NOT automatically select
-    // another athlete.
-    //
-    // The next athlete must be explicitly
-    // declared before reaching platform.
-    // -----------------------------------
-
-    session.currentEntryId =
-        null;
-
-    // -----------------------------------
-    // Previous athlete becomes PREPARE
-    // only when their next attempt is
-    // still in the current phase.
-    //
-    // If phase changed, this returns null.
-    // -----------------------------------
-
-    session.prepareEntryId =
-        getPrepareEntryId(
-            previousCurrentEntryId
-        );
-
-    console.log(
-        "===== WAITING FOR NEXT DECLARATION ====="
-    );
-
-    console.log(
-        "Current Platform:",
-        "NONE"
-    );
-
-    console.log(
-        "Prepare Entry:",
-        session.prepareEntryId
-            ?.toString() ?? "NONE"
-    );
-
-    console.log(
-        "Current Phase:",
-        session.currentPhase
-    );
-
-    console.log(
-        "Status:",
-        session.status
-    );
-
-    // -----------------------------------
-    // Persist state
+    // Safety fallback
     // -----------------------------------
 
     await session.save();
-
-    console.log(
-        "===== LIVE SESSION SAVED ====="
-    );
-
-    console.log(
-        "Current Entry AFTER:",
-        session.currentEntryId
-            ?.toString() ?? "NONE"
-    );
-
-    console.log(
-        "Prepare Entry AFTER:",
-        session.prepareEntryId
-            ?.toString() ?? "NONE"
-    );
 
     return session;
 };
