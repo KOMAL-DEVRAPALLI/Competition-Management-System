@@ -1,187 +1,373 @@
-.header{
-    background:#0a2342;
-    padding:8px 15px;
-    border-bottom:2px solid #2d4f7c;
+/* =========================================================
+   SCOREBOARD
+========================================================= */
+
+.scoreboard {
+    width: 100%;
+    min-height: 100vh;
+    background: #081a33;
+    overflow: hidden;
 }
 
-.competition-title{
-    margin:0;
-    text-align:center;
-    color:#fff;
-    font-size:24px;
-    font-weight:700;
-    letter-spacing:1px;
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header {
+    width: 100%;
+    box-sizing: border-box;
+    background: #0a2342;
+    padding: 8px 15px;
+    border-bottom: 2px solid #2d4f7c;
 }
 
-.header-info{
-    margin-top:5px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:15px;
-    color:#ffd54f;
-    font-size:15px;
-    font-weight:600;
+.competition-title {
+    margin: 0;
+    text-align: center;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    white-space: nowrap;
 }
 
-.content{
-    width:100%;
-    overflow:hidden;
+.header-info {
+    margin-top: 5px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 15px;
+
+    color: #ffd54f;
+    font-size: 15px;
+    font-weight: 600;
 }
 
-.table-area{
-    width:100%;
-    overflow-x:auto;
-    overflow-y:auto;
-    background:#081a33;
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.content {
+    width: 100%;
+    overflow: hidden;
 }
 
-.score-table{
-    width:100%;
-    min-width:1350px;
-    border-collapse:collapse;
-    table-layout:auto;
+.table-area {
+    width: 100%;
+
+    overflow-x: auto;
+    overflow-y: auto;
+
+    background: #081a33;
 }
 
-.score-table thead th{
-    background:#1b3f6d;
-    color:#fff;
-    border:1px solid #35567d;
-    padding:6px;
-    font-size:13px;
-    font-weight:700;
-    position:sticky;
-    top:0;
-    z-index:10;
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.score-table {
+    width: 100%;
+
+    /*
+       The table must have enough space for
+       all 14 columns.
+    */
+    min-width: 1150px;
+
+    border-collapse: collapse;
+
+    /*
+       IMPORTANT:
+       Widths are controlled by <colgroup>
+       in LiveScoreBoard.jsx.
+    */
+    table-layout: fixed;
 }
 
-.score-table td{
-    border:1px solid #35567d;
-    color:#fff;
-    text-align:center;
-    padding:6px;
-    font-size:13px;
-    height:34px;
-    white-space:nowrap;
+
+/* =========================================================
+   COLUMN WIDTHS
+========================================================= */
+
+.col-lot {
+    width: 60px;
 }
 
-.athlete-name{
-    text-align:left !important;
-    padding-left:10px !important;
-    font-weight:600;
-    min-width:220px;
+.col-athlete {
+    width: 240px;
 }
 
-.category-row td{
-    padding:0 !important;
-    border:0 !important;
-    background:transparent !important;
+.col-event {
+    width: 70px;
 }
 
-.category-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    width:100%;
-    box-sizing:border-box;
-
-    padding:10px 18px;
-    margin:12px 0 6px;
-
-    background:#17365d;
-    border-top:3px solid #4f7db6;
-    border-bottom:2px solid #4f7db6;
-
-    color:#ffd54f;
-    font-size:17px;
-    font-weight:700;
+.col-bw {
+    width: 70px;
 }
 
-.category-left strong,
-.category-right strong{
-    color:#fff;
+.col-attempt {
+    width: 65px;
 }
 
-.score-table th:nth-child(1),
-.score-table td:nth-child(1){
-    width:60px;
+.col-best {
+    width: 70px;
 }
 
-.score-table th:nth-child(2),
-.score-table td:nth-child(2){
-    width:240px;
+.col-total {
+    width: 75px;
 }
 
-.score-table th:nth-child(3),
-.score-table td:nth-child(3){
-    width:70px;
+.col-rank {
+    width: 65px;
 }
 
-.score-table th:nth-child(4),
-.score-table td:nth-child(4){
-    width:80px;
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
+.score-table thead th {
+    background: #1b3f6d;
+
+    color: #ffffff;
+
+    border: 1px solid #35567d;
+
+    padding: 6px 4px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+    position: sticky;
+    top: 0;
+
+    z-index: 10;
 }
 
-.score-table th:nth-child(n+5):nth-child(-n+12),
-.score-table td:nth-child(n+5):nth-child(-n+12){
-    width:65px;
+
+/* =========================================================
+   TABLE BODY
+========================================================= */
+
+.score-table tbody td {
+    border: 1px solid #35567d;
+
+    color: #ffffff;
+
+    text-align: center;
+
+    padding: 6px 5px;
+
+    font-size: 13px;
+
+    height: 34px;
+
+    box-sizing: border-box;
+
+    white-space: nowrap;
 }
 
-.score-table th:nth-child(13),
-.score-table td:nth-child(13){
-    width:80px;
+
+/* =========================================================
+   ATHLETE NAME
+========================================================= */
+
+.athlete-name {
+    text-align: left !important;
+
+    padding-left: 10px !important;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 }
 
-.score-table th:nth-child(14),
-.score-table td:nth-child(14){
-    width:70px;
+
+/* =========================================================
+   CATEGORY ROW
+========================================================= */
+
+.category-row td {
+    padding: 0 !important;
+
+    border: 0 !important;
+
+    background: transparent !important;
 }
 
-.current-athlete-row{
-    background:#ffd54f !important;
+.category-header {
+    width: 100%;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    box-sizing: border-box;
+
+    padding: 10px 18px;
+
+    margin: 12px 0 6px;
+
+    background: #17365d;
+
+    border-top: 3px solid #4f7db6;
+
+    border-bottom: 2px solid #4f7db6;
+
+    color: #ffd54f;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.5px;
 }
 
-.current-athlete-row td{
-    color:#000 !important;
-    font-weight:700;
+.category-left {
+    color: #ffd54f;
 }
 
-.current-attempt{
-    background:#ff9800 !important;
-    color:#000 !important;
-    font-weight:700;
+.category-left strong {
+    color: #ffffff;
+
+    font-size: 18px;
 }
 
-.next-athlete-row td{
-    border-top:2px dashed #00ffff !important;
-    border-bottom:2px dashed #00ffff !important;
+.category-right {
+    color: #ffffff;
 }
 
-.good-lift{
-    color:#66ff33;
-    font-weight:700;
+.category-right strong {
+    color: #ffffff;
+
+    font-size: 16px;
 }
 
-.no-lift{
-    color:#ff4040;
-    font-weight:700;
+
+/* =========================================================
+   CURRENT ATHLETE
+========================================================= */
+
+.current-athlete-row {
+    background: #ffd54f !important;
 }
 
-.pending-lift{
-    color:#fff;
+.current-athlete-row td {
+    color: #000000 !important;
+
+    font-weight: 700;
 }
 
-.best-lift{
-    color:#6dff6d;
-    font-weight:700;
+
+/* =========================================================
+   NEXT ATHLETE
+========================================================= */
+
+.next-athlete-row td {
+    border-top: 2px dashed #00ffff !important;
+
+    border-bottom: 2px dashed #00ffff !important;
 }
 
-.total-cell{
-    color:#ffb400;
-    font-weight:700;
+
+/* =========================================================
+   CURRENT ATTEMPT
+========================================================= */
+
+.current-attempt {
+    background: #ff9800 !important;
+
+    color: #000000 !important;
+
+    font-weight: 700;
 }
 
-.rank-cell{
-    color:#ffd54f;
-    font-weight:700;
+
+/* =========================================================
+   LIFT RESULTS
+========================================================= */
+
+.good-lift {
+    color: #66ff33;
+
+    font-weight: 700;
+}
+
+.no-lift {
+    color: #ff4040;
+
+    font-weight: 700;
+}
+
+.pending-lift {
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   BEST LIFT
+========================================================= */
+
+.best-lift {
+    color: #6dff6d;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   TOTAL
+========================================================= */
+
+.total-cell {
+    color: #ffb400 !important;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   RANK
+========================================================= */
+
+.rank-cell {
+    color: #ffd54f !important;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   MOBILE / SMALL SCREEN
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .competition-title {
+        font-size: 19px;
+    }
+
+    .header-info {
+        font-size: 13px;
+        gap: 10px;
+    }
+
+    .score-table {
+        min-width: 1150px;
+    }
 }

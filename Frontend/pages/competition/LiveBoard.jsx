@@ -10,8 +10,8 @@ import "./LiveScoreBoard.css";
 const LiveScoreBoard = () => {
 
     const { competitionId, gender } = useParams();
-const currentRowRef = useRef(null);
-        const [liveCompetition, setLiveCompetition] = useState(null);
+    const currentRowRef = useRef(null);
+    const [liveCompetition, setLiveCompetition] = useState(null);
 
     const loadScoreBoard = async () => {
 
@@ -46,12 +46,12 @@ const currentRowRef = useRef(null);
     }, []);
     useEffect(() => {
 
-    currentRowRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-    });
+        currentRowRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+        });
 
-}, [liveCompetition?.currentAthlete?.entryId]);
+    }, [liveCompetition?.currentAthlete?.entryId]);
     if (!liveCompetition) {
         return <h2>Loading...</h2>;
     }
@@ -114,45 +114,45 @@ const currentRowRef = useRef(null);
         );
 
     };
-   const groupedResults = liveCompetition.competitionResults.reduce(
-    (groups, athlete) => {
+    const groupedResults = liveCompetition.competitionResults.reduce(
+        (groups, athlete) => {
 
-        const weight = athlete.weightCategory;
+            const weight = athlete.weightCategory;
 
-        if (!groups[weight]) {
-            groups[weight] = [];
+            if (!groups[weight]) {
+                groups[weight] = [];
+            }
+
+            groups[weight].push(athlete);
+
+            return groups;
+
+        },
+        {}
+    );
+
+    const sortedCategories = Object.entries(groupedResults).sort(
+        ([a], [b]) => {
+
+            const weightA = Number(a.replace("+", ""));
+            const weightB = Number(b.replace("+", ""));
+
+            if (weightA !== weightB) {
+                return weightA - weightB;
+            }
+
+            if (a.startsWith("+") && !b.startsWith("+")) {
+                return 1;
+            }
+
+            if (!a.startsWith("+") && b.startsWith("+")) {
+                return -1;
+            }
+
+            return 0;
+
         }
-
-        groups[weight].push(athlete);
-
-        return groups;
-
-    },
-    {}
-);
-
-const sortedCategories = Object.entries(groupedResults).sort(
-    ([a], [b]) => {
-
-        const weightA = Number(a.replace("+", ""));
-        const weightB = Number(b.replace("+", ""));
-
-        if (weightA !== weightB) {
-            return weightA - weightB;
-        }
-
-        if (a.startsWith("+") && !b.startsWith("+")) {
-            return 1;
-        }
-
-        if (!a.startsWith("+") && b.startsWith("+")) {
-            return -1;
-        }
-
-        return 0;
-
-    }
-);
+    );
 
     return (
 
@@ -200,11 +200,33 @@ const sortedCategories = Object.entries(groupedResults).sort(
 
             <div className="content">
 
-            
+
 
                 <main className="table-area">
 
                     <table className="score-table">
+
+                        <colgroup>
+
+                            <col className="col-lot" />
+                            <col className="col-athlete" />
+                            <col className="col-event" />
+                            <col className="col-bw" />
+
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-best" />
+
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-best" />
+
+                            <col className="col-total" />
+                            <col className="col-rank" />
+
+                        </colgroup>
 
                         <thead>
 
@@ -243,196 +265,196 @@ const sortedCategories = Object.entries(groupedResults).sort(
                             </tr>
 
                         </thead>
-                      
-    <tbody>
 
-    {sortedCategories.map(([weight, athletes]) => (
+                        <tbody>
 
-        <React.Fragment key={weight}>
+                            {sortedCategories.map(([weight, athletes]) => (
 
-           <tr className="category-row">
-    <td colSpan="14">
+                                <React.Fragment key={weight}>
 
-        <div className="category-header">
+                                    <tr className="category-row">
+                                        <td colSpan="14">
 
-            <div className="category-left">
-                Weight Category : <strong>{weight} kg</strong>
-            </div>
+                                            <div className="category-header">
+
+                                                <div className="category-left">
+                                                    Weight Category : <strong>{weight} kg</strong>
+                                                </div>
 
 
-        </div>
+                                            </div>
 
-    </td>
-</tr>
-            {athletes.map((athlete) => (
+                                        </td>
+                                    </tr>
+                                    {athletes.map((athlete) => (
 
-               <tr
-    key={athlete.entryId}
-    ref={
-        athlete.entryId ===
-        liveCompetition.currentAthlete?.entryId
-            ? currentRowRef
-            : null
-    }
-    className={
-        athlete.entryId ===
-            liveCompetition.currentAthlete?.entryId
-            ? "current-athlete-row"
-            : athlete.entryId ===
-                liveCompetition.nextAthlete?.entryId
-                ? "next-athlete-row"
-                : ""
-    }
->
+                                        <tr
+                                            key={athlete.entryId}
+                                            ref={
+                                                athlete.entryId ===
+                                                    liveCompetition.currentAthlete?.entryId
+                                                    ? currentRowRef
+                                                    : null
+                                            }
+                                            className={
+                                                athlete.entryId ===
+                                                    liveCompetition.currentAthlete?.entryId
+                                                    ? "current-athlete-row"
+                                                    : athlete.entryId ===
+                                                        liveCompetition.nextAthlete?.entryId
+                                                        ? "next-athlete-row"
+                                                        : ""
+                                            }
+                                        >
 
-                    <td>{athlete.lotNumber}</td>
+                                            <td>{athlete.lotNumber}</td>
 
-                    <td
-                        className="athlete-name"
-                        title={athlete.name}
-                    >
-                        {athlete.name}
-                    </td>
+                                            <td
+                                                className="athlete-name"
+                                                title={athlete.name}
+                                            >
+                                                {athlete.name}
+                                            </td>
 
-                    <td>{athlete.event}</td>
+                                            <td>{athlete.event}</td>
 
-                    <td>{athlete.bodyWeight}</td>
+                                            <td>{athlete.bodyWeight}</td>
 
-                    {/* SNATCH */}
+                                            {/* SNATCH */}
 
-                    <td
-                        className={
-                            isCurrentAttempt(
-                                athlete,
-                                "SNATCH",
-                                1
-                            )
-                                ? "current-attempt"
-                                : ""
-                        }
-                    >
-                        {renderAttempt(
-                            athlete.snatchAttempts[0],
-                            athlete.openingSnatch
-                        )}
-                    </td>
+                                            <td
+                                                className={
+                                                    isCurrentAttempt(
+                                                        athlete,
+                                                        "SNATCH",
+                                                        1
+                                                    )
+                                                        ? "current-attempt"
+                                                        : ""
+                                                }
+                                            >
+                                                {renderAttempt(
+                                                    athlete.snatchAttempts[0],
+                                                    athlete.openingSnatch
+                                                )}
+                                            </td>
 
-                    <td
-                        className={
-                            isCurrentAttempt(
-                                athlete,
-                                "SNATCH",
-                                2
-                            )
-                                ? "current-attempt"
-                                : ""
-                        }
-                    >
-                        {renderAttempt(
-                            athlete.snatchAttempts[1]
-                        )}
-                    </td>
+                                            <td
+                                                className={
+                                                    isCurrentAttempt(
+                                                        athlete,
+                                                        "SNATCH",
+                                                        2
+                                                    )
+                                                        ? "current-attempt"
+                                                        : ""
+                                                }
+                                            >
+                                                {renderAttempt(
+                                                    athlete.snatchAttempts[1]
+                                                )}
+                                            </td>
 
-                    <td
-                        className={
-                            isCurrentAttempt(
-                                athlete,
-                                "SNATCH",
-                                3
-                            )
-                                ? "current-attempt"
-                                : ""
-                        }
-                    >
-                        {renderAttempt(
-                            athlete.snatchAttempts[2]
-                        )}
-                    </td>
+                                            <td
+                                                className={
+                                                    isCurrentAttempt(
+                                                        athlete,
+                                                        "SNATCH",
+                                                        3
+                                                    )
+                                                        ? "current-attempt"
+                                                        : ""
+                                                }
+                                            >
+                                                {renderAttempt(
+                                                    athlete.snatchAttempts[2]
+                                                )}
+                                            </td>
 
-                    <td className="best-lift">
-                        {athlete.bestSnatch > 0
-                            ? athlete.bestSnatch
-                            : "-"}
-                    </td>
+                                            <td className="best-lift">
+                                                {athlete.bestSnatch > 0
+                                                    ? athlete.bestSnatch
+                                                    : "-"}
+                                            </td>
 
-                    {/* CLEAN & JERK */}
+                                            {/* CLEAN & JERK */}
 
-                    <td
-                        className={
-                            isCurrentAttempt(
-                                athlete,
-                                "CLEAN_JERK",
-                                1
-                            )
-                                ? "current-attempt"
-                                : ""
-                        }
-                    >
-                        {renderAttempt(
-                            athlete.cleanJerkAttempts[0],
-                            athlete.openingCleanJerk
-                        )}
-                    </td>
+                                            <td
+                                                className={
+                                                    isCurrentAttempt(
+                                                        athlete,
+                                                        "CLEAN_JERK",
+                                                        1
+                                                    )
+                                                        ? "current-attempt"
+                                                        : ""
+                                                }
+                                            >
+                                                {renderAttempt(
+                                                    athlete.cleanJerkAttempts[0],
+                                                    athlete.openingCleanJerk
+                                                )}
+                                            </td>
 
-                    <td
-                        className={
-                            isCurrentAttempt(
-                                athlete,
-                                "CLEAN_JERK",
-                                2
-                            )
-                                ? "current-attempt"
-                                : ""
-                        }
-                    >
-                        {renderAttempt(
-                            athlete.cleanJerkAttempts[1]
-                        )}
-                    </td>
+                                            <td
+                                                className={
+                                                    isCurrentAttempt(
+                                                        athlete,
+                                                        "CLEAN_JERK",
+                                                        2
+                                                    )
+                                                        ? "current-attempt"
+                                                        : ""
+                                                }
+                                            >
+                                                {renderAttempt(
+                                                    athlete.cleanJerkAttempts[1]
+                                                )}
+                                            </td>
 
-                    <td
-                        className={
-                            isCurrentAttempt(
-                                athlete,
-                                "CLEAN_JERK",
-                                3
-                            )
-                                ? "current-attempt"
-                                : ""
-                        }
-                    >
-                        {renderAttempt(
-                            athlete.cleanJerkAttempts[2]
-                        )}
-                    </td>
+                                            <td
+                                                className={
+                                                    isCurrentAttempt(
+                                                        athlete,
+                                                        "CLEAN_JERK",
+                                                        3
+                                                    )
+                                                        ? "current-attempt"
+                                                        : ""
+                                                }
+                                            >
+                                                {renderAttempt(
+                                                    athlete.cleanJerkAttempts[2]
+                                                )}
+                                            </td>
 
-                    <td className="best-lift">
-                        {athlete.bestCleanJerk > 0
-                            ? athlete.bestCleanJerk
-                            : "-"
-                        }
-                    </td>
+                                            <td className="best-lift">
+                                                {athlete.bestCleanJerk > 0
+                                                    ? athlete.bestCleanJerk
+                                                    : "-"
+                                                }
+                                            </td>
 
-                    <td className="total-cell">
-                        {athlete.total > 0
-                            ? athlete.total
-                            : "-"
-                        }
-                    </td>
+                                            <td className="total-cell">
+                                                {athlete.total > 0
+                                                    ? athlete.total
+                                                    : "-"
+                                                }
+                                            </td>
 
-                    <td className="rank-cell">
-                        {athlete.place || "-"}
-                    </td>
+                                            <td className="rank-cell">
+                                                {athlete.place || "-"}
+                                            </td>
 
-                </tr>
+                                        </tr>
 
-            ))}
+                                    ))}
 
-        </React.Fragment>
+                                </React.Fragment>
 
-    ))}
+                            ))}
 
-</tbody>
+                        </tbody>
                     </table>
 
                 </main>
