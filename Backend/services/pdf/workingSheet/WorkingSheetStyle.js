@@ -42,13 +42,17 @@ body {
     page-break-inside: avoid;
     break-inside: avoid;
 
+    /*
+     * Each category starts on a
+     * separate physical page.
+     */
     page-break-after: always;
     break-after: page;
 }
 
 
 /*
- * Prevent an unnecessary blank page
+ * Do not create a page break
  * after the final category.
  */
 
@@ -115,8 +119,8 @@ body {
     border-collapse: collapse;
 
     /*
-     * Auto allows the browser to use the
-     * specified column widths more naturally.
+     * Allow the browser to use the
+     * defined column widths naturally.
      */
     table-layout: auto;
 
@@ -143,7 +147,7 @@ body {
 
 
 /*
- * Space for officials to write attempts.
+ * Writing space for officials.
  */
 
 .working-sheet-table tbody td {
@@ -154,6 +158,7 @@ body {
 /* ===========================
    COLUMN WIDTHS
 =========================== */
+
 
 /*
  * Lot number
@@ -196,9 +201,6 @@ body {
 
 /*
  * YTH / JR / SR
- *
- * Increased from 28px so the
- * event cells are easier to read/write.
  */
 
 .event-col {
@@ -209,9 +211,6 @@ body {
 
 /*
  * Snatch and Clean & Jerk attempts
- *
- * These are intentionally wider because
- * officials need to write attempt weights.
  */
 
 .attempt-col {
@@ -308,16 +307,6 @@ body {
     border-top: 1px solid #000;
 
     margin-bottom: 6px;
-}
-
-
-/* ===========================
-   PAGE BREAK
-=========================== */
-
-.page-break {
-    page-break-after: always;
-    break-after: page;
 }
 
 

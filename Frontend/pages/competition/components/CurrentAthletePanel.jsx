@@ -1,7 +1,9 @@
 import "./CompetitionPanel.css";
 
+
 const CurrentAthletePanel = ({
     currentAthlete,
+    currentPhase,
 
     declaredWeight,
     setDeclaredWeight,
@@ -22,9 +24,26 @@ const CurrentAthletePanel = ({
 
 
     // =====================================
+    // DECLARATION LOCK
+    //
+    // Clean & Jerk declaration must remain
+    // locked while the competition is still
+    // in the Snatch phase.
+    //
+    // Once the live competition actually
+    // enters CLEAN_JERK, the declaration
+    // becomes editable.
+    // =====================================
+
+    const declarationLocked =
+        currentAttempt?.phase === "CLEAN_JERK" &&
+        currentPhase !== "CLEAN_JERK";
+
+
+    // =====================================
     // CURRENT WEIGHT
     //
-    // This is the currently declared weight.
+    // Currently declared weight.
     // =====================================
 
     const currentWeight =
@@ -209,6 +228,7 @@ const CurrentAthletePanel = ({
                                 }
 
                                 disabled={
+                                    declarationLocked ||
                                     savingDeclaration ||
                                     processingLift
                                 }
@@ -232,6 +252,7 @@ const CurrentAthletePanel = ({
                                 }
 
                                 disabled={
+                                    declarationLocked ||
                                     savingDeclaration ||
                                     processingLift ||
                                     !declaredWeight
@@ -241,6 +262,8 @@ const CurrentAthletePanel = ({
                                 {
                                     savingDeclaration
                                         ? "Saving..."
+                                        : declarationLocked
+                                        ? "C&J Locked"
                                         : "Save Declaration"
                                 }
 
@@ -255,8 +278,11 @@ const CurrentAthletePanel = ({
 
                         <small>
 
-                            Enter or modify the declared
-                            weight before the lift.
+                            {
+                                declarationLocked
+                                    ? "Clean & Jerk declaration is locked until all Snatch attempts are completed."
+                                    : "Enter or modify the declared weight before the lift."
+                            }
 
                         </small>
 
@@ -317,6 +343,7 @@ const CurrentAthletePanel = ({
         </section>
 
     );
+
 };
 
 

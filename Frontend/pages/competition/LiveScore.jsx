@@ -393,84 +393,141 @@ const LiveScore = () => {
     // =====================================
 
     const handleSaveDeclaration =
-        async () => {
+    async () => {
 
-        if (
-            !currentAthlete ||
-            savingDeclaration
-        ) {
-            return;
-        }
-
-
-        const weight =
-            Number(
-                declaredWeight
-            );
+    if (
+        !currentAthlete ||
+        savingDeclaration
+    ) {
+        return;
+    }
 
 
-        if (
-            Number.isNaN(weight) ||
-            weight <= 0
-        ) {
+    // =====================================
+    // PHASE PROTECTION
+    //
+    // Clean & Jerk declarations must NOT
+    // be editable while competition is still
+    // in Snatch phase.
+    //
+    // This is a frontend protection only.
+    // Backend must enforce the same rule.
+    // =====================================
 
-            setLiftError(
-                "Please enter a valid declared weight."
-            );
-
-            return;
-        }
-
-
-        try {
-
-            setSavingDeclaration(true);
-
-            setLiftError("");
-            setLiftMessage("");
+    const attemptPhase =
+        currentAthlete
+            ?.currentAttempt
+            ?.phase;
 
 
-            await saveDeclaredWeight({
+    if (
+        attemptPhase === "CLEAN_JERK" &&
+        currentPhase !== "CLEAN_JERK"
+    ) {
 
-                entryId:
-                    currentAthlete.entryId,
+        setLiftError(
+            "Clean & Jerk declaration is locked until all Snatch attempts are completed."
+        );
 
-                declaredWeight:
-                    weight,
-
-            });
-
-
-            setLiftMessage(
-                "Declaration saved successfully."
-            );
+        return;
+    }
 
 
-            await loadLiveCompetition();
+    // =====================================
+    // ALSO PROTECT AGAINST PHASE MISMATCH
+    // =====================================
 
-        } catch (error) {
+    if (
+        attemptPhase &&
+        attemptPhase !== currentPhase
+    ) {
 
-            console.error(
-                "Failed to save declaration:",
-                error
-            );
+        setLiftError(
+            `${attemptPhase === "SNATCH"
+                ? "Snatch"
+                : "Clean & Jerk"
+            } declaration cannot be edited during the ${currentPhase === "SNATCH"
+                ? "Snatch"
+                : "Clean & Jerk"
+            } phase.`
+        );
+
+        return;
+    }
 
 
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to save declaration."
-            );
+    // =====================================
+    // VALIDATE WEIGHT
+    // =====================================
 
-        } finally {
+    const weight =
+        Number(
+            declaredWeight
+        );
 
-            setSavingDeclaration(false);
 
-        }
-    };
+    if (
+        Number.isNaN(weight) ||
+        weight <= 0
+    ) {
 
+        setLiftError(
+            "Please enter a valid declared weight."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        setSavingDeclaration(true);
+
+        setLiftError("");
+        setLiftMessage("");
+
+
+        await saveDeclaredWeight({
+
+            entryId:
+                currentAthlete.entryId,
+
+            declaredWeight:
+                weight,
+
+        });
+
+
+        setLiftMessage(
+            "Declaration saved successfully."
+        );
+
+
+        await loadLiveCompetition();
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to save declaration:",
+            error
+        );
+
+
+        setLiftError(
+            error.response
+                ?.data
+                ?.message ||
+            error.message ||
+            "Failed to save declaration."
+        );
+
+    } finally {
+
+        setSavingDeclaration(false);
+
+    }
+};
 
     // =====================================
     // PROCESS LIFT
