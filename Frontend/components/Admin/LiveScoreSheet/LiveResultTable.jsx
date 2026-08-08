@@ -1,4 +1,5 @@
-import "./LiveResultTable.css"
+import "./LiveResultTable.css";
+
 const ScoreboardTable = ({
     competitionResults,
 }) => {
@@ -6,50 +7,99 @@ const ScoreboardTable = ({
     if (!competitionResults?.length) {
 
         return (
-
             <div className="scoreboard">
 
                 <div className="scoreboard-header">
-
-                    <h2>Live Scoreboard</h2>
-
+                    <h2>
+                        Live Scoreboard
+                    </h2>
                 </div>
 
                 <p>No Athletes</p>
 
             </div>
-
         );
 
     }
 
-    const renderAttempt = (attempt) => {
+    // -----------------------------------
+    // Render individual attempt
+    // -----------------------------------
 
-        if (!attempt) return "-";
+    const renderAttempt = (
+        attempt,
+        openingWeight = null
+    ) => {
 
-        if (attempt.result === "GOOD") {
+        if (!attempt) {
+            return "-";
+        }
+
+        // -----------------------------------
+        // Determine display weight
+        //
+        // Attempt 1:
+        // Use official declaration if it exists.
+        // Otherwise show opening weight.
+        //
+        // Attempt 2 / 3:
+        // Show only official declaration.
+        // -----------------------------------
+
+        let displayWeight = null;
+
+        if (attempt.attemptNo === 1) {
+
+            displayWeight =
+                attempt.declaredWeight ??
+                openingWeight;
+
+        } else {
+
+            displayWeight =
+                attempt.declaredWeight;
+
+        }
+
+        // -----------------------------------
+        // GOOD LIFT
+        // -----------------------------------
+
+        if (
+            attempt.result === "GOOD"
+        ) {
 
             return (
                 <span className="attempt-good">
-                    {attempt.declaredWeight} ✓
+                    {displayWeight ?? "-"} ✓
                 </span>
             );
 
         }
 
-        if (attempt.result === "NO_LIFT") {
+        // -----------------------------------
+        // NO LIFT
+        // -----------------------------------
+
+        if (
+            attempt.result === "NO_LIFT"
+        ) {
 
             return (
                 <span className="attempt-fail">
-                    {attempt.declaredWeight} ✗
+                    {displayWeight ?? "-"} ✗
                 </span>
             );
 
         }
 
+        // -----------------------------------
+        // PENDING
+        // -----------------------------------
+
         return (
             <span className="attempt-pending">
-                {attempt.declaredWeight ?? "-"}
+                {displayWeight ?? "-"}
             </span>
         );
 
@@ -96,80 +146,164 @@ const ScoreboardTable = ({
 
                 <tbody>
 
-                    {competitionResults.map((athlete) => (
+                    {competitionResults.map(
+                        (athlete) => (
 
-                       <tr
-    key={athlete.entryId}
-    className={
-        athlete.status === "ON_PLATFORM"
-            ? "scoreboard-current-row"
-            : athlete.status === "NEXT"
-            ? "scoreboard-next-row"
-            : athlete.status === "COMPLETED"
-            ? "scoreboard-completed-row"
-            : ""
-    }
->
+                            <tr
+                                key={
+                                    athlete.entryId
+                                }
+                                className={
+                                    athlete.status ===
+                                    "ON_PLATFORM"
+                                        ? "scoreboard-current-row"
+                                        : athlete.status ===
+                                          "NEXT"
+                                        ? "scoreboard-next-row"
+                                        : athlete.status ===
+                                          "COMPLETED"
+                                        ? "scoreboard-completed-row"
+                                        : ""
+                                }
+                            >
 
-                            <td>{athlete.lotNumber}</td>
+                                {/* -----------------------------------
+                                    LOT
+                                    ----------------------------------- */}
 
-                            <td>
+                                <td>
+                                    {
+                                        athlete.lotNumber
+                                    }
+                                </td>
 
-                                <strong>
+                                {/* -----------------------------------
+                                    NAME
+                                    ----------------------------------- */}
 
-                                    {athlete.name}
+                                <td>
 
-                                </strong>
+                                    <strong>
+                                        {
+                                            athlete.name
+                                        }
+                                    </strong>
 
-                            </td>
+                                </td>
 
-                            <td>{renderAttempt(athlete.snatchAttempts[0])}</td>
-                            <td>{renderAttempt(athlete.snatchAttempts[1])}</td>
-                            <td>{renderAttempt(athlete.snatchAttempts[2])}</td>
+                                {/* -----------------------------------
+                                    SNATCH
+                                    ----------------------------------- */}
 
-                            <td>{renderAttempt(athlete.cleanJerkAttempts[0])}</td>
-                            <td>{renderAttempt(athlete.cleanJerkAttempts[1])}</td>
-                            <td>{renderAttempt(athlete.cleanJerkAttempts[2])}</td>
+                                <td>
+                                    {renderAttempt(
+                                        athlete
+                                            .snatchAttempts?.[0],
+                                        athlete
+                                            .openingSnatch
+                                    )}
+                                </td>
 
-                            <td>
+                                <td>
+                                    {renderAttempt(
+                                        athlete
+                                            .snatchAttempts?.[1]
+                                    )}
+                                </td>
 
-                                <strong>
+                                <td>
+                                    {renderAttempt(
+                                        athlete
+                                            .snatchAttempts?.[2]
+                                    )}
+                                </td>
 
-                                    {athlete.bestSnatch}
+                                {/* -----------------------------------
+                                    CLEAN & JERK
+                                    ----------------------------------- */}
 
-                                </strong>
+                                <td>
+                                    {renderAttempt(
+                                        athlete
+                                            .cleanJerkAttempts?.[0],
+                                        athlete
+                                            .openingCleanJerk
+                                    )}
+                                </td>
 
-                            </td>
+                                <td>
+                                    {renderAttempt(
+                                        athlete
+                                            .cleanJerkAttempts?.[1]
+                                    )}
+                                </td>
 
-                            <td>
+                                <td>
+                                    {renderAttempt(
+                                        athlete
+                                            .cleanJerkAttempts?.[2]
+                                    )}
+                                </td>
 
-                                <strong>
+                                {/* -----------------------------------
+                                    BEST SNATCH
+                                    ----------------------------------- */}
 
-                                    {athlete.bestCleanJerk}
+                                <td>
 
-                                </strong>
+                                    <strong>
+                                        {
+                                            athlete.bestSnatch
+                                        }
+                                    </strong>
 
-                            </td>
+                                </td>
 
-                            <td>
+                                {/* -----------------------------------
+                                    BEST CLEAN & JERK
+                                    ----------------------------------- */}
 
-                                <strong>
+                                <td>
 
-                                    {athlete.total}
+                                    <strong>
+                                        {
+                                            athlete.bestCleanJerk
+                                        }
+                                    </strong>
 
-                                </strong>
+                                </td>
 
-                            </td>
+                                {/* -----------------------------------
+                                    TOTAL
+                                    ----------------------------------- */}
 
-                            <td>
+                                <td>
 
-                                {athlete.place ?? "-"}
+                                    <strong>
+                                        {
+                                            athlete.total
+                                        }
+                                    </strong>
 
-                            </td>
+                                </td>
 
-                        </tr>
+                                {/* -----------------------------------
+                                    RANK
+                                    ----------------------------------- */}
 
-                    ))}
+                                <td>
+
+                                    {
+                                        athlete.place ??
+                                        "-"
+                                    }
+
+                                </td>
+
+                            </tr>
+
+                        )
+                    )}
 
                 </tbody>
 
