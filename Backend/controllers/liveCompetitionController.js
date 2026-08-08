@@ -5,7 +5,6 @@ import updateQueueDeclaration from "../services/liveCompetition/updateQueueDecla
 import getLiveCompetition from "../services/liveCompetition/getLiveCompetition.js";
 import selectOfficialAthlete from "../services/liveCompetition/selectOfficialAthlete.js";
 
-
 // =====================================
 // GET LIVE COMPETITION
 // =====================================
@@ -122,58 +121,40 @@ export const startLiveCompetitionController =
 //
 // NO automatic selection.
 // =====================================
+export const selectOfficialAthleteController = async (
+    req,
+    res
+) => {
+    try {
 
-export const selectOfficialAthleteController =
-    async (
-        req,
-        res
-    ) => {
+        const {
+            competitionId,
+            gender,
+            entryId,
+        } = req.body;
 
-        try {
-
-            const {
+        const result =
+            await selectOfficialAthlete({
                 competitionId,
                 gender,
                 entryId,
-            } = req.body;
-
-            const result =
-                await selectOfficialAthlete({
-
-                    competitionId,
-
-                    gender,
-
-                    entryId,
-
-                });
-
-            return res.status(200).json({
-
-                success: true,
-
-                message:
-                    "Athlete selected successfully.",
-
-                data: result,
-
             });
 
-        } catch (error) {
+        return res.status(200).json({
+            success: true,
+            message: "Athlete selected successfully.",
+            data: result,
+        });
 
-            return res.status(400).json({
+    } catch (error) {
 
-                success: false,
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
 
-                message:
-                    error.message,
-
-            });
-
-        }
-
-    };
-
+    }
+};
 
 // =====================================
 // PROCESS LIFT
