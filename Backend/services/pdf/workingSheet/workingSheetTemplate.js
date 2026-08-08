@@ -40,13 +40,13 @@ ${workingSheetStyles()}
 
 <h4>${competition.competitionName}</h4>
 
-        <p>
+       <p>
 
-            Venue : ${competition.venue}
-            <br>
-            Date : ${new Date(competition.startDate).toLocaleDateString("en-IN")}
+    Venue : ${competition.venue}
+    <br>
+    Date : ${new Date().toLocaleDateString("en-IN")}
 
-        </p>
+</p>
 
     </div>
 
