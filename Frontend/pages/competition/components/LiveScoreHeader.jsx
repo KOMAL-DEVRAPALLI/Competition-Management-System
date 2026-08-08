@@ -1,272 +1,65 @@
-import "./LiveScoreHeader.css"
-const AthleteSelectionTable = ({
-    athletes,
-    currentAthlete,
+const LiveScoreHeader = ({
+    competitionId,
+    status,
     currentPhase,
-    selectingAthlete,
-    canSelectAnotherAthlete,
-    getCurrentWeight,
-    onSelectAthlete,
+    totalAthletes,
 }) => {
 
-    const officialAthletes =
-        Array.isArray(athletes)
-            ? athletes
-            : [];
-
     return (
-        <section className="official-athlete-list">
+        <header className="live-score-header">
 
-            <div className="official-list-header">
+            {/* =================================
+                COMPETITION INFORMATION
+            ================================= */}
 
-                <div>
+            <div className="live-score-header-main">
 
-                    <h2>
-                        Official Athlete Selection
-                    </h2>
+                <h1>
+                    Live Competition
+                </h1>
 
-                    <p>
-                        Select the athlete manually.
-                        The system will not decide who
-                        lifts next.
-                    </p>
-
-                    {!canSelectAnotherAthlete &&
-                        currentAthlete && (
-                            <p className="selection-locked-message">
-                                Declare the current athlete's
-                                next attempt before selecting
-                                another athlete.
-                            </p>
-                        )}
-
-                    {canSelectAnotherAthlete &&
-                        currentAthlete && (
-                            <p className="selection-ready-message">
-                                Current declaration is saved.
-                                You may select another eligible
-                                athlete.
-                            </p>
-                        )}
-
-                </div>
-
-                <strong>
-                    {officialAthletes.length} athletes
-                </strong>
+                <p>
+                    Competition:{" "}
+                    {competitionId}
+                </p>
 
             </div>
 
-            <div className="official-list-table-wrapper">
 
-                <table className="official-athlete-table">
+            {/* =================================
+                SESSION INFORMATION
+            ================================= */}
 
-                    <thead>
+            <div className="live-score-session">
 
-                        <tr>
+                <span>
+                    Status:{" "}
+                    <strong>
+                        {status}
+                    </strong>
+                </span>
 
-                            <th>
-                                Lot
-                            </th>
 
-                            <th>
-                                Name
-                            </th>
+                <span>
+                    Phase:{" "}
+                    <strong>
+                        {currentPhase}
+                    </strong>
+                </span>
 
-                            <th>
-                                Category
-                            </th>
 
-                            <th>
-                                Attempt
-                            </th>
-
-                            <th>
-                                Weight
-                            </th>
-
-                            <th>
-                                Action
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {officialAthletes.map(
-                            (athlete) => {
-
-                                const attempt =
-                                    athlete.currentAttempt;
-
-                                const weight =
-                                    getCurrentWeight(
-                                        athlete
-                                    );
-
-                                const isSelected =
-                                    currentAthlete &&
-                                    currentAthlete
-                                        .entryId
-                                        ?.toString() ===
-                                    athlete
-                                        .entryId
-                                        ?.toString();
-
-                                const isCompleted =
-                                    attempt?.completed ===
-                                    true;
-
-                                const wrongPhase =
-                                    attempt &&
-                                    attempt.phase !==
-                                    currentPhase;
-
-                                const isCurrent =
-                                    isSelected;
-
-                                const canSelect =
-                                    !selectingAthlete &&
-                                    !isCompleted &&
-                                    !wrongPhase &&
-                                    !isCurrent &&
-                                    (
-                                        !currentAthlete ||
-                                        canSelectAnotherAthlete
-                                    );
-
-                                return (
-                                    <tr
-                                        key={
-                                            athlete.entryId
-                                        }
-                                        className={
-                                            isSelected
-                                                ? "official-selected-row"
-                                                : isCompleted
-                                                ? "official-completed-row"
-                                                : ""
-                                        }
-                                    >
-
-                                        {/* LOT */}
-
-                                        <td>
-                                            {
-                                                athlete
-                                                    .lotNumber
-                                            }
-                                        </td>
-
-                                        {/* NAME */}
-
-                                        <td>
-                                            <strong>
-                                                {
-                                                    athlete
-                                                        .name
-                                                }
-                                            </strong>
-                                        </td>
-
-                                        {/* CATEGORY */}
-
-                                        <td>
-                                            {
-                                                athlete
-                                                    .weightCategory ??
-                                                "-"
-                                            }
-                                        </td>
-
-                                        {/* ATTEMPT */}
-
-                                        <td>
-                                            {
-                                                attempt
-                                                    ?.phase ??
-                                                "-"
-                                            }{" "}
-                                            {
-                                                attempt
-                                                    ?.attemptNo ??
-                                                "-"
-                                            }
-                                        </td>
-
-                                        {/* WEIGHT */}
-
-                                        <td>
-                                            {
-                                                weight ??
-                                                "-"
-                                            } kg
-                                        </td>
-
-                                        {/* ACTION */}
-
-                                        <td>
-
-                                            <button
-                                                type="button"
-                                                className="select-athlete-btn"
-                                                disabled={
-                                                    !canSelect
-                                                }
-                                                onClick={() =>
-                                                    onSelectAthlete(
-                                                        athlete
-                                                    )
-                                                }
-                                            >
-
-                                                {isSelected
-                                                    ? "SELECTED"
-                                                    : isCompleted
-                                                    ? "COMPLETED"
-                                                    : wrongPhase
-                                                    ? "WRONG PHASE"
-                                                    : selectingAthlete
-                                                    ? "SELECTING..."
-                                                    : currentAthlete &&
-                                                      !canSelectAnotherAthlete
-                                                    ? "DECLARATION REQUIRED"
-                                                    : "SELECT"}
-
-                                            </button>
-
-                                        </td>
-
-                                    </tr>
-                                );
-                            }
-                        )}
-
-                        {!officialAthletes.length && (
-
-                            <tr>
-
-                                <td
-                                    colSpan="6"
-                                    className="no-athletes-cell"
-                                >
-                                    No athletes available.
-                                </td>
-
-                            </tr>
-
-                        )}
-
-                    </tbody>
-
-                </table>
+                <span>
+                    Athletes:{" "}
+                    <strong>
+                        {totalAthletes}
+                    </strong>
+                </span>
 
             </div>
 
-        </section>
+        </header>
     );
 };
 
-export default AthleteSelectionTable;
+
+export default LiveScoreHeader;
