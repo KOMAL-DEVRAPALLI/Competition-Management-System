@@ -1,10 +1,13 @@
-import "./LiftControls.css"
+import "./LiftControls.css";
+
 const LiftControls = ({
     processingLift,
     onProcessLift,
 }) => {
+
     return (
-        <div className="lift-decision">
+
+        <div className="lift-controls">
 
             <button
                 type="button"
@@ -14,8 +17,12 @@ const LiftControls = ({
                     onProcessLift("GOOD")
                 }
             >
-                GOOD LIFT
+                {processingLift
+                    ? "PROCESSING..."
+                    : "GOOD LIFT"
+                }
             </button>
+
 
             <button
                 type="button"
@@ -25,10 +32,14 @@ const LiftControls = ({
                     onProcessLift("NO_LIFT")
                 }
             >
-                NO LIFT
+                {processingLift
+                    ? "PROCESSING..."
+                    : "NO LIFT"
+                }
             </button>
 
         </div>
+
     );
 };
 
