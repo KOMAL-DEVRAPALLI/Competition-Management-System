@@ -49,21 +49,41 @@ const updateCategoryRanking = async (entryId) => {
 
     let currentRank = 1;
 
+    const bulkOperations = [];
+
     for (const entry of entries) {
 
+        let rank = null;
+
         if (entry.results.total > 0) {
-
-            entry.results.rank = currentRank;
+            rank = currentRank;
             currentRank++;
-
-        } else {
-
-            entry.results.rank = null;
-
         }
 
-        await entry.save();
+        bulkOperations.push({
 
+            updateOne: {
+
+                filter: {
+                    _id: entry._id,
+                },
+
+                update: {
+                    $set: {
+                        "results.rank": rank,
+                    },
+                },
+
+            },
+
+        });
+
+    }
+
+    if (bulkOperations.length > 0) {
+        await CompetitionEntry.bulkWrite(
+            bulkOperations
+        );
     }
 
 };

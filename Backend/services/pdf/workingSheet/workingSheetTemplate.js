@@ -1,249 +1,326 @@
-export const workingSheetStyles = () => `
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
-}
+import { workingSheetStyles } from "./WorkingSheetStyle.js";
 
+export const workingSheetTemplate = (
+    competition,
+    workingSheetData,
+    gender
+) => {
 
-/* ===========================
-   A4 PAGE
-=========================== */
+    return `
 
-@page {
-    size: A4 portrait;
-    margin: 12mm;
-}
+<!DOCTYPE html>
+<html>
+<head>
 
+    <meta charset="UTF-8">
 
-body {
-    font-size: 11px;
-    color: #000;
-}
+    <style>
+        ${workingSheetStyles}
+    </style>
 
+</head>
 
-/* ===========================
-   CATEGORY PAGE
-=========================== */
+<body>
 
-.category-page {
-    width: 100%;
+${workingSheetData.map((section, sectionIndex) => `
 
-    page-break-inside: avoid;
-    break-inside: avoid;
+    <div class="category-page">
 
-    page-break-after: always;
-    break-after: page;
-}
+        <!-- =========================
+             HEADER
+        ========================== -->
 
+        <div class="header">
 
-/*
- * Do not create an unnecessary
- * blank page after the last category.
- */
+            <h2>
+                SURAT DISTRICT WEIGHTLIFTING ASSOCIATION
+            </h2>
 
-.category-page:last-child {
-    page-break-after: auto;
-    break-after: auto;
-}
+            <h3>
+                ${
+                    gender === "female"
+                        ? "WOMEN'S WORKING SHEET"
+                        : "MEN'S WORKING SHEET"
+                }
+            </h3>
 
+            <p>
+                Surat District Weightlifting Championship
+                <br>
+                Venue : ${competition.venue}
+                <br>
+                Date : ${new Date().toLocaleDateString("en-IN")}
+            </p>
 
-/* ===========================
-   HEADER
-=========================== */
+        </div>
 
-.header {
-    text-align: center;
-    margin-bottom: 15px;
-}
 
+        <!-- =========================
+             CATEGORY
+        ========================== -->
 
-.header h2 {
-    font-size: 18px;
-    margin-bottom: 5px;
-}
+        <div class="class-title">
+            Class : ${section.class}
+        </div>
 
 
-.header h3 {
-    font-size: 15px;
-    margin-bottom: 8px;
-}
+        <!-- =========================
+             WORKING SHEET TABLE
+        ========================== -->
 
+        <table class="working-sheet-table">
 
-.header p {
-    font-size: 12px;
-    line-height: 1.5;
-}
+            <thead>
 
+                <tr>
 
-/* ===========================
-   CLASS TITLE
-=========================== */
+                    <th class="lot-col" rowspan="2">
+                        Lot
+                    </th>
 
-.class-title {
-    border: 1.5px solid #000;
+                    <th class="sr-col" rowspan="2">
+                        Sr.
+                    </th>
 
-    padding: 6px 10px;
+                    <th class="name-col" rowspan="2">
+                        Name of Competitor
+                    </th>
 
-    font-weight: bold;
+                    <th class="event-group" colspan="3">
+                        Event
+                    </th>
 
-    margin-bottom: 6px;
-}
+                    <th class="snatch-group" colspan="3">
+                        Snatch
+                    </th>
 
+                    <th class="cj-group" colspan="3">
+                        Clean &amp; Jerk
+                    </th>
 
-/* ===========================
-   WORKING SHEET TABLE
-=========================== */
+                    <th class="maximum-group" colspan="2">
+                        Maximum
+                    </th>
 
-table {
-    width: 100%;
+                    <th class="total-col" rowspan="2">
+                        Total
+                    </th>
 
-    border-collapse: collapse;
+                    <th class="place-col" rowspan="2">
+                        Place
+                    </th>
 
-    table-layout: fixed;
+                </tr>
 
-    page-break-inside: avoid;
-    break-inside: avoid;
-}
 
+                <tr>
 
-th,
-td {
-    border: 1px solid #000;
+                    <th class="event-col">
+                        YTH
+                    </th>
 
-    text-align: center;
-    vertical-align: middle;
+                    <th class="event-col">
+                        JR
+                    </th>
 
-    padding: 4px;
-}
+                    <th class="event-col">
+                        SR
+                    </th>
 
 
-th {
-    font-weight: bold;
-}
+                    <th class="attempt-col">
+                        1
+                    </th>
 
+                    <th class="attempt-col">
+                        2
+                    </th>
 
-tbody td {
-    height: 32px;
-}
+                    <th class="attempt-col">
+                        3
+                    </th>
 
 
-/* ===========================
-   COLUMN WIDTHS
-=========================== */
+                    <th class="attempt-col">
+                        1
+                    </th>
 
-.lot-col {
-    width: 40px;
+                    <th class="attempt-col">
+                        2
+                    </th>
 
-    text-align: center;
+                    <th class="attempt-col">
+                        3
+                    </th>
 
-    font-weight: bold;
-}
 
+                    <th class="maximum-col">
+                        S
+                    </th>
 
-.sr-col {
-    width: 40px;
-}
+                    <th class="maximum-col">
+                        C&amp;J
+                    </th>
 
+                </tr>
 
-.name-col {
-    width: 220px;
+            </thead>
 
-    text-align: left;
 
-    padding-left: 8px;
-}
+            <tbody>
 
+                ${section.athletes.map(athlete => `
 
-.event-col {
-    width: 28px;
-}
+                    <tr>
 
+                        <td class="lot-col">
+                            ${athlete.lotNumber ?? ""}
+                        </td>
 
-.attempt-col {
-    width: 38px;
-}
 
+                        <td class="sr-col">
+                            ${athlete.serialNo ?? ""}
+                        </td>
 
-.maximum-col {
-    width: 45px;
-}
 
+                        <td class="name-col">
+                            ${athlete.name ?? ""}
+                        </td>
 
-.total-col {
-    width: 55px;
-}
 
+                        <!-- EVENT -->
 
-.place-col {
-    width: 55px;
-}
+                        <td class="event-col checkmark">
+                            ${athlete.isYouth ? "✓" : ""}
+                        </td>
 
+                        <td class="event-col checkmark">
+                            ${athlete.isJunior ? "✓" : ""}
+                        </td>
 
-/* ===========================
-   HEADER GROUPS
-=========================== */
+                        <td class="event-col checkmark">
+                            ${athlete.isSenior ? "✓" : ""}
+                        </td>
 
-.event-group,
-.snatch-group,
-.cj-group,
-.maximum-group {
-    font-weight: bold;
-}
 
+                        <!-- SNATCH -->
 
-/* ===========================
-   CHECK MARK
-=========================== */
+                        <td class="attempt-col">
+                            ${athlete.openingSnatch ?? ""}
+                        </td>
 
-.checkmark {
-    font-weight: bold;
-}
+                        <td class="attempt-col"></td>
 
+                        <td class="attempt-col"></td>
 
-/* ===========================
-   SIGNATURE SECTION
-=========================== */
 
-.signature-row {
-    width: 100%;
+                        <!-- CLEAN & JERK -->
 
-    display: flex;
+                        <td class="attempt-col">
+                            ${athlete.openingCleanJerk ?? ""}
+                        </td>
 
-    justify-content: space-between;
+                        <td class="attempt-col"></td>
 
-    align-items: flex-end;
+                        <td class="attempt-col"></td>
 
-    margin-top: 45px;
 
-    page-break-inside: avoid;
-    break-inside: avoid;
-}
+                        <!-- MAXIMUM -->
 
+                        <td class="maximum-col"></td>
 
-.signature {
-    width: 18%;
+                        <td class="maximum-col"></td>
 
-    text-align: center;
 
-    font-size: 11px;
-}
+                        <!-- RESULT -->
 
+                        <td class="total-col"></td>
 
-.signature-line {
-    border-top: 1px solid #000;
+                        <td class="place-col"></td>
 
-    margin-bottom: 6px;
-}
+                    </tr>
 
+                `).join("")}
 
-/* ===========================
-   EXPLICIT PAGE BREAK
-=========================== */
+            </tbody>
 
-.page-break {
-    page-break-after: always;
-    break-after: page;
-}
-`;
+        </table>
+
+
+        <!-- =========================
+             SIGNATURE SECTION
+        ========================== -->
+
+        <div class="signature-row">
+
+            <div class="signature">
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Scorer
+                </p>
+
+            </div>
+
+
+            <div class="signature">
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Organizer
+                </p>
+
+            </div>
+
+
+            <div class="signature">
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Side Referee
+                </p>
+
+            </div>
+
+
+            <div class="signature">
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Side Referee
+                </p>
+
+            </div>
+
+
+            <div class="signature">
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Chief Referee
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    ${
+        sectionIndex < workingSheetData.length - 1
+            ? `<div class="page-break"></div>`
+            : ""
+    }
+
+`).join("")}
+
+</body>
+</html>
+
+    `;
+};
