@@ -14,6 +14,7 @@ const saveAthleteWeighIn = async ({
         competitionId,
         athleteId
     );
+console.log("Recieved:" ,selectedCategories);
 
     for (const entry of competitionEntries) {
 

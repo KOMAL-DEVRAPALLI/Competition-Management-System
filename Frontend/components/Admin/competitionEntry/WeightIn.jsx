@@ -73,6 +73,14 @@ const WeighInSection = ({ athlete, setAthlete }) => {
                 acc[entry.entryId] = entry.assignedCategory
                 return acc
             }, {})
+            console.log("Preview Entries:", previewEntries);
+
+            const selectedCategories = previewEntries.reduce((acc, entry) => {
+                acc[entry.entryId] = entry.assignedCategory;
+                return acc;
+            }, {});
+
+            console.log("Selected Categories:", selectedCategories);
             const saveData = {
                 competitionId: athlete.competition,
                 athleteId: athlete._id,
@@ -82,7 +90,7 @@ const WeighInSection = ({ athlete, setAthlete }) => {
             };
             const response = await saveWeighIn(saveData)
             setAthlete(response.data.athlete)
-            
+
             alert("Weigh-in saved successfully!")
         } catch (error) {
             console.error(error);
