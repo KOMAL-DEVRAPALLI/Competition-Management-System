@@ -4,6 +4,7 @@ const CurrentAthleteCard = ({
     currentAthlete,
     onGoodLift,
     onNoLift,
+    processingLift,
 }) => {
 
     if (!currentAthlete) {
@@ -44,7 +45,9 @@ const CurrentAthleteCard = ({
 
                     <span>Lot Number</span>
 
-                    <strong>{currentAthlete.lotNumber}</strong>
+                    <strong>
+                        {currentAthlete.lotNumber}
+                    </strong>
 
                 </div>
 
@@ -52,7 +55,9 @@ const CurrentAthleteCard = ({
 
                     <span>Name</span>
 
-                    <strong>{currentAthlete.name}</strong>
+                    <strong>
+                        {currentAthlete.name}
+                    </strong>
 
                 </div>
 
@@ -89,18 +94,24 @@ const CurrentAthleteCard = ({
                 <button
                     className="good-lift-btn"
                     onClick={onGoodLift}
+                    disabled={processingLift}
                 >
 
-                    GOOD LIFT
+                    {processingLift
+                        ? "SAVING..."
+                        : "GOOD LIFT"}
 
                 </button>
 
                 <button
                     className="no-lift-btn"
                     onClick={onNoLift}
+                    disabled={processingLift}
                 >
 
-                    NO LIFT
+                    {processingLift
+                        ? "SAVING..."
+                        : "NO LIFT"}
 
                 </button>
 
@@ -109,7 +120,6 @@ const CurrentAthleteCard = ({
         </div>
 
     );
-
 };
 
 export default CurrentAthleteCard;

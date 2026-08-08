@@ -3,234 +3,184 @@
 ====================================== */
 
 .current-athlete-card {
-
     background: #ffffff;
-
     border-radius: 16px;
-
     padding: 28px;
-
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-
     display: flex;
-
     flex-direction: column;
-
     gap: 24px;
-
     height: 100%;
-
 }
+
 
 /* =====================================
    HEADER
 ====================================== */
 
 .current-athlete-header {
-
     border-bottom: 3px solid #2563eb;
-
     padding-bottom: 14px;
-
 }
 
 .current-athlete-header h2 {
-
     margin: 0;
-
     font-size: 28px;
-
     font-weight: 700;
-
     color: #111827;
-
 }
+
 
 /* =====================================
    DETAILS
 ====================================== */
 
 .current-athlete-details {
-
     display: flex;
-
     flex-direction: column;
-
     gap: 14px;
-
 }
+
 
 /* =====================================
    ROW
 ====================================== */
 
 .current-athlete-row {
-
     display: grid;
-
     grid-template-columns: 180px 1fr;
-
     align-items: center;
-
     border: 1px solid #e5e7eb;
-
     border-radius: 10px;
-
     overflow: hidden;
-
     background: #f9fafb;
-
 }
+
 
 /* Label */
 
 .current-athlete-row span {
-
     background: #eff6ff;
-
     color: #1d4ed8;
-
     padding: 14px 18px;
-
     font-size: 15px;
-
     font-weight: 600;
-
 }
+
 
 /* Value */
 
 .current-athlete-row strong {
-
     padding: 14px 18px;
-
     text-align: right;
-
     color: #111827;
-
     font-size: 17px;
-
     font-weight: 700;
-
 }
+
 
 /* =====================================
    WEIGHT ON BAR
 ====================================== */
 
 .current-athlete-row:last-child {
-
     background: #ecfdf5;
-
     border: 2px solid #16a34a;
-
 }
 
 .current-athlete-row:last-child span {
-
     background: #16a34a;
-
     color: #ffffff;
-
 }
 
 .current-athlete-row:last-child strong {
-
     font-size: 30px;
-
     color: #15803d;
-
     font-weight: 800;
-
 }
+
 
 /* =====================================
    ACTION BUTTONS
 ====================================== */
 
 .current-athlete-actions {
-
     display: grid;
-
     grid-template-columns: 1fr 1fr;
-
     gap: 18px;
-
     margin-top: auto;
-
 }
 
 .current-athlete-actions button {
-
     height: 60px;
-
     border: none;
-
     border-radius: 12px;
-
     font-size: 18px;
-
     font-weight: 700;
-
     cursor: pointer;
-
     transition: all 0.2s ease;
-
 }
 
+
+/* =====================================
+   GOOD LIFT
+====================================== */
+
 .good-lift-btn {
-
     background: #16a34a;
-
     color: white;
-
 }
 
 .good-lift-btn:hover {
-
     background: #15803d;
-
     transform: translateY(-2px);
-
 }
 
+
+/* =====================================
+   NO LIFT
+====================================== */
+
 .no-lift-btn {
-
     background: #dc2626;
-
     color: white;
-
 }
 
 .no-lift-btn:hover {
-
     background: #b91c1c;
-
     transform: translateY(-2px);
-
 }
+
+
+/* =====================================
+   DISABLED / SAVING STATE
+====================================== */
+
+.current-athlete-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.current-athlete-actions button:disabled:hover {
+    transform: none;
+}
+
 
 /* =====================================
    EMPTY STATE
 ====================================== */
 
 .current-athlete-card.no-athlete {
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
-
     min-height: 400px;
-
     font-size: 22px;
-
     font-weight: 700;
-
     color: #6b7280;
-
 }
+
 
 /* =====================================
    RESPONSIVE
@@ -239,39 +189,27 @@
 @media (max-width: 768px) {
 
     .current-athlete-card {
-
         padding: 20px;
-
     }
 
     .current-athlete-header h2 {
-
         font-size: 24px;
-
     }
 
     .current-athlete-row {
-
         grid-template-columns: 140px 1fr;
-
     }
 
     .current-athlete-row strong {
-
         font-size: 16px;
-
     }
 
     .current-athlete-row:last-child strong {
-
         font-size: 24px;
-
     }
 
     .current-athlete-actions {
-
         grid-template-columns: 1fr;
-
     }
 
 }

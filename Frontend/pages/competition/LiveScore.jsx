@@ -27,16 +27,29 @@ const LiveScore = () => {
     const [declaredWeight, setDeclaredWeight] =
         useState("");
 
-   const {
-    currentAthlete,
-    prepareAthlete,
-    nextAthlete,
-    declarationQueue,
-    competitionResults,
-    status,
-    currentPhase,
-    totalAthletes,
-} = liveCompetition || {};
+    const [processingLift, setProcessingLift] =
+        useState(false);
+
+    const [liftMessage, setLiftMessage] =
+        useState("");
+
+    const [liftError, setLiftError] =
+        useState("");
+
+    const {
+        currentAthlete,
+        prepareAthlete,
+        nextAthlete,
+        declarationQueue,
+        competitionResults,
+        status,
+        currentPhase,
+        totalAthletes,
+    } = liveCompetition || {};
+
+    // -----------------------------------
+    // Initial live competition load
+    // -----------------------------------
 
     useEffect(() => {
 
@@ -44,44 +57,32 @@ const LiveScore = () => {
 
     }, []);
 
+    // -----------------------------------
+    // Update declaration input when
+    // prepare athlete changes
+    // -----------------------------------
+
     useEffect(() => {
 
-    if (!prepareAthlete) {
+        if (!prepareAthlete) {
 
-        setDeclaredWeight("");
+            setDeclaredWeight("");
 
-        return;
+            return;
 
-    }
+        }
 
-    setDeclaredWeight(
-        prepareAthlete.currentAttempt?.declaredWeight ?? ""
-    );
+        setDeclaredWeight(
+            prepareAthlete.currentAttempt
+                ?.declaredWeight ?? ""
+        );
 
-}, [prepareAthlete]);
-const handlePrepareDeclaration = async () => {
+    }, [prepareAthlete]);
 
-    if (!prepareAthlete) return;
+    // -----------------------------------
+    // Load live competition
+    // -----------------------------------
 
-    try {
-
-        await saveDeclaredWeight({
-
-            entryId: prepareAthlete.entryId,
-
-            declaredWeight: Number(declaredWeight),
-
-        });
-
-        await loadLiveCompetition();
-
-    } catch (error) {
-
-        console.log(error);
-
-    }
-
-};
     const loadLiveCompetition = async () => {
 
         try {
@@ -91,16 +92,23 @@ const handlePrepareDeclaration = async () => {
                 "GET"
             );
 
-            setLiveCompetition(response.data);
+            setLiveCompetition(
+                response.data
+            );
 
         } catch (error) {
 
-    console.log(error);
+            console.error(
+                "Failed to load live competition:",
+                error
+            );
 
-    console.log("Backend Response:");
-    console.log(error.response?.data);
+            console.log(
+                "Backend Response:",
+                error.response?.data
+            );
 
-} finally {
+        } finally {
 
             setLoading(false);
 
@@ -108,15 +116,68 @@ const handlePrepareDeclaration = async () => {
 
     };
 
-    const handleProcessLift = async (result) => {
+    // -----------------------------------
+    // Prepare athlete declaration
+    // -----------------------------------
 
-        if (!currentAthlete) return;
+    const handlePrepareDeclaration = async () => {
+
+        if (!prepareAthlete) return;
 
         try {
 
+            await saveDeclaredWeight({
+
+                entryId:
+                    prepareAthlete.entryId,
+
+                declaredWeight:
+                    Number(declaredWeight),
+
+            });
+
+            await loadLiveCompetition();
+
+        } catch (error) {
+
+            console.error(
+                "Failed to save declaration:",
+                error
+            );
+
+        }
+
+    };
+
+    // -----------------------------------
+    // Process Good Lift / No Lift
+    // -----------------------------------
+
+    const handleProcessLift = async (result) => {
+
+        if (
+            !currentAthlete ||
+            processingLift
+        ) {
+            return;
+        }
+
+        try {
+
+            setProcessingLift(true);
+
+            setLiftMessage("");
+
+            setLiftError("");
+
+            // -----------------------------------
+            // Save official result
+            // -----------------------------------
+
             await processLift({
 
-                entryId: currentAthlete.entryId,
+                entryId:
+                    currentAthlete.entryId,
 
                 competitionId,
 
@@ -126,15 +187,46 @@ const handlePrepareDeclaration = async () => {
 
             });
 
+            // -----------------------------------
+            // Refresh complete live state
+            // -----------------------------------
+
             await loadLiveCompetition();
+
+            // -----------------------------------
+            // Show confirmation
+            // -----------------------------------
+
+            setLiftMessage(
+                result === "GOOD"
+                    ? "Good Lift saved successfully."
+                    : "No Lift saved successfully."
+            );
 
         } catch (error) {
 
-            console.log(error);
+            console.error(
+                "Failed to process lift:",
+                error
+            );
+
+            setLiftError(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to save lift."
+            );
+
+        } finally {
+
+            setProcessingLift(false);
 
         }
 
     };
+
+    // -----------------------------------
+    // Current / next athlete declaration
+    // -----------------------------------
 
     const handleCurrentDeclaration = async () => {
 
@@ -144,9 +236,11 @@ const handlePrepareDeclaration = async () => {
 
             await saveDeclaredWeight({
 
-                entryId: nextAthlete.entryId,
+                entryId:
+                    nextAthlete.entryId,
 
-                declaredWeight: Number(declaredWeight),
+                declaredWeight:
+                    Number(declaredWeight),
 
             });
 
@@ -154,11 +248,18 @@ const handlePrepareDeclaration = async () => {
 
         } catch (error) {
 
-            console.log(error);
+            console.error(
+                "Failed to save declaration:",
+                error
+            );
 
         }
 
     };
+
+    // -----------------------------------
+    // Declaration queue
+    // -----------------------------------
 
     const handleQueueDeclaration = async (
         entryId,
@@ -179,19 +280,32 @@ const handlePrepareDeclaration = async () => {
 
         } catch (error) {
 
-            console.log(error);
+            console.error(
+                "Failed to update queue declaration:",
+                error
+            );
 
         }
 
     };
 
+    // -----------------------------------
+    // Loading
+    // -----------------------------------
+
     if (loading) {
 
         return (
-            <h2>Loading Live Competition...</h2>
+            <h2>
+                Loading Live Competition...
+            </h2>
         );
 
     }
+
+    // -----------------------------------
+    // UI
+    // -----------------------------------
 
     return (
 
@@ -223,32 +337,104 @@ const handlePrepareDeclaration = async () => {
 
             <main className="live-score-content">
 
+                {/* ---------------------------------
+                    Lift status
+                ---------------------------------- */}
+
+                {(processingLift ||
+                    liftMessage ||
+                    liftError) && (
+
+                    <div
+                        className={`lift-status ${
+                            processingLift
+                                ? "lift-status-processing"
+                                : liftError
+                                    ? "lift-status-error"
+                                    : "lift-status-success"
+                        }`}
+                    >
+
+                        {processingLift && (
+                            <span>
+                                Saving lift result...
+                            </span>
+                        )}
+
+                        {!processingLift &&
+                            liftMessage && (
+                                <span>
+                                    ✓ {liftMessage}
+                                </span>
+                            )}
+
+                        {!processingLift &&
+                            liftError && (
+                                <span>
+                                    ✕ {liftError}
+                                </span>
+                            )}
+
+                    </div>
+
+                )}
+
                 <section className="live-score-top">
 
-                    <CurrentAthleteCard
-                        currentAthlete={currentAthlete}
-                        onGoodLift={() =>
-                            handleProcessLift("GOOD")
-                        }
-                        onNoLift={() =>
-                            handleProcessLift("NO_LIFT")
-                        }
-                    />
+                 <CurrentAthleteCard
+    currentAthlete={
+        currentAthlete
+    }
+
+    processingLift={
+        processingLift
+    }
+
+    onGoodLift={() =>
+        handleProcessLift(
+            "GOOD"
+        )
+    }
+
+    onNoLift={() =>
+        handleProcessLift(
+            "NO_LIFT"
+        )
+    }
+/>
 
                     <PrepareNextAttemptCard
-    prepareAthlete={prepareAthlete}
-    declaredWeight={declaredWeight}
-    setDeclaredWeight={setDeclaredWeight}
-    onSaveWeight={handlePrepareDeclaration}
-/>
+                        prepareAthlete={
+                            prepareAthlete
+                        }
+
+                        declaredWeight={
+                            declaredWeight
+                        }
+
+                        setDeclaredWeight={
+                            setDeclaredWeight
+                        }
+
+                        onSaveWeight={
+                            handlePrepareDeclaration
+                        }
+
+                    />
 
                 </section>
 
                 <section className="live-score-middle">
 
                     <DeclarationQueue
-                        declarationQueue={declarationQueue}
-                        onSaveWeight={handleQueueDeclaration}
+                        declarationQueue={
+                            declarationQueue
+                        }
+
+                        onSaveWeight={
+                            handleQueueDeclaration
+                        }
+
                     />
 
                 </section>
@@ -256,7 +442,10 @@ const handlePrepareDeclaration = async () => {
                 <section className="live-score-bottom">
 
                     <ScoreboardTable
-                        competitionResults={competitionResults}
+                        competitionResults={
+                            competitionResults
+                        }
+
                     />
 
                 </section>
@@ -266,7 +455,6 @@ const handlePrepareDeclaration = async () => {
         </div>
 
     );
-
 };
 
 export default LiveScore;

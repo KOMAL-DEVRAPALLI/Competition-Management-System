@@ -1,85 +1,93 @@
 /* ===============================
    PAGE
-=================================*/
+================================= */
 
-.live-score-page{
-    padding:24px;
-    background:#f3f4f6;
-    min-height:100vh;
+.live-score-page {
+    padding: 24px;
+    background: #f3f4f6;
+    min-height: 100vh;
 }
+
+
+/* ===============================
+   LIFT STATUS
+================================= */
+
+.lift-status {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.lift-status-processing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.lift-status-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.lift-status-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
 
 /* ===============================
    HEADER
-=================================*/
+================================= */
 
-.live-score-header{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    margin-bottom:24px;
-
+.live-score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
 }
 
-.live-score-header h1{
-
-    font-size:36px;
-    color:#111827;
-
+.live-score-header h1 {
+    font-size: 36px;
+    color: #111827;
 }
 
-.live-score-session{
-
-    display:flex;
-    gap:20px;
-
+.live-score-session {
+    display: flex;
+    gap: 20px;
 }
 
-.live-score-session span{
-
-    background:white;
-
-    padding:10px 18px;
-
-    border-radius:8px;
-
-    font-weight:600;
-
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-
+.live-score-session span {
+    background: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
+
 
 /* ===============================
    MAIN GRID
-=================================*/
+================================= */
 
-.live-score-content{
-
-    display:grid;
-
-    gap:24px;
-
+.live-score-content {
+    display: grid;
+    gap: 24px;
 }
 
-.live-score-top{
-
-    display:grid;
-
-    grid-template-columns:1fr 1fr;
-
-    gap:24px;
-
+.live-score-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
 }
 
-.live-score-middle{
-
-    width:100%;
-
+.live-score-middle {
+    width: 100%;
 }
 
-.live-score-bottom{
-
-    width:100%;
-
+.live-score-bottom {
+    width: 100%;
 }
