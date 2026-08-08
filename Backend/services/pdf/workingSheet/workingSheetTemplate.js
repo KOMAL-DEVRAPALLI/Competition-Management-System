@@ -9,22 +9,25 @@ export const workingSheetTemplate = (
     return `
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
 
     <style>
-        ${workingSheetStyles}
+        ${workingSheetStyles()}
     </style>
 
 </head>
 
+
 <body>
 
-${workingSheetData.map((section, sectionIndex) => `
+${workingSheetData.map(section => `
 
     <div class="category-page">
+
 
         <!-- =========================
              HEADER
@@ -36,6 +39,7 @@ ${workingSheetData.map((section, sectionIndex) => `
                 SURAT DISTRICT WEIGHTLIFTING ASSOCIATION
             </h2>
 
+
             <h3>
                 ${
                     gender === "female"
@@ -43,6 +47,7 @@ ${workingSheetData.map((section, sectionIndex) => `
                         : "MEN'S WORKING SHEET"
                 }
             </h3>
+
 
             <p>
                 Surat District Weightlifting Championship
@@ -78,33 +83,41 @@ ${workingSheetData.map((section, sectionIndex) => `
                         Lot
                     </th>
 
+
                     <th class="sr-col" rowspan="2">
                         Sr.
                     </th>
+
 
                     <th class="name-col" rowspan="2">
                         Name of Competitor
                     </th>
 
+
                     <th class="event-group" colspan="3">
                         Event
                     </th>
+
 
                     <th class="snatch-group" colspan="3">
                         Snatch
                     </th>
 
+
                     <th class="cj-group" colspan="3">
                         Clean &amp; Jerk
                     </th>
+
 
                     <th class="maximum-group" colspan="2">
                         Maximum
                     </th>
 
+
                     <th class="total-col" rowspan="2">
                         Total
                     </th>
+
 
                     <th class="place-col" rowspan="2">
                         Place
@@ -119,9 +132,11 @@ ${workingSheetData.map((section, sectionIndex) => `
                         YTH
                     </th>
 
+
                     <th class="event-col">
                         JR
                     </th>
+
 
                     <th class="event-col">
                         SR
@@ -132,9 +147,11 @@ ${workingSheetData.map((section, sectionIndex) => `
                         1
                     </th>
 
+
                     <th class="attempt-col">
                         2
                     </th>
+
 
                     <th class="attempt-col">
                         3
@@ -145,9 +162,11 @@ ${workingSheetData.map((section, sectionIndex) => `
                         1
                     </th>
 
+
                     <th class="attempt-col">
                         2
                     </th>
+
 
                     <th class="attempt-col">
                         3
@@ -157,6 +176,7 @@ ${workingSheetData.map((section, sectionIndex) => `
                     <th class="maximum-col">
                         S
                     </th>
+
 
                     <th class="maximum-col">
                         C&amp;J
@@ -173,70 +193,104 @@ ${workingSheetData.map((section, sectionIndex) => `
 
                     <tr>
 
+
+                        <!-- LOT -->
+
                         <td class="lot-col">
                             ${athlete.lotNumber ?? ""}
                         </td>
 
+
+                        <!-- SERIAL -->
 
                         <td class="sr-col">
                             ${athlete.serialNo ?? ""}
                         </td>
 
 
+                        <!-- NAME -->
+
                         <td class="name-col">
                             ${athlete.name ?? ""}
                         </td>
 
 
-                        <!-- EVENT -->
+                        <!-- =====================
+                             EVENT
+                        ====================== -->
 
                         <td class="event-col checkmark">
                             ${athlete.isYouth ? "✓" : ""}
                         </td>
 
+
                         <td class="event-col checkmark">
                             ${athlete.isJunior ? "✓" : ""}
                         </td>
+
 
                         <td class="event-col checkmark">
                             ${athlete.isSenior ? "✓" : ""}
                         </td>
 
 
-                        <!-- SNATCH -->
+                        <!-- =====================
+                             SNATCH
+                        ====================== -->
 
                         <td class="attempt-col">
                             ${athlete.openingSnatch ?? ""}
                         </td>
 
-                        <td class="attempt-col"></td>
 
-                        <td class="attempt-col"></td>
+                        <td class="attempt-col">
+                        </td>
 
 
-                        <!-- CLEAN & JERK -->
+                        <td class="attempt-col">
+                        </td>
+
+
+                        <!-- =====================
+                             CLEAN & JERK
+                        ====================== -->
 
                         <td class="attempt-col">
                             ${athlete.openingCleanJerk ?? ""}
                         </td>
 
-                        <td class="attempt-col"></td>
 
-                        <td class="attempt-col"></td>
-
-
-                        <!-- MAXIMUM -->
-
-                        <td class="maximum-col"></td>
-
-                        <td class="maximum-col"></td>
+                        <td class="attempt-col">
+                        </td>
 
 
-                        <!-- RESULT -->
+                        <td class="attempt-col">
+                        </td>
 
-                        <td class="total-col"></td>
 
-                        <td class="place-col"></td>
+                        <!-- =====================
+                             MAXIMUM
+                        ====================== -->
+
+                        <td class="maximum-col">
+                        </td>
+
+
+                        <td class="maximum-col">
+                        </td>
+
+
+                        <!-- =====================
+                             RESULT
+                        ====================== -->
+
+                        <td class="total-col">
+                        </td>
+
+
+                        <td class="place-col">
+                        </td>
+
 
                     </tr>
 
@@ -252,6 +306,7 @@ ${workingSheetData.map((section, sectionIndex) => `
         ========================== -->
 
         <div class="signature-row">
+
 
             <div class="signature">
 
@@ -307,20 +362,19 @@ ${workingSheetData.map((section, sectionIndex) => `
 
             </div>
 
+
         </div>
+
 
     </div>
 
-    ${
-        sectionIndex < workingSheetData.length - 1
-            ? `<div class="page-break"></div>`
-            : ""
-    }
-
 `).join("")}
 
+
 </body>
+
 </html>
 
     `;
+
 };

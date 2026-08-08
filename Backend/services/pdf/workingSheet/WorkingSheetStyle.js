@@ -9,7 +9,7 @@ export const workingSheetStyles = () => `
 
 
 /* ===========================
-   A4 PAGE
+   A4 LANDSCAPE PAGE
 =========================== */
 
 @page {
@@ -43,8 +43,8 @@ body {
     break-inside: avoid;
 
     /*
-     * Each category starts on a
-     * separate physical page.
+     * Every category starts on
+     * its own physical page.
      */
     page-break-after: always;
     break-after: page;
@@ -52,8 +52,8 @@ body {
 
 
 /*
- * Do not create a page break
- * after the final category.
+ * Prevent an unnecessary blank
+ * page after the last category.
  */
 
 .category-page:last-child {
@@ -68,25 +68,30 @@ body {
 
 .header {
     width: 100%;
+
     text-align: center;
+
     margin-bottom: 12px;
 }
 
 
 .header h2 {
     font-size: 18px;
+
     margin-bottom: 4px;
 }
 
 
 .header h3 {
     font-size: 15px;
+
     margin-bottom: 6px;
 }
 
 
 .header p {
     font-size: 11px;
+
     line-height: 1.4;
 }
 
@@ -103,6 +108,7 @@ body {
     padding: 6px 10px;
 
     font-weight: bold;
+
     font-size: 12px;
 
     margin-bottom: 6px;
@@ -119,8 +125,9 @@ body {
     border-collapse: collapse;
 
     /*
-     * Allow the browser to use the
-     * defined column widths naturally.
+     * Allows the browser to use
+     * the defined column widths
+     * naturally.
      */
     table-layout: auto;
 
@@ -134,6 +141,7 @@ body {
     border: 1px solid #000;
 
     text-align: center;
+
     vertical-align: middle;
 
     padding: 4px;
@@ -142,6 +150,7 @@ body {
 
 .working-sheet-table th {
     font-weight: bold;
+
     line-height: 1.1;
 }
 
@@ -151,7 +160,7 @@ body {
  */
 
 .working-sheet-table tbody td {
-    height: 32px;
+    height: 36px;
 }
 
 
@@ -166,9 +175,11 @@ body {
 
 .lot-col {
     width: 42px;
+
     min-width: 42px;
 
     text-align: center;
+
     font-weight: bold;
 }
 
@@ -179,6 +190,7 @@ body {
 
 .sr-col {
     width: 42px;
+
     min-width: 42px;
 }
 
@@ -189,6 +201,7 @@ body {
 
 .name-col {
     width: 225px;
+
     min-width: 225px;
 
     text-align: left;
@@ -205,6 +218,7 @@ body {
 
 .event-col {
     width: 34px;
+
     min-width: 34px;
 }
 
@@ -215,16 +229,18 @@ body {
 
 .attempt-col {
     width: 42px;
+
     min-width: 42px;
 }
 
 
 /*
- * Maximum S / C&J
+ * Maximum Snatch / Clean & Jerk
  */
 
 .maximum-col {
     width: 50px;
+
     min-width: 50px;
 }
 
@@ -235,6 +251,7 @@ body {
 
 .total-col {
     width: 58px;
+
     min-width: 58px;
 }
 
@@ -245,6 +262,7 @@ body {
 
 .place-col {
     width: 58px;
+
     min-width: 58px;
 }
 
@@ -258,6 +276,7 @@ body {
 .cj-group,
 .maximum-group {
     font-weight: bold;
+
     text-align: center;
 }
 
@@ -268,6 +287,7 @@ body {
 
 .checkmark {
     font-weight: bold;
+
     font-size: 12px;
 }
 
