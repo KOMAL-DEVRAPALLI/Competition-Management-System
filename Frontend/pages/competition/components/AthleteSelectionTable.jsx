@@ -4,6 +4,7 @@ const AthleteSelectionTable = ({
     athletes = [],
     currentAthlete = null,
     currentPhase = "SNATCH",
+    canSelectAnotherAthlete = false,
     selectingAthlete = false,
     onSelectAthlete,
 }) => {
@@ -17,32 +18,6 @@ const AthleteSelectionTable = ({
 
 
     // =====================================
-    // CAN OFFICIAL SELECT ANOTHER ATHLETE?
-    //
-    // IMPORTANT:
-    //
-    // The current athlete remains selected
-    // after GOOD / NO LIFT.
-    //
-    // Once the NEXT attempt declaration
-    // has been saved, another athlete can
-    // be selected.
-    // =====================================
-
-    const currentAttemptDeclared =
-        currentAttempt &&
-        currentAttempt.declaredWeight != null &&
-        Number(
-            currentAttempt.declaredWeight
-        ) > 0;
-
-
-    const canSelectAnotherAthlete =
-        !currentAthlete ||
-        currentAttemptDeclared;
-
-
-    // =====================================
     // ATHLETE COUNTS
     // =====================================
 
@@ -53,10 +28,8 @@ const AthleteSelectionTable = ({
     const completedAthletes =
         athletes.filter(
             (athlete) =>
-                athlete.status ===
-                    "COMPLETED" ||
-                athlete.currentAttempt
-                    ?.completed
+                athlete.status === "COMPLETED" ||
+                athlete.currentAttempt?.completed
         ).length;
 
 
@@ -71,12 +44,14 @@ const AthleteSelectionTable = ({
                     return false;
                 }
 
+
                 if (
                     athlete.currentAttempt
                         ?.completed
                 ) {
                     return false;
                 }
+
 
                 if (
                     athlete.currentAttempt
@@ -85,6 +60,7 @@ const AthleteSelectionTable = ({
                 ) {
                     return false;
                 }
+
 
                 return true;
             }
@@ -112,9 +88,9 @@ const AthleteSelectionTable = ({
         }
 
 
-        // ---------------------------------
-        // Current athlete
-        // ---------------------------------
+        // =================================
+        // CURRENT ATHLETE
+        // =================================
 
         if (
             currentAthlete &&
@@ -125,23 +101,30 @@ const AthleteSelectionTable = ({
         }
 
 
-        // ---------------------------------
-        // Current athlete's declaration
-        // must be completed first.
-        // ---------------------------------
+        // =================================
+        // CURRENT ATHLETE DECLARATION
+        //
+        // The current athlete can remain
+        // selected after Good / No Lift.
+        //
+        // Another athlete can only be
+        // selected after the current
+        // athlete's next declaration
+        // has been saved.
+        // =================================
 
         if (
             currentAthlete &&
             !canSelectAnotherAthlete
         ) {
+
             return;
         }
 
 
-        // ---------------------------------
-        // Athlete must have a current
-        // attempt.
-        // ---------------------------------
+        // =================================
+        // VALID ATTEMPT
+        // =================================
 
         if (
             !athlete.currentAttempt ||
@@ -151,15 +134,31 @@ const AthleteSelectionTable = ({
         }
 
 
-        // ---------------------------------
-        // Athlete must belong to the
-        // current competition phase.
-        // ---------------------------------
+        // =================================
+        // VERIFY PHASE
+        // =================================
 
         if (
             athlete.currentAttempt.phase !==
             currentPhase
         ) {
+            return;
+        }
+
+
+        // =================================
+        // SELECT
+        // =================================
+
+        if (
+            typeof onSelectAthlete !==
+            "function"
+        ) {
+
+            console.error(
+                "AthleteSelectionTable: onSelectAthlete is not a function."
+            );
+
             return;
         }
 
@@ -183,20 +182,34 @@ const AthleteSelectionTable = ({
             currentAthlete.entryId?.toString();
 
 
-        if (isCurrent) {
+        // ---------------------------------
+        // CURRENT ATHLETE
+        // ---------------------------------
+
+        if (
+            isCurrent
+        ) {
             return "CURRENT";
         }
 
 
+        // ---------------------------------
+        // COMPLETED
+        // ---------------------------------
+
         if (
             athlete.status ===
-            "COMPLETED" ||
+                "COMPLETED" ||
             athlete.currentAttempt
                 ?.completed
         ) {
             return "COMPLETED";
         }
 
+
+        // ---------------------------------
+        // WRONG PHASE
+        // ---------------------------------
 
         if (
             !athlete.currentAttempt ||
@@ -207,6 +220,11 @@ const AthleteSelectionTable = ({
         }
 
 
+        // ---------------------------------
+        // CURRENT ATHLETE STILL NEEDS
+        // NEXT DECLARATION
+        // ---------------------------------
+
         if (
             currentAthlete &&
             !canSelectAnotherAthlete
@@ -214,6 +232,10 @@ const AthleteSelectionTable = ({
             return "WAITING_DECLARATION";
         }
 
+
+        // ---------------------------------
+        // AVAILABLE
+        // ---------------------------------
 
         return "AVAILABLE";
     };
@@ -224,7 +246,7 @@ const AthleteSelectionTable = ({
     // =====================================
 
     const getButtonText =
-        (athlete, rowStatus) => {
+        (rowStatus) => {
 
         if (
             rowStatus ===
@@ -274,9 +296,12 @@ const AthleteSelectionTable = ({
     // =====================================
 
     const isButtonDisabled =
-        (athlete, rowStatus) => {
+        (rowStatus) => {
 
-        // Current athlete
+        // ---------------------------------
+        // CURRENT ATHLETE
+        // ---------------------------------
+
         if (
             rowStatus ===
             "CURRENT"
@@ -285,7 +310,10 @@ const AthleteSelectionTable = ({
         }
 
 
-        // Completed athlete
+        // ---------------------------------
+        // COMPLETED
+        // ---------------------------------
+
         if (
             rowStatus ===
             "COMPLETED"
@@ -294,7 +322,10 @@ const AthleteSelectionTable = ({
         }
 
 
-        // Wrong phase
+        // ---------------------------------
+        // WRONG PHASE
+        // ---------------------------------
+
         if (
             rowStatus ===
             "WRONG_PHASE"
@@ -303,8 +334,11 @@ const AthleteSelectionTable = ({
         }
 
 
-        // Current athlete has not
-        // declared next attempt yet.
+        // ---------------------------------
+        // CURRENT ATHLETE DECLARATION
+        // NOT SAVED
+        // ---------------------------------
+
         if (
             rowStatus ===
             "WAITING_DECLARATION"
@@ -313,8 +347,10 @@ const AthleteSelectionTable = ({
         }
 
 
-        // Another selection request
-        // is currently being processed.
+        // ---------------------------------
+        // SELECTION IN PROGRESS
+        // ---------------------------------
+
         if (
             selectingAthlete
         ) {
@@ -346,16 +382,18 @@ const AthleteSelectionTable = ({
                         Official Athlete Selection
                     </h2>
 
+
                     <p>
                         Select the athlete manually.
                         The system will not decide who
                         lifts next.
                     </p>
 
+
                     <p>
 
                         {currentAthlete
-                            ? currentAttemptDeclared
+                            ? canSelectAnotherAthlete
                                 ? "Current athlete's declaration is saved. You can now select any eligible athlete."
                                 : "Declare the current athlete's next attempt before selecting another athlete."
                             : "Select any eligible athlete for the current phase."
@@ -446,7 +484,6 @@ const AthleteSelectionTable = ({
 
                                     const buttonDisabled =
                                         isButtonDisabled(
-                                            athlete,
                                             rowStatus
                                         );
 
@@ -573,7 +610,6 @@ const AthleteSelectionTable = ({
 
                                                     {
                                                         getButtonText(
-                                                            athlete,
                                                             rowStatus
                                                         )
                                                     }
@@ -599,7 +635,7 @@ const AthleteSelectionTable = ({
 
 
             {/* =================================
-                FOOTER INFORMATION
+                FOOTER
             ================================= */}
 
             <div className="official-list-footer">
@@ -608,9 +644,11 @@ const AthleteSelectionTable = ({
                     Available: {availableAthletes}
                 </span>
 
+
                 <span>
                     Completed: {completedAthletes}
                 </span>
+
 
                 <span>
                     Phase: {currentPhase}

@@ -76,6 +76,38 @@ const LiveScore = () => {
 
 
     // =====================================
+    // CURRENT ATTEMPT
+    // =====================================
+
+    const currentAttempt =
+        currentAthlete?.currentAttempt ?? null;
+
+
+    // =====================================
+    // CAN SELECT ANOTHER ATHLETE
+    //
+    // IMPORTANT:
+    //
+    // The current athlete remains selected
+    // after GOOD / NO_LIFT.
+    //
+    // Another athlete becomes selectable
+    // only after the current athlete's
+    // next attempt has been declared.
+    // =====================================
+
+    const canSelectAnotherAthlete =
+        !currentAthlete ||
+        (
+            currentAttempt &&
+            currentAttempt.declaredWeight != null &&
+            Number(
+                currentAttempt.declaredWeight
+            ) > 0
+        );
+
+
+    // =====================================
     // LOAD LIVE COMPETITION
     // =====================================
 
@@ -166,7 +198,9 @@ const LiveScore = () => {
 
         if (
             attempt.declaredWeight != null &&
-            Number(attempt.declaredWeight) > 0
+            Number(
+                attempt.declaredWeight
+            ) > 0
         ) {
 
             setDeclaredWeight(
@@ -276,9 +310,9 @@ const LiveScore = () => {
     // =====================================
     // SELECT ATHLETE
     //
-    // OFFICIAL MANUALLY CHOOSES ATHLETE
+    // OFFICIAL MANUALLY CHOOSES ATHLETE.
     //
-    // NO AUTOMATIC ORDERING
+    // NO AUTOMATIC ORDERING.
     // =====================================
 
     const handleSelectAthlete =
@@ -293,16 +327,38 @@ const LiveScore = () => {
 
 
         // =================================
-        // PLATFORM ALREADY OCCUPIED
+        // CURRENT ATHLETE SELECTION RULE
+        //
+        // The current athlete remains
+        // selected after GOOD / NO_LIFT.
+        //
+        // The official must declare their
+        // next attempt before switching
+        // to another athlete.
         // =================================
 
         if (currentAthlete) {
 
-            setLiftError(
-                "Complete the current athlete before selecting another athlete."
-            );
+            const currentAttempt =
+                currentAthlete.currentAttempt;
 
-            return;
+
+            const declarationSaved =
+                currentAttempt &&
+                currentAttempt.declaredWeight != null &&
+                Number(
+                    currentAttempt.declaredWeight
+                ) > 0;
+
+
+            if (!declarationSaved) {
+
+                setLiftError(
+                    "Declare the current athlete's next attempt before selecting another athlete."
+                );
+
+                return;
+            }
         }
 
 
@@ -316,6 +372,22 @@ const LiveScore = () => {
 
             setLiftError(
                 "This athlete does not have a valid current attempt."
+            );
+
+            return;
+        }
+
+
+        // =================================
+        // COMPLETED ATHLETE
+        // =================================
+
+        if (
+            athlete.currentAttempt.completed
+        ) {
+
+            setLiftError(
+                "This athlete has completed the competition."
             );
 
             return;
@@ -338,6 +410,10 @@ const LiveScore = () => {
             return;
         }
 
+
+        // =================================
+        // SELECT ATHLETE
+        // =================================
 
         try {
 
@@ -508,7 +584,7 @@ const LiveScore = () => {
     //
     // GOOD / NO LIFT
     //
-    // BACKEND HANDLES CURRENT ATHLETE.
+    // CURRENT ATHLETE REMAINS SELECTED.
     //
     // NO AUTOMATIC NEXT ATHLETE.
     // =====================================
@@ -803,6 +879,10 @@ const LiveScore = () => {
 
                 currentPhase={
                     currentPhase
+                }
+
+                canSelectAnotherAthlete={
+                    canSelectAnotherAthlete
                 }
 
                 selectingAthlete={
