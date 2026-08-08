@@ -7,7 +7,7 @@
 .competition-title{
     margin:0;
     text-align:center;
-    color:white;
+    color:#fff;
     font-size:24px;
     font-weight:700;
     letter-spacing:1px;
@@ -31,26 +31,23 @@
 
 .table-area{
     width:100%;
-    overflow:auto;
+    overflow-x:auto;
+    overflow-y:auto;
     background:#081a33;
-    padding:0;
 }
 
 .score-table{
     width:100%;
+    min-width:1350px;
     border-collapse:collapse;
-    table-layout:fixed;
+    table-layout:auto;
 }
-
-/* =========================
-   TABLE HEADER
-========================= */
 
 .score-table thead th{
     background:#1b3f6d;
-    color:white;
+    color:#fff;
     border:1px solid #35567d;
-    padding:4px;
+    padding:6px;
     font-size:13px;
     font-weight:700;
     position:sticky;
@@ -58,13 +55,26 @@
     z-index:10;
 }
 
-/* =========================
-   CATEGORY HEADER
-========================= */
+.score-table td{
+    border:1px solid #35567d;
+    color:#fff;
+    text-align:center;
+    padding:6px;
+    font-size:13px;
+    height:34px;
+    white-space:nowrap;
+}
+
+.athlete-name{
+    text-align:left !important;
+    padding-left:10px !important;
+    font-weight:600;
+    min-width:220px;
+}
 
 .category-row td{
     padding:0 !important;
-    border:none !important;
+    border:0 !important;
     background:transparent !important;
 }
 
@@ -72,211 +82,60 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
-
-    margin:14px 0 6px;
+    width:100%;
+    box-sizing:border-box;
 
     padding:10px 18px;
+    margin:12px 0 6px;
 
     background:#17365d;
-
     border-top:3px solid #4f7db6;
     border-bottom:2px solid #4f7db6;
 
     color:#ffd54f;
-
     font-size:17px;
     font-weight:700;
-
-    letter-spacing:0.5px;
-
-    box-sizing:border-box;
 }
 
 .category-left strong,
 .category-right strong{
-    color:white;
-    font-size:18px;
+    color:#fff;
 }
-
-/* =========================
-   TABLE BODY
-========================= */
-
-.score-table td{
-    border:1px solid #35567d;
-    color:white;
-    text-align:center;
-    padding:4px 5px;
-    font-size:13px;
-    height:28px;
-}
-
-.athlete-name{
-    text-align:left !important;
-    padding-left:10px !important;
-    font-weight:600;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-/* Column widths */
 
 .score-table th:nth-child(1),
 .score-table td:nth-child(1){
-    width:50px;
-}
-
-.header{
-    background:#0a2342;
-    padding:8px 15px;
-    border-bottom:2px solid #2d4f7c;
-}
-
-.competition-title{
-    margin:0;
-    text-align:center;
-    color:white;
-    font-size:24px;
-    font-weight:700;
-    letter-spacing:1px;
-}
-
-.header-info{
-    margin-top:5px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:15px;
-    color:#ffd54f;
-    font-size:15px;
-    font-weight:600;
-}
-
-.content{
-    width:100%;
-    overflow:hidden;
-}
-
-.table-area{
-    width:100%;
-    overflow:auto;
-    background:#081a33;
-    padding:0;
-}
-
-.score-table{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-}
-
-/* =========================
-   TABLE HEADER
-========================= */
-
-.score-table thead th{
-    background:#1b3f6d;
-    color:white;
-    border:1px solid #35567d;
-    padding:4px;
-    font-size:13px;
-    font-weight:700;
-    position:sticky;
-    top:0;
-    z-index:10;
-}
-
-/* =========================
-   CATEGORY HEADER
-========================= */
-
-.category-row td{
-    padding:0 !important;
-    border:none !important;
-    background:transparent !important;
-}
-
-.category-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    margin:14px 0 6px;
-
-    padding:10px 18px;
-
-    background:#17365d;
-
-    border-top:3px solid #4f7db6;
-    border-bottom:2px solid #4f7db6;
-
-    color:#ffd54f;
-
-    font-size:17px;
-    font-weight:700;
-
-    letter-spacing:0.5px;
-
-    box-sizing:border-box;
-}
-
-.category-left strong,
-.category-right strong{
-    color:white;
-    font-size:18px;
-}
-
-/* =========================
-   TABLE BODY
-========================= */
-
-.score-table td{
-    border:1px solid #35567d;
-    color:white;
-    text-align:center;
-    padding:4px 5px;
-    font-size:13px;
-    height:28px;
-}
-
-.athlete-name{
-    text-align:left !important;
-    padding-left:10px !important;
-    font-weight:600;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-/* Column widths */
-
-.score-table th:nth-child(1),
-.score-table td:nth-child(1){
-    width:50px;
+    width:60px;
 }
 
 .score-table th:nth-child(2),
 .score-table td:nth-child(2){
-    width:220px;
+    width:240px;
 }
 
 .score-table th:nth-child(3),
 .score-table td:nth-child(3){
-    width:55px;
+    width:70px;
 }
 
-.score-table th:last-child,
-.score-table td:last-child{
-    width:55px;
-    background:#102a43;
-    color:#ffd54f;
-    font-weight:700;
+.score-table th:nth-child(4),
+.score-table td:nth-child(4){
+    width:80px;
 }
 
-/* =========================
-   CURRENT ATHLETE
-========================= */
+.score-table th:nth-child(n+5):nth-child(-n+12),
+.score-table td:nth-child(n+5):nth-child(-n+12){
+    width:65px;
+}
+
+.score-table th:nth-child(13),
+.score-table td:nth-child(13){
+    width:80px;
+}
+
+.score-table th:nth-child(14),
+.score-table td:nth-child(14){
+    width:70px;
+}
 
 .current-athlete-row{
     background:#ffd54f !important;
@@ -287,18 +146,16 @@
     font-weight:700;
 }
 
-/* =========================
-   NEXT ATHLETE
-========================= */
+.current-attempt{
+    background:#ff9800 !important;
+    color:#000 !important;
+    font-weight:700;
+}
 
 .next-athlete-row td{
     border-top:2px dashed #00ffff !important;
     border-bottom:2px dashed #00ffff !important;
 }
-
-/* =========================
-   ATTEMPT COLORS
-========================= */
 
 .good-lift{
     color:#66ff33;
@@ -311,71 +168,8 @@
 }
 
 .pending-lift{
-    color:white;
+    color:#fff;
 }
-
-/* =========================
-   RESULT COLORS
-========================= */
-
-.best-lift{
-    color:#6dff6d;
-    font-weight:700;
-}
-
-.total-cell{
-    color:#ffb400;
-    font-weight:700;
-}
-
-.rank-cell{
-    color:#ffd54f;
-    font-weight:700;
-}
-
-/* =========================
-   CURRENT ATHLETE
-========================= */
-
-.current-athlete-row{
-    background:#ffd54f !important;
-}
-
-.current-athlete-row td{
-    color:#000 !important;
-    font-weight:700;
-}
-
-/* =========================
-   NEXT ATHLETE
-========================= */
-
-.next-athlete-row td{
-    border-top:2px dashed #00ffff !important;
-    border-bottom:2px dashed #00ffff !important;
-}
-
-/* =========================
-   ATTEMPT COLORS
-========================= */
-
-.good-lift{
-    color:#66ff33;
-    font-weight:700;
-}
-
-.no-lift{
-    color:#ff4040;
-    font-weight:700;
-}
-
-.pending-lift{
-    color:white;
-}
-
-/* =========================
-   RESULT COLORS
-========================= */
 
 .best-lift{
     color:#6dff6d;
