@@ -35,7 +35,7 @@ const processLift = async ({
     }
 
     // -----------------------------------
-    // Find the current attempt
+    // Find current attempt
     // -----------------------------------
 
     const currentAttempt =
@@ -72,20 +72,12 @@ const processLift = async ({
     }
 
     // -----------------------------------
-    // Result can only be recorded for
-    // a declared attempt
-    // -----------------------------------
-
-    if (
-        attempt.declaredWeight == null
-    ) {
-        throw new Error(
-            "Cannot record lift result before declaration."
-        );
-    }
-
-    // -----------------------------------
     // Save official result
+    //
+    // Attempt 1 may use the opening
+    // weight without declaredWeight.
+    // Therefore, do NOT require
+    // declaredWeight here.
     // -----------------------------------
 
     attempt.result = result;
@@ -131,19 +123,6 @@ const processLift = async ({
 
     // -----------------------------------
     // Advance competition
-    //
-    // advanceCompetition() determines
-    // whether:
-    //
-    // 1. The athlete returns for the
-    //    next declared attempt.
-    //
-    // 2. Another athlete goes next.
-    //
-    // 3. Platform remains empty waiting
-    //    for a declaration.
-    //
-    // 4. Phase changes to Clean & Jerk.
     // -----------------------------------
 
     await advanceCompetition(
