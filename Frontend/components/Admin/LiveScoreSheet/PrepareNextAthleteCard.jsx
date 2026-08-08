@@ -5,6 +5,7 @@ const PrepareNextAttemptCard = ({
     declaredWeight,
     setDeclaredWeight,
     onSaveWeight,
+    savingDeclaration,
 }) => {
 
     if (!prepareAthlete) {
@@ -15,7 +16,9 @@ const PrepareNextAttemptCard = ({
 
                 <div className="next-athlete-header">
 
-                    <h2>Prepare Next Attempt</h2>
+                    <h2>
+                        Prepare Next Attempt
+                    </h2>
 
                 </div>
 
@@ -39,13 +42,19 @@ const PrepareNextAttemptCard = ({
                 : prepareAthlete.openingCleanJerk
         );
 
+    const invalidWeight =
+        declaredWeight === "" ||
+        Number(declaredWeight) <= 0;
+
     return (
 
         <div className="next-athlete-card">
 
             <div className="next-athlete-header">
 
-                <h2>Prepare Next Attempt</h2>
+                <h2>
+                    Prepare Next Attempt
+                </h2>
 
             </div>
 
@@ -53,7 +62,9 @@ const PrepareNextAttemptCard = ({
 
                 <div className="next-athlete-row">
 
-                    <span>Lot Number</span>
+                    <span>
+                        Lot Number
+                    </span>
 
                     <strong>
                         {prepareAthlete.lotNumber}
@@ -63,7 +74,9 @@ const PrepareNextAttemptCard = ({
 
                 <div className="next-athlete-row">
 
-                    <span>Athlete</span>
+                    <span>
+                        Athlete
+                    </span>
 
                     <strong>
                         {prepareAthlete.name}
@@ -73,7 +86,9 @@ const PrepareNextAttemptCard = ({
 
                 <div className="next-athlete-row">
 
-                    <span>Next Attempt</span>
+                    <span>
+                        Next Attempt
+                    </span>
 
                     <strong>
 
@@ -89,7 +104,9 @@ const PrepareNextAttemptCard = ({
 
                 <div className="next-athlete-row">
 
-                    <span>Previous Declaration</span>
+                    <span>
+                        Previous Declaration
+                    </span>
 
                     <strong>
 
@@ -106,9 +123,7 @@ const PrepareNextAttemptCard = ({
             <div className="next-athlete-weight">
 
                 <label>
-
                     New Declaration
-
                 </label>
 
                 <input
@@ -120,6 +135,7 @@ const PrepareNextAttemptCard = ({
                             e.target.value
                         )
                     }
+                    disabled={savingDeclaration}
                 />
 
             </div>
@@ -129,9 +145,15 @@ const PrepareNextAttemptCard = ({
                 <button
                     className="save-next-weight-btn"
                     onClick={onSaveWeight}
+                    disabled={
+                        savingDeclaration ||
+                        invalidWeight
+                    }
                 >
 
-                    SAVE DECLARATION
+                    {savingDeclaration
+                        ? "SAVING..."
+                        : "SAVE DECLARATION"}
 
                 </button>
 

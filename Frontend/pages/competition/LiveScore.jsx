@@ -34,6 +34,9 @@ const LiveScore = () => {
     const [processingLift, setProcessingLift] =
         useState(false);
 
+    const [savingDeclaration, setSavingDeclaration] =
+        useState(false);
+
     const [liftMessage, setLiftMessage] =
         useState("");
 
@@ -147,50 +150,72 @@ const LiveScore = () => {
     // Prepare athlete declaration
     // -----------------------------------
 
-    const handlePrepareDeclaration =
-        async () => {
+    const handlePrepareDeclaration = async () => {
 
-            if (!prepareAthlete) {
-                return;
-            }
+        if (
+            !prepareAthlete ||
+            savingDeclaration
+        ) {
+            return;
+        }
 
-            try {
+        if (
+            declaredWeight === "" ||
+            Number(declaredWeight) <= 0
+        ) {
 
-                setLiftError("");
-                setLiftMessage("");
+            setLiftError(
+                "Please enter a valid declared weight."
+            );
 
-                await saveDeclaredWeight({
+            return;
+        }
 
-                    entryId:
-                        prepareAthlete.entryId,
+        try {
 
-                    declaredWeight:
-                        Number(
-                            declaredWeight
-                        ),
+            setSavingDeclaration(true);
 
-                });
+            setLiftError("");
+            setLiftMessage("");
 
-                await loadLiveCompetition();
+            await saveDeclaredWeight({
 
-            } catch (error) {
+                entryId:
+                    prepareAthlete.entryId,
 
-                console.error(
-                    "Failed to save declaration:",
-                    error
-                );
+                declaredWeight:
+                    Number(declaredWeight),
 
-                setLiftError(
-                    error.response
-                        ?.data
-                        ?.message ||
-                    error.message ||
-                    "Failed to save declaration."
-                );
+            });
 
-            }
+            setLiftMessage(
+                "Declaration saved successfully."
+            );
 
-        };
+            await loadLiveCompetition();
+
+        } catch (error) {
+
+            console.error(
+                "Failed to save declaration:",
+                error
+            );
+
+            setLiftError(
+                error.response
+                    ?.data
+                    ?.message ||
+                error.message ||
+                "Failed to save declaration."
+            );
+
+        } finally {
+
+            setSavingDeclaration(false);
+
+        }
+
+    };
 
     // -----------------------------------
     // Process Good Lift / No Lift
@@ -201,6 +226,7 @@ const LiveScore = () => {
 
             // Only the REAL platform athlete
             // can have a lift processed.
+
             if (
                 !currentAthlete ||
                 processingLift
@@ -208,11 +234,12 @@ const LiveScore = () => {
                 return;
             }
 
-            setProcessingLift(true);
-            setLiftMessage("");
-            setLiftError("");
-
             try {
+
+                setProcessingLift(true);
+
+                setLiftMessage("");
+                setLiftError("");
 
                 // -----------------------------------
                 // Save official result
@@ -383,12 +410,14 @@ const LiveScore = () => {
                 ---------------------------------- */}
 
                 {(processingLift ||
+                    savingDeclaration ||
                     liftMessage ||
                     liftError) && (
 
                     <div
                         className={`lift-status ${
-                            processingLift
+                            processingLift ||
+                            savingDeclaration
                                 ? "lift-status-processing"
                                 : liftError
                                     ? "lift-status-error"
@@ -396,24 +425,35 @@ const LiveScore = () => {
                         }`}
                     >
 
-                        {processingLift && (
+                        {(processingLift ||
+                            savingDeclaration) && (
+
                             <span>
-                                Saving lift result...
+                                {processingLift
+                                    ? "Saving lift result..."
+                                    : "Saving declaration..."}
                             </span>
+
                         )}
 
                         {!processingLift &&
+                            !savingDeclaration &&
                             liftMessage && (
+
                                 <span>
                                     ✓ {liftMessage}
                                 </span>
+
                             )}
 
                         {!processingLift &&
+                            !savingDeclaration &&
                             liftError && (
+
                                 <span>
                                     ✕ {liftError}
                                 </span>
+
                             )}
 
                     </div>
@@ -459,6 +499,10 @@ const LiveScore = () => {
 
                         onSaveWeight={
                             handlePrepareDeclaration
+                        }
+
+                        savingDeclaration={
+                            savingDeclaration
                         }
                     />
 
