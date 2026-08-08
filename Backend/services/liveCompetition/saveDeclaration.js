@@ -1,7 +1,5 @@
 import CompetitionEntry from "../../models/CompetitionEntry.js";
-import LiveCompetition from "../../models/LiveCompetition.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
-import updateCurrentPlatformAthlete from "./updateCurrentPlatformAthlete.js";
 
 const saveDeclaration = async ({
     entryId,
@@ -15,6 +13,18 @@ const saveDeclaration = async ({
     if (
         declaredWeight == null ||
         declaredWeight <= 0
+    ) {
+        throw new Error(
+            "Invalid declared weight."
+        );
+    }
+
+    const weight =
+        Number(declaredWeight);
+
+    if (
+        Number.isNaN(weight) ||
+        weight <= 0
     ) {
         throw new Error(
             "Invalid declared weight."
@@ -37,7 +47,7 @@ const saveDeclaration = async ({
     }
 
     // -----------------------------------
-    // Determine current attempt
+    // Determine athlete's next attempt
     // -----------------------------------
 
     const currentAttempt =
@@ -45,7 +55,9 @@ const saveDeclaration = async ({
             competitionEntry
         );
 
-    if (currentAttempt.completed) {
+    if (
+        currentAttempt.completed
+    ) {
         throw new Error(
             "Athlete has completed the competition."
         );
@@ -74,78 +86,47 @@ const saveDeclaration = async ({
     }
 
     // -----------------------------------
-    // Save declaration
-    //
-    // IMPORTANT:
-    //
-    // declaredAt represents the time
-    // at which the official entered/
-    // updated this declaration.
-    //
-    // This timestamp is later used by
-    // selectNextAthlete() when two
-    // athletes have the same weight.
+    // Prevent changing an already
+    // completed attempt
     // -----------------------------------
 
-    const declarationTime =
-        new Date();
+    if (
+        attempt.result !== "PENDING"
+    ) {
+        throw new Error(
+            "This attempt has already been completed."
+        );
+    }
+
+    // -----------------------------------
+    // Save declaration
+    // -----------------------------------
 
     attempt.declaredWeight =
-        Number(declaredWeight);
+        weight;
 
     attempt.declaredAt =
-        declarationTime;
+        new Date();
 
     await competitionEntry.save();
 
     // -----------------------------------
-    // Populate athlete
-    // -----------------------------------
-
-    await competitionEntry.populate(
-        "athleteId"
-    );
-
-    const gender =
-        competitionEntry
-            .athleteId
-            ?.personalInfo
-            ?.gender;
-
-    if (!gender) {
-        throw new Error(
-            "Athlete gender is missing."
-        );
-    }
-
-    const normalizedGender =
-        gender.toLowerCase();
-
-    // -----------------------------------
-    // Debug declaration
+    // Logging
     // -----------------------------------
 
     console.log(
-        "===== SAVE DECLARATION ====="
+        "===================================="
     );
 
     console.log(
-        "Competition ID:",
-        competitionEntry
-            .competitionId
-            .toString()
+        "SAVE DECLARATION"
     );
 
     console.log(
-        "Entry ID:",
+        "Entry:",
         competitionEntry
             ._id
             .toString()
-    );
-
-    console.log(
-        "Gender:",
-        normalizedGender
     );
 
     console.log(
@@ -168,82 +149,23 @@ const saveDeclaration = async ({
         attempt.declaredAt
     );
 
-    // -----------------------------------
-    // Try to place athlete on platform
-    //
-    // If platform is occupied,
-    // updateCurrentPlatformAthlete()
-    // will leave the current athlete
-    // unchanged.
-    //
-    // If platform is empty, the newly
-    // declared athlete can be selected
-    // according to lifting order.
-    // -----------------------------------
-
-    await updateCurrentPlatformAthlete(
-        competitionEntry.competitionId,
-        normalizedGender,
-        competitionEntry._id
+    console.log(
+        "===================================="
     );
 
     // -----------------------------------
-    // Check actual platform state
-    // -----------------------------------
-
-    const session =
-        await LiveCompetition.findOne({
-            competitionId:
-                competitionEntry
-                    .competitionId,
-
-            gender:
-                normalizedGender,
-        });
-
-    if (!session) {
-        throw new Error(
-            "Live competition session not found."
-        );
-    }
-
-    // -----------------------------------
-    // Remove from Prepare only if this
-    // athlete actually became the
-    // current platform athlete.
-    // -----------------------------------
-
-    if (
-        session.currentEntryId &&
-        session.currentEntryId
-            .toString() ===
-        competitionEntry._id
-            .toString()
-    ) {
-
-        session.prepareEntryId =
-            null;
-
-        await session.save();
-
-        console.log(
-            "Athlete moved from Prepare to Platform."
-        );
-
-    } else {
-
-        console.log(
-            "Platform occupied."
-        );
-
-        console.log(
-            "Athlete remains available for next turn."
-        );
-
-    }
-
-    // -----------------------------------
-    // Return updated entry
+    // IMPORTANT
+    //
+    // DO NOT:
+    //
+    // - select athlete
+    // - change currentEntryId
+    // - calculate next athlete
+    // - call selectNextAthlete()
+    // - call updateCurrentPlatformAthlete()
+    // - call advanceCompetition()
+    //
+    // Declaration is ONLY a declaration.
     // -----------------------------------
 
     return await CompetitionEntry.findById(

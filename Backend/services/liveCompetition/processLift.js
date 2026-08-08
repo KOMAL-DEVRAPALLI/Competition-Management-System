@@ -1,7 +1,7 @@
 import CompetitionEntry from "../../models/CompetitionEntry.js";
+import LiveCompetition from "../../models/LiveCompetition.js";
 import updateCompetitionResults from "../calculations/updateCompetitionResults.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
-import advanceCompetition from "./advanceCompetition.js";
 
 const processLift = async ({
     entryId,
@@ -39,6 +39,42 @@ const processLift = async ({
     }
 
     // -----------------------------------
+    // Find live competition session
+    // -----------------------------------
+
+    const normalizedGender =
+        gender.toLowerCase();
+
+    const session =
+        await LiveCompetition.findOne({
+            competitionId,
+            gender: normalizedGender,
+        });
+
+    if (!session) {
+        throw new Error(
+            "Live competition session not found."
+        );
+    }
+
+    // -----------------------------------
+    // Verify this athlete is actually
+    // the athlete selected by the official
+    // -----------------------------------
+
+    if (
+        !session.currentEntryId ||
+        session.currentEntryId
+            .toString() !==
+            competitionEntry._id
+                .toString()
+    ) {
+        throw new Error(
+            "This athlete is not currently selected."
+        );
+    }
+
+    // -----------------------------------
     // Find current attempt
     // -----------------------------------
 
@@ -47,9 +83,24 @@ const processLift = async ({
             competitionEntry
         );
 
-    if (currentAttempt.completed) {
+    if (
+        currentAttempt.completed
+    ) {
         throw new Error(
             "Athlete has already completed the competition."
+        );
+    }
+
+    // -----------------------------------
+    // Verify phase
+    // -----------------------------------
+
+    if (
+        currentAttempt.phase !==
+        session.currentPhase
+    ) {
+        throw new Error(
+            `Athlete attempt is ${currentAttempt.phase}, but live session is in ${session.currentPhase}.`
         );
     }
 
@@ -76,24 +127,29 @@ const processLift = async ({
     }
 
     // -----------------------------------
-    // Save official result
-    //
-    // Attempt 1 may use the opening
-    // weight without declaredWeight.
-    // Therefore, do NOT require
-    // declaredWeight here.
+    // Prevent duplicate result
     // -----------------------------------
 
-    attempt.result = result;
+    if (
+        attempt.result !== "PENDING"
+    ) {
+        throw new Error(
+            "This attempt has already been judged."
+        );
+    }
+
+    // -----------------------------------
+    // Save official result
+    //
+    // Attempt 1 can use opening weight
+    // even when declaredWeight is null.
+    // -----------------------------------
+
+    attempt.result =
+        result;
 
     // -----------------------------------
     // Record actual completion time
-    //
-    // This represents when the official
-    // judged the attempt GOOD / NO_LIFT.
-    //
-    // Used later for competition
-    // calling-order calculations.
     // -----------------------------------
 
     attempt.completedAt =
@@ -106,7 +162,11 @@ const processLift = async ({
     // -----------------------------------
 
     console.log(
-        "===== PROCESS LIFT ====="
+        "===================================="
+    );
+
+    console.log(
+        "PROCESS LIFT"
     );
 
     console.log(
@@ -143,6 +203,12 @@ const processLift = async ({
 
     // -----------------------------------
     // Update athlete results
+    //
+    // Calculates:
+    // Best Snatch
+    // Best Clean & Jerk
+    // Total
+    // Rank
     // -----------------------------------
 
     await updateCompetitionResults(
@@ -150,21 +216,83 @@ const processLift = async ({
     );
 
     // -----------------------------------
-    // Advance competition
+    // IMPORTANT
+    //
+    // DO NOT automatically select another
+    // athlete.
+    //
+    // The official must manually select
+    // the next athlete.
     // -----------------------------------
 
-    await advanceCompetition(
-        competitionId,
-        gender.toLowerCase()
+    session.currentEntryId =
+        null;
+
+    // -----------------------------------
+    // If this was the final lift of the
+    // entire competition, the session can
+    // be marked FINISHED.
+    //
+    // Otherwise keep it RUNNING.
+    // -----------------------------------
+
+    const updatedEntry =
+        await CompetitionEntry.findById(
+            entryId
+        );
+
+    if (!updatedEntry) {
+        throw new Error(
+            "Competition entry could not be reloaded."
+        );
+    }
+
+    const updatedAttempt =
+        getCurrentAttempt(
+            updatedEntry
+        );
+
+    if (
+        updatedAttempt.completed
+    ) {
+
+        console.log(
+            "Athlete has completed the entire competition."
+        );
+
+    }
+
+    session.status =
+        "RUNNING";
+
+    await session.save();
+
+    console.log(
+        "===== PLATFORM CLEARED ====="
+    );
+
+    console.log(
+        "Current Entry:",
+        session.currentEntryId
+            ?.toString() ??
+            "NONE"
+    );
+
+    console.log(
+        "Next athlete:",
+        "MANUAL SELECTION REQUIRED"
     );
 
     // -----------------------------------
-    // Return updated athlete
+    // Return updated state
     // -----------------------------------
 
-    return await CompetitionEntry.findById(
-        entryId
-    );
+    return {
+        athlete:
+            updatedEntry,
+
+        session,
+    };
 };
 
 export default processLift;

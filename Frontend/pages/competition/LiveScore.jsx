@@ -5,13 +5,7 @@ import {
     apiRequest,
     processLift,
     saveDeclaredWeight,
-    updateQueueDeclaration,
 } from "../../api/axios";
-
-import CurrentAthleteCard from "../../components/Admin/LiveScoreSheet/CurrentLifterCard";
-import PrepareNextAttemptCard from "../../components/Admin/LiveScoreSheet/PrepareNextAthleteCard";
-import DeclarationQueue from "../../components/Admin/LiveScoreSheet/DeclarationQueue";
-import ScoreboardTable from "../../components/Admin/LiveScoreSheet/LiveResultTable";
 
 import "./LiveScore.css";
 
@@ -21,6 +15,17 @@ const LiveScore = () => {
         competitionId,
         gender,
     } = useParams();
+
+    // -----------------------------------
+    // API
+    // -----------------------------------
+
+    const SELECT_ATHLETE_URL =
+        "/live-competition/select-official-athlete";
+
+    // -----------------------------------
+    // State
+    // -----------------------------------
 
     const [loading, setLoading] =
         useState(true);
@@ -37,38 +42,30 @@ const LiveScore = () => {
     const [savingDeclaration, setSavingDeclaration] =
         useState(false);
 
+    const [selectingAthlete, setSelectingAthlete] =
+        useState(false);
+
     const [liftMessage, setLiftMessage] =
         useState("");
 
     const [liftError, setLiftError] =
         useState("");
 
+    // -----------------------------------
+    // Live data
+    // -----------------------------------
+
     const {
-    currentAthlete,
-    prepareAthlete,
-    nextAthlete,
-    declarationQueue,
-    competitionResults,
-    status,
-    currentPhase,
-    totalAthletes,
-} = liveCompetition || {};
+        currentAthlete,
+        declarationQueue = [],
+        competitionResults = [],
+        status,
+        currentPhase,
+        totalAthletes,
+    } = liveCompetition || {};
 
     // -----------------------------------
-    // DISPLAYED LIFT
-    //
-    // Actual platform athlete always has
-    // priority.
-    //
-    // Last lift is shown only when the
-    // platform is temporarily empty.
-    // -----------------------------------
-
-   const displayedAthlete =
-    currentAthlete ?? null;
-
-    // -----------------------------------
-    // Initial live competition load
+    // Load live competition
     // -----------------------------------
 
     useEffect(() => {
@@ -78,29 +75,56 @@ const LiveScore = () => {
     }, []);
 
     // -----------------------------------
-    // Update declaration input whenever
-    // prepare athlete changes
+    // Keep declaration input synced with
+    // CURRENT athlete
     // -----------------------------------
 
     useEffect(() => {
 
-        if (!prepareAthlete) {
+        if (!currentAthlete) {
 
             setDeclaredWeight("");
 
             return;
         }
 
-        setDeclaredWeight(
-            prepareAthlete
-                .currentAttempt
-                ?.declaredWeight ?? ""
-        );
+        const attempt =
+            currentAthlete.currentAttempt;
 
-    }, [prepareAthlete]);
+        if (
+            attempt?.declaredWeight != null
+        ) {
+
+            setDeclaredWeight(
+                attempt.declaredWeight
+            );
+
+            return;
+        }
+
+        // Attempt 1 uses opening weight
+        if (
+            attempt?.attemptNo === 1
+        ) {
+
+            const openingWeight =
+                attempt.phase === "SNATCH"
+                    ? currentAthlete.openingSnatch
+                    : currentAthlete.openingCleanJerk;
+
+            setDeclaredWeight(
+                openingWeight ?? ""
+            );
+
+            return;
+        }
+
+        setDeclaredWeight("");
+
+    }, [currentAthlete]);
 
     // -----------------------------------
-    // Load live competition
+    // LOAD LIVE COMPETITION
     // -----------------------------------
 
     const loadLiveCompetition = async () => {
@@ -113,14 +137,11 @@ const LiveScore = () => {
                     "GET"
                 );
 
-            const newLiveCompetition =
-                response.data;
-
             setLiveCompetition(
-                newLiveCompetition
+                response.data
             );
 
-            return newLiveCompetition;
+            return response.data;
 
         } catch (error) {
 
@@ -134,7 +155,13 @@ const LiveScore = () => {
                 error.response?.data
             );
 
-            throw error;
+            setLiftError(
+                error.response
+                    ?.data
+                    ?.message ||
+                error.message ||
+                "Failed to load live competition."
+            );
 
         } finally {
 
@@ -145,22 +172,135 @@ const LiveScore = () => {
     };
 
     // -----------------------------------
-    // Save declaration for Prepare athlete
+    // SELECT ATHLETE
+    //
+    // Official manually chooses the
+    // athlete.
+    //
+    // NO automatic ordering.
+    // NO selectNextAthlete().
     // -----------------------------------
 
-    const handlePrepareDeclaration =
+    const handleSelectAthlete = async (
+        athlete
+    ) => {
+
+        if (
+            !athlete ||
+            selectingAthlete
+        ) {
+            return;
+        }
+
+        // -----------------------------------
+        // Do not allow another selection
+        // while somebody is on platform.
+        // -----------------------------------
+
+        if (currentAthlete) {
+
+            setLiftError(
+                "Complete the current athlete before selecting another athlete."
+            );
+
+            return;
+
+        }
+
+        try {
+
+            setSelectingAthlete(true);
+
+            setLiftError("");
+            setLiftMessage("");
+
+            console.log(
+                "===== OFFICIAL SELECT ATHLETE ====="
+            );
+
+            console.log(
+                "Entry ID:",
+                athlete.entryId
+            );
+
+            console.log(
+                "Name:",
+                athlete.name
+            );
+
+            // -----------------------------------
+            // IMPORTANT
+            //
+            // Official selection endpoint.
+            // -----------------------------------
+
+            await apiRequest(
+                SELECT_ATHLETE_URL,
+                "POST",
+                {
+                    competitionId,
+                    gender,
+                    entryId:
+                        athlete.entryId,
+                }
+            );
+
+            setLiftMessage(
+                `${athlete.name} selected.`
+            );
+
+            // -----------------------------------
+            // Refresh live state
+            // -----------------------------------
+
+            await loadLiveCompetition();
+
+        } catch (error) {
+
+            console.error(
+                "Failed to select athlete:",
+                error
+            );
+
+            setLiftError(
+                error.response
+                    ?.data
+                    ?.message ||
+                error.message ||
+                "Failed to select athlete."
+            );
+
+        } finally {
+
+            setSelectingAthlete(false);
+
+        }
+
+    };
+
+    // -----------------------------------
+    // SAVE DECLARATION
+    //
+    // Declaration belongs ONLY to the
+    // manually selected athlete.
+    // -----------------------------------
+
+    const handleSaveDeclaration =
         async () => {
 
             if (
-                !prepareAthlete ||
+                !currentAthlete ||
                 savingDeclaration
             ) {
                 return;
             }
 
+            const weight =
+                Number(declaredWeight);
+
             if (
-                declaredWeight === "" ||
-                Number(declaredWeight) <= 0
+                Number.isNaN(weight) ||
+                weight <= 0
             ) {
 
                 setLiftError(
@@ -180,10 +320,10 @@ const LiveScore = () => {
                 await saveDeclaredWeight({
 
                     entryId:
-                        prepareAthlete.entryId,
+                        currentAthlete.entryId,
 
                     declaredWeight:
-                        Number(declaredWeight),
+                        weight,
 
                 });
 
@@ -217,7 +357,7 @@ const LiveScore = () => {
         };
 
     // -----------------------------------
-    // Process Good Lift / No Lift
+    // PROCESS GOOD / NO LIFT
     // -----------------------------------
 
     const handleProcessLift =
@@ -236,6 +376,10 @@ const LiveScore = () => {
 
                 setLiftMessage("");
                 setLiftError("");
+
+                // -----------------------------------
+                // Save official result
+                // -----------------------------------
 
                 await processLift({
 
@@ -256,7 +400,22 @@ const LiveScore = () => {
                         : "No Lift saved successfully."
                 );
 
+                // -----------------------------------
+                // IMPORTANT
+                //
+                // Backend clears currentEntryId.
+                //
+                // Therefore after refresh:
+                //
+                // currentAthlete === null
+                //
+                // Official must manually select
+                // the next athlete.
+                // -----------------------------------
+
                 await loadLiveCompetition();
+
+                setDeclaredWeight("");
 
             } catch (error) {
 
@@ -282,34 +441,41 @@ const LiveScore = () => {
         };
 
     // -----------------------------------
-    // Queue declaration
+    // START COMPETITION
+    //
+    // This only creates/initializes the
+    // live session.
+    //
+    // It does NOT choose an athlete here.
     // -----------------------------------
 
-    const handleQueueDeclaration =
-        async (
-            entryId,
-            declaredWeight
-        ) => {
+    const handleStartCompetition =
+        async () => {
 
             try {
 
                 setLiftError("");
                 setLiftMessage("");
 
-                await updateQueueDeclaration({
+                await apiRequest(
+                    "/live-competition/start",
+                    "POST",
+                    {
+                        competitionId,
+                        gender,
+                    }
+                );
 
-                    entryId,
-
-                    declaredWeight,
-
-                });
+                setLiftMessage(
+                    "Live competition started."
+                );
 
                 await loadLiveCompetition();
 
             } catch (error) {
 
                 console.error(
-                    "Failed to update queue declaration:",
+                    "Failed to start competition:",
                     error
                 );
 
@@ -318,7 +484,7 @@ const LiveScore = () => {
                         ?.data
                         ?.message ||
                     error.message ||
-                    "Failed to update declaration."
+                    "Failed to start competition."
                 );
 
             }
@@ -326,18 +492,131 @@ const LiveScore = () => {
         };
 
     // -----------------------------------
-    // Loading
+    // DISPLAY WEIGHT
+    // -----------------------------------
+
+    const getCurrentWeight = (
+        athlete
+    ) => {
+
+        if (!athlete) {
+            return null;
+        }
+
+        const attempt =
+            athlete.currentAttempt;
+
+        if (!attempt) {
+            return null;
+        }
+
+        if (
+            attempt.declaredWeight != null
+        ) {
+
+            return attempt.declaredWeight;
+
+        }
+
+        if (
+            attempt.attemptNo === 1
+        ) {
+
+            return (
+                attempt.phase === "SNATCH"
+                    ? athlete.openingSnatch
+                    : athlete.openingCleanJerk
+            );
+
+        }
+
+        return null;
+
+    };
+
+    // -----------------------------------
+    // ATTEMPT DISPLAY
+    // -----------------------------------
+
+    const renderAttempt = (
+        attempt,
+        openingWeight = null
+    ) => {
+
+        if (!attempt) {
+            return "-";
+        }
+
+        const displayWeight =
+            attempt.attemptNo === 1
+                ? attempt.declaredWeight ??
+                  openingWeight
+                : attempt.declaredWeight;
+
+        if (
+            attempt.result === "GOOD"
+        ) {
+
+            return (
+                <span className="attempt-good">
+                    {displayWeight ?? "-"} ✓
+                </span>
+            );
+
+        }
+
+        if (
+            attempt.result === "NO_LIFT"
+        ) {
+
+            return (
+                <span className="attempt-fail">
+                    {displayWeight ?? "-"} ✗
+                </span>
+            );
+
+        }
+
+        return (
+            <span className="attempt-pending">
+                {displayWeight ?? "-"}
+            </span>
+        );
+
+    };
+
+    // -----------------------------------
+    // LOADING
     // -----------------------------------
 
     if (loading) {
 
         return (
-            <h2>
-                Loading Live Competition...
-            </h2>
+            <div className="live-score-page">
+
+                <h2>
+                    Loading Live Competition...
+                </h2>
+
+            </div>
         );
 
     }
+
+    // -----------------------------------
+    // CURRENT ATTEMPT
+    // -----------------------------------
+
+    const currentAttempt =
+        currentAthlete?.currentAttempt;
+
+    const isAttemptOne =
+        currentAttempt?.attemptNo === 1;
+
+    const currentWeight =
+        getCurrentWeight(
+            currentAthlete
+        );
 
     // -----------------------------------
     // UI
@@ -347,162 +626,742 @@ const LiveScore = () => {
 
         <div className="live-score-page">
 
+            {/* =================================
+                HEADER
+            ================================= */}
+
             <header className="live-score-header">
 
-                <h1>
-                    Live Competition
-                </h1>
+                <div>
+
+                    <h1>
+                        Live Competition
+                    </h1>
+
+                    <p>
+                        Competition:{" "}
+                        {competitionId}
+                    </p>
+
+                </div>
 
                 <div className="live-score-session">
 
                     <span>
-                        Status : {status}
+                        Status: {status}
                     </span>
 
                     <span>
-                        Phase : {currentPhase}
+                        Phase: {currentPhase}
                     </span>
 
                     <span>
-                        Athletes : {totalAthletes}
+                        Athletes: {totalAthletes}
                     </span>
 
                 </div>
 
             </header>
 
-            <main className="live-score-content">
+            {/* =================================
+                STATUS MESSAGE
+            ================================= */}
 
-                {/* ---------------------------------
-                    Lift status
-                ---------------------------------- */}
+            {(liftMessage ||
+                liftError ||
+                processingLift ||
+                savingDeclaration ||
+                selectingAthlete) && (
 
-                {(processingLift ||
-                    savingDeclaration ||
-                    liftMessage ||
-                    liftError) && (
+                <div
+                    className={
+                        liftError
+                            ? "lift-status lift-status-error"
+                            : "lift-status lift-status-success"
+                    }
+                >
+
+                    {selectingAthlete &&
+                        "Selecting athlete..."}
+
+                    {!selectingAthlete &&
+                        savingDeclaration &&
+                        "Saving declaration..."}
+
+                    {!selectingAthlete &&
+                        !savingDeclaration &&
+                        processingLift &&
+                        "Saving lift result..."}
+
+                    {!selectingAthlete &&
+                        !savingDeclaration &&
+                        !processingLift &&
+                        liftMessage &&
+                        `✓ ${liftMessage}`}
+
+                    {liftError &&
+                        `✕ ${liftError}`}
+
+                </div>
+
+            )}
+
+            {/* =================================
+                START BUTTON
+            ================================= */}
+
+            {!currentAthlete &&
+                status === "READY" && (
+
+                <div
+                    className="live-score-start"
+                >
+
+                    <button
+                        type="button"
+                        onClick={
+                            handleStartCompetition
+                        }
+                        disabled={
+                            selectingAthlete
+                        }
+                    >
+                        Start Competition
+                    </button>
+
+                </div>
+
+            )}
+
+            {/* =================================
+                CURRENT ATHLETE
+            ================================= */}
+
+            <section className="live-score-current">
+
+                <div className="live-score-current-header">
+
+                    <h2>
+                        Current Athlete
+                    </h2>
+
+                    {currentAthlete && (
+                        <span>
+                            ON PLATFORM
+                        </span>
+                    )}
+
+                </div>
+
+                {!currentAthlete ? (
 
                     <div
-                        className={`lift-status ${
-                            processingLift ||
-                            savingDeclaration
-                                ? "lift-status-processing"
-                                : liftError
-                                    ? "lift-status-error"
-                                    : "lift-status-success"
-                        }`}
+                        className="live-score-empty"
                     >
 
-                        {(processingLift ||
-                            savingDeclaration) && (
+                        <h2>
+                            PLATFORM EMPTY
+                        </h2>
 
-                            <span>
-                                {processingLift
-                                    ? "Saving lift result..."
-                                    : "Saving declaration..."}
-                            </span>
+                        <p>
+                            Official must manually
+                            select the next athlete.
+                        </p>
 
-                        )}
+                    </div>
 
-                        {!processingLift &&
-                            !savingDeclaration &&
-                            liftMessage && (
+                ) : (
 
-                                <span>
-                                    ✓ {liftMessage}
-                                </span>
+                    <div className="current-athlete-panel">
+
+                        <div className="current-athlete-main">
+
+                            <div>
+
+                                <div className="current-athlete-label">
+                                    ATHLETE
+                                </div>
+
+                                <h1>
+                                    {currentAthlete.name}
+                                </h1>
+
+                            </div>
+
+                            <div className="current-athlete-meta">
+
+                                <div>
+                                    <strong>
+                                        Lot
+                                    </strong>
+
+                                    <span>
+                                        {
+                                            currentAthlete.lotNumber
+                                        }
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        Attempt
+                                    </strong>
+
+                                    <span>
+                                        {
+                                            currentAttempt?.phase
+                                        }{" "}
+                                        {
+                                            currentAttempt?.attemptNo
+                                        }
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        Weight
+                                    </strong>
+
+                                    <span>
+                                        {currentWeight}
+                                        {" "}kg
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {/* =================================
+                            DECLARATION
+                        ================================= */}
+
+                        <div className="current-athlete-declaration">
+
+                            <label>
+                                Declared Weight (kg)
+                            </label>
+
+                            <div
+                                className="declaration-control"
+                            >
+
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={
+                                        declaredWeight
+                                    }
+                                    disabled={
+                                        isAttemptOne ||
+                                        savingDeclaration ||
+                                        processingLift
+                                    }
+                                    onChange={(e) =>
+                                        setDeclaredWeight(
+                                            e.target.value
+                                        )
+                                    }
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleSaveDeclaration
+                                    }
+                                    disabled={
+                                        isAttemptOne ||
+                                        savingDeclaration ||
+                                        processingLift ||
+                                        !declaredWeight
+                                    }
+                                >
+                                    {savingDeclaration
+                                        ? "Saving..."
+                                        : "Save Declaration"}
+                                </button>
+
+                            </div>
+
+                            {isAttemptOne && (
+
+                                <small>
+                                    Attempt 1 uses the
+                                    opening weight.
+                                </small>
 
                             )}
 
-                        {!processingLift &&
-                            !savingDeclaration &&
-                            liftError && (
+                        </div>
 
-                                <span>
-                                    ✕ {liftError}
-                                </span>
+                        {/* =================================
+                            OFFICIAL DECISION
+                        ================================= */}
 
-                            )}
+                        <div className="lift-decision">
+
+                            <button
+                                type="button"
+                                className="good-btn"
+                                disabled={
+                                    processingLift
+                                }
+                                onClick={() =>
+                                    handleProcessLift(
+                                        "GOOD"
+                                    )
+                                }
+                            >
+                                GOOD LIFT
+                            </button>
+
+                            <button
+                                type="button"
+                                className="no-lift-btn"
+                                disabled={
+                                    processingLift
+                                }
+                                onClick={() =>
+                                    handleProcessLift(
+                                        "NO_LIFT"
+                                    )
+                                }
+                            >
+                                NO LIFT
+                            </button>
+
+                        </div>
 
                     </div>
 
                 )}
 
-                <section className="live-score-top">
+            </section>
 
-                    <CurrentAthleteCard
-                        currentAthlete={
-                            displayedAthlete
-                        }
+            {/* =================================
+                OFFICIAL ATHLETE LIST
+            ================================= */}
 
-                        processingLift={
-                            processingLift
-                        }
+            <section className="official-athlete-list">
 
-                        onGoodLift={() =>
-                            handleProcessLift(
-                                "GOOD"
-                            )
-                        }
+                <div className="official-list-header">
 
-                        onNoLift={() =>
-                            handleProcessLift(
-                                "NO_LIFT"
-                            )
-                        }
-                    />
+                    <div>
 
-                    <PrepareNextAttemptCard
-                        prepareAthlete={
-                            prepareAthlete
-                        }
+                        <h2>
+                            Official Athlete List
+                        </h2>
 
-                        declaredWeight={
-                            declaredWeight
-                        }
+                        <p>
+                            Select any athlete manually.
+                            No automatic athlete selection.
+                        </p>
 
-                        setDeclaredWeight={
-                            setDeclaredWeight
-                        }
+                    </div>
 
-                        onSaveWeight={
-                            handlePrepareDeclaration
-                        }
+                    <strong>
+                        {
+                            declarationQueue.length
+                        } athletes
+                    </strong>
 
-                        savingDeclaration={
-                            savingDeclaration
-                        }
+                </div>
 
-                    />
+                <div className="official-list-table-wrapper">
 
-                </section>
+                    <table
+                        className="official-athlete-table"
+                    >
 
-                <section className="live-score-middle">
+                        <thead>
 
-                    <DeclarationQueue
-                        declarationQueue={
-                            declarationQueue
-                        }
+                            <tr>
 
-                        onSaveWeight={
-                            handleQueueDeclaration
-                        }
+                                <th>
+                                    Lot
+                                </th>
 
-                    />
+                                <th>
+                                    Name
+                                </th>
 
-                </section>
+                                <th>
+                                    Attempt
+                                </th>
 
-                <section className="live-score-bottom">
+                                <th>
+                                    Current / Opening
+                                </th>
 
-                    <ScoreboardTable
-                        competitionResults={
-                            competitionResults
-                        }
-                    />
+                                <th>
+                                    Declared
+                                </th>
 
-                </section>
+                                <th>
+                                    Action
+                                </th>
 
-            </main>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {declarationQueue.map(
+                                (athlete) => {
+
+                                    const attempt =
+                                        athlete.currentAttempt;
+
+                                    const weight =
+                                        getCurrentWeight(
+                                            athlete
+                                        );
+
+                                    const isSelected =
+                                        currentAthlete &&
+                                        currentAthlete
+                                            .entryId
+                                            ?.toString() ===
+                                        athlete.entryId
+                                            ?.toString();
+
+                                    return (
+
+                                        <tr
+                                            key={
+                                                athlete.entryId
+                                            }
+                                            className={
+                                                isSelected
+                                                    ? "official-selected-row"
+                                                    : ""
+                                            }
+                                        >
+
+                                            <td>
+                                                {
+                                                    athlete.lotNumber
+                                                }
+                                            </td>
+
+                                            <td>
+
+                                                <strong>
+                                                    {
+                                                        athlete.name
+                                                    }
+                                                </strong>
+
+                                            </td>
+
+                                            <td>
+
+                                                {
+                                                    attempt?.phase
+                                                }{" "}
+                                                {
+                                                    attempt?.attemptNo
+                                                }
+
+                                            </td>
+
+                                            <td>
+
+                                                {
+                                                    weight ??
+                                                    "-"
+                                                } kg
+
+                                            </td>
+
+                                            <td>
+
+                                                {
+                                                    attempt
+                                                        ?.declaredWeight ??
+                                                    "-"
+                                                } kg
+
+                                            </td>
+
+                                            <td>
+
+                                                <button
+                                                    type="button"
+                                                    className="select-athlete-btn"
+                                                    disabled={
+                                                        !!currentAthlete ||
+                                                        selectingAthlete
+                                                    }
+                                                    onClick={() =>
+                                                        handleSelectAthlete(
+                                                            athlete
+                                                        )
+                                                    }
+                                                >
+                                                    {selectingAthlete
+                                                        ? "Selecting..."
+                                                        : "SELECT"}
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    );
+
+                                }
+                            )}
+
+                            {!declarationQueue.length && (
+
+                                <tr>
+
+                                    <td
+                                        colSpan="6"
+                                        style={{
+                                            textAlign:
+                                                "center",
+                                            padding:
+                                                "30px",
+                                        }}
+                                    >
+                                        No athletes available
+                                        in this phase.
+                                    </td>
+
+                                </tr>
+
+                            )}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+            {/* =================================
+                LIVE SCOREBOARD
+            ================================= */}
+
+            <section className="scoreboard">
+
+                <div className="scoreboard-header">
+
+                    <h2>
+                        Live Scoreboard
+                    </h2>
+
+                </div>
+
+                <div className="scoreboard-wrapper">
+
+                    <table
+                        className="scoreboard-table"
+                    >
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Lot
+                                </th>
+
+                                <th>
+                                    Name
+                                </th>
+
+                                <th>
+                                    S1
+                                </th>
+
+                                <th>
+                                    S2
+                                </th>
+
+                                <th>
+                                    S3
+                                </th>
+
+                                <th>
+                                    CJ1
+                                </th>
+
+                                <th>
+                                    CJ2
+                                </th>
+
+                                <th>
+                                    CJ3
+                                </th>
+
+                                <th>
+                                    Best S
+                                </th>
+
+                                <th>
+                                    Best CJ
+                                </th>
+
+                                <th>
+                                    Total
+                                </th>
+
+                                <th>
+                                    Rank
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {competitionResults.map(
+                                (athlete) => {
+
+                                    return (
+
+                                        <tr
+                                            key={
+                                                athlete.entryId
+                                            }
+                                            className={
+                                                athlete.status ===
+                                                "ON_PLATFORM"
+                                                    ? "scoreboard-current-row"
+                                                    : athlete.status ===
+                                                      "COMPLETED"
+                                                    ? "scoreboard-completed-row"
+                                                    : ""
+                                            }
+                                        >
+
+                                            <td>
+                                                {
+                                                    athlete.lotNumber
+                                                }
+                                            </td>
+
+                                            <td>
+
+                                                <strong>
+                                                    {
+                                                        athlete.name
+                                                    }
+                                                </strong>
+
+                                            </td>
+
+                                            <td>
+                                                {renderAttempt(
+                                                    athlete
+                                                        .snatchAttempts
+                                                        ?. [0],
+                                                    athlete
+                                                        .openingSnatch
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                {renderAttempt(
+                                                    athlete
+                                                        .snatchAttempts
+                                                        ?. [1]
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                {renderAttempt(
+                                                    athlete
+                                                        .snatchAttempts
+                                                        ?. [2]
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                {renderAttempt(
+                                                    athlete
+                                                        .cleanJerkAttempts
+                                                        ?. [0],
+                                                    athlete
+                                                        .openingCleanJerk
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                {renderAttempt(
+                                                    athlete
+                                                        .cleanJerkAttempts
+                                                        ?. [1]
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                {renderAttempt(
+                                                    athlete
+                                                        .cleanJerkAttempts
+                                                        ?. [2]
+                                                )}
+                                            </td>
+
+                                            <td>
+
+                                                <strong>
+                                                    {
+                                                        athlete.bestSnatch
+                                                    }
+                                                </strong>
+
+                                            </td>
+
+                                            <td>
+
+                                                <strong>
+                                                    {
+                                                        athlete.bestCleanJerk
+                                                    }
+                                                </strong>
+
+                                            </td>
+
+                                            <td>
+
+                                                <strong>
+                                                    {
+                                                        athlete.total
+                                                    }
+                                                </strong>
+
+                                            </td>
+
+                                            <td>
+
+                                                {
+                                                    athlete.place ??
+                                                    "-"
+                                                }
+
+                                            </td>
+
+                                        </tr>
+
+                                    );
+
+                                }
+                            )}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
 
         </div>
 
