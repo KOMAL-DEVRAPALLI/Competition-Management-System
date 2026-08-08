@@ -10,6 +10,7 @@ import {
 import "./LiveScore.css";
 
 const LiveScore = () => {
+
     const {
         competitionId,
         gender,
@@ -64,6 +65,17 @@ const LiveScore = () => {
         status = "READY",
         currentPhase = "SNATCH",
         totalAthletes = 0,
+
+        // =================================
+        // NEW
+        //
+        // Backend determines whether the
+        // official may select another
+        // athlete.
+        // =================================
+
+        canSelectAnotherAthlete = false,
+
     } = liveCompetition || {};
 
     // =====================================
@@ -73,7 +85,9 @@ const LiveScore = () => {
     const loadLiveCompetition = async (
         showLoading = false
     ) => {
+
         try {
+
             if (showLoading) {
                 setLoading(true);
             }
@@ -91,6 +105,7 @@ const LiveScore = () => {
             return response.data;
 
         } catch (error) {
+
             console.error(
                 "Failed to load live competition:",
                 error
@@ -107,9 +122,11 @@ const LiveScore = () => {
             return null;
 
         } finally {
+
             if (showLoading) {
                 setLoading(false);
             }
+
         }
     };
 
@@ -118,7 +135,9 @@ const LiveScore = () => {
     // =====================================
 
     useEffect(() => {
+
         loadLiveCompetition(true);
+
     }, [
         competitionId,
         gender,
@@ -134,14 +153,20 @@ const LiveScore = () => {
     // =====================================
 
     useEffect(() => {
+
         const interval =
             setInterval(() => {
+
                 loadLiveCompetition(false);
+
             }, 1000);
 
         return () => {
+
             clearInterval(interval);
+
         };
+
     }, [
         competitionId,
         gender,
@@ -152,24 +177,28 @@ const LiveScore = () => {
     //
     // IMPORTANT:
     //
-    // Do NOT depend on [currentAthlete].
-    // The live scoreboard refreshes every second,
-    // so the currentAthlete object is recreated
-    // even when the same attempt is still active.
+    // Do NOT overwrite the input every
+    // second.
     //
-    // If we synced on every object change,
-    // whatever the official is typing would be
-    // overwritten every second.
+    // declarationKey identifies the exact
+    // athlete + phase + attempt.
     // =====================================
 
     const currentEntryId =
-        currentAthlete?.entryId?.toString() ?? null;
+        currentAthlete?.entryId?.toString() ??
+        null;
 
     const currentAttemptNo =
-        currentAthlete?.currentAttempt?.attemptNo ?? null;
+        currentAthlete
+            ?.currentAttempt
+            ?.attemptNo ??
+        null;
 
     const currentAttemptPhase =
-        currentAthlete?.currentAttempt?.phase ?? null;
+        currentAthlete
+            ?.currentAttempt
+            ?.phase ??
+        null;
 
     const declarationKey =
         currentEntryId &&
@@ -183,24 +212,45 @@ const LiveScore = () => {
 
     useEffect(() => {
 
-        // Platform became empty.
-        if (!currentAthlete || !declarationKey) {
+        // ---------------------------------
+        // Platform became empty
+        // ---------------------------------
 
-            if (lastDeclarationKey.current !== null) {
-                lastDeclarationKey.current = null;
+        if (
+            !currentAthlete ||
+            !declarationKey
+        ) {
+
+            if (
+                lastDeclarationKey.current !==
+                null
+            ) {
+
+                lastDeclarationKey.current =
+                    null;
+
                 setDeclaredWeight("");
+
             }
 
             return;
+
         }
 
-        // Same athlete + same attempt:
-        // NEVER overwrite what the official is typing.
+        // ---------------------------------
+        // Same athlete + same attempt
+        //
+        // NEVER overwrite what the official
+        // is typing.
+        // ---------------------------------
+
         if (
             lastDeclarationKey.current ===
             declarationKey
         ) {
+
             return;
+
         }
 
         lastDeclarationKey.current =
@@ -210,23 +260,42 @@ const LiveScore = () => {
             currentAthlete.currentAttempt;
 
         if (!attempt) {
+
             setDeclaredWeight("");
+
             return;
+
         }
 
-        // Existing saved declaration.
+        // ---------------------------------
+        // Existing saved declaration
+        // ---------------------------------
+
         if (
             attempt.declaredWeight != null &&
             Number(attempt.declaredWeight) > 0
         ) {
+
             setDeclaredWeight(
                 attempt.declaredWeight
             );
+
             return;
+
         }
 
-        // Attempt 1 uses opening weight.
-        if (attempt.attemptNo === 1) {
+        // ---------------------------------
+        // Attempt 1 uses opening weight
+        //
+        // IMPORTANT:
+        //
+        // This is only the INITIAL value.
+        // Official can edit it.
+        // ---------------------------------
+
+        if (
+            attempt.attemptNo === 1
+        ) {
 
             const openingWeight =
                 attempt.phase === "SNATCH"
@@ -238,9 +307,13 @@ const LiveScore = () => {
             );
 
             return;
+
         }
 
-        // New attempt 2 / 3 starts empty.
+        // ---------------------------------
+        // Attempt 2 / 3 starts empty
+        // ---------------------------------
+
         setDeclaredWeight("");
 
     }, [
@@ -259,12 +332,18 @@ const LiveScore = () => {
     const handleStartCompetition =
         async () => {
 
-            if (startingCompetition) {
+            if (
+                startingCompetition
+            ) {
                 return;
             }
 
             try {
-                setStartingCompetition(true);
+
+                setStartingCompetition(
+                    true
+                );
+
                 setLiftError("");
                 setLiftMessage("");
 
@@ -286,6 +365,7 @@ const LiveScore = () => {
                 );
 
             } catch (error) {
+
                 console.error(
                     "Failed to start competition:",
                     error
@@ -300,8 +380,13 @@ const LiveScore = () => {
                 );
 
             } finally {
-                setStartingCompetition(false);
+
+                setStartingCompetition(
+                    false
+                );
+
             }
+
         };
 
     // =====================================
@@ -310,6 +395,14 @@ const LiveScore = () => {
     // OFFICIAL MANUALLY SELECTS.
     //
     // NO AUTOMATIC ORDERING.
+    //
+    // IMPORTANT:
+    //
+    // Current athlete may remain selected
+    // after GOOD / NO LIFT.
+    //
+    // Once their next declaration is saved,
+    // another athlete may be selected.
     // =====================================
 
     const handleSelectAthlete =
@@ -319,43 +412,103 @@ const LiveScore = () => {
                 !athlete ||
                 selectingAthlete
             ) {
+
                 return;
+
             }
 
-            // Platform already occupied
-            if (currentAthlete) {
+            // ---------------------------------
+            // SAME ATHLETE
+            //
+            // Do not select the already
+            // selected athlete again.
+            // ---------------------------------
+
+            if (
+                currentAthlete &&
+                currentAthlete.entryId
+                    ?.toString() ===
+                athlete.entryId
+                    ?.toString()
+            ) {
+
+                return;
+
+            }
+
+            // ---------------------------------
+            // CURRENT ATHLETE STILL REQUIRES
+            // DECLARATION
+            // ---------------------------------
+
+            if (
+                currentAthlete &&
+                !canSelectAnotherAthlete
+            ) {
+
                 setLiftError(
-                    "Complete the current athlete before selecting another athlete."
+                    "Declare the current athlete's next attempt before selecting another athlete."
                 );
 
                 return;
+
             }
 
-            // Invalid attempt
+            // ---------------------------------
+            // INVALID ATTEMPT
+            // ---------------------------------
+
             if (
                 !athlete.currentAttempt
             ) {
+
                 setLiftError(
                     "This athlete does not have a valid current attempt."
                 );
 
                 return;
+
             }
 
-            // Wrong phase
+            // ---------------------------------
+            // WRONG PHASE
+            // ---------------------------------
+
             if (
                 athlete.currentAttempt.phase !==
                 currentPhase
             ) {
+
                 setLiftError(
                     `This athlete belongs to ${athlete.currentAttempt.phase}, while the live session is in ${currentPhase}.`
                 );
 
                 return;
+
+            }
+
+            // ---------------------------------
+            // COMPLETED ATHLETE
+            // ---------------------------------
+
+            if (
+                athlete.currentAttempt.completed
+            ) {
+
+                setLiftError(
+                    "This athlete has completed the competition."
+                );
+
+                return;
+
             }
 
             try {
-                setSelectingAthlete(true);
+
+                setSelectingAthlete(
+                    true
+                );
+
                 setLiftError("");
                 setLiftMessage("");
 
@@ -379,6 +532,7 @@ const LiveScore = () => {
                 );
 
             } catch (error) {
+
                 console.error(
                     "Failed to select athlete:",
                     error
@@ -393,8 +547,13 @@ const LiveScore = () => {
                 );
 
             } finally {
-                setSelectingAthlete(false);
+
+                setSelectingAthlete(
+                    false
+                );
+
             }
+
         };
 
     // =====================================
@@ -402,8 +561,16 @@ const LiveScore = () => {
     //
     // DECLARATION ONLY.
     //
-    // Does NOT select athlete.
-    // Does NOT move athlete.
+    // Does NOT automatically select
+    // another athlete.
+    //
+    // AFTER SAVING:
+    //
+    // Backend returns canSelectAnotherAthlete
+    // = true.
+    //
+    // Therefore official can select another
+    // athlete.
     // =====================================
 
     const handleSaveDeclaration =
@@ -413,7 +580,9 @@ const LiveScore = () => {
                 !currentAthlete ||
                 savingDeclaration
             ) {
+
                 return;
+
             }
 
             const weight =
@@ -425,15 +594,21 @@ const LiveScore = () => {
                 Number.isNaN(weight) ||
                 weight <= 0
             ) {
+
                 setLiftError(
                     "Please enter a valid declared weight."
                 );
 
                 return;
+
             }
 
             try {
-                setSavingDeclaration(true);
+
+                setSavingDeclaration(
+                    true
+                );
+
                 setLiftError("");
                 setLiftMessage("");
 
@@ -446,18 +621,31 @@ const LiveScore = () => {
                 });
 
                 setLiftMessage(
-                    "Declaration saved successfully."
+                    "Declaration saved successfully. You can now select the next eligible athlete."
                 );
 
-                // IMPORTANT:
-                // Do not reload the live competition here.
+                // =================================
+                // IMPORTANT
                 //
-                // The 1-second live refresh will pick up the
-                // saved declaration from the backend. More
-                // importantly, we keep the local input stable
-                // immediately after saving.
+                // Reload immediately after saving.
+                //
+                // This updates:
+                //
+                // canSelectAnotherAthlete
+                //
+                // from false -> true.
+                //
+                // The declaration input will NOT
+                // revert because declarationKey
+                // remains unchanged.
+                // =================================
+
+                await loadLiveCompetition(
+                    false
+                );
 
             } catch (error) {
+
                 console.error(
                     "Failed to save declaration:",
                     error
@@ -472,8 +660,13 @@ const LiveScore = () => {
                 );
 
             } finally {
-                setSavingDeclaration(false);
+
+                setSavingDeclaration(
+                    false
+                );
+
             }
+
         };
 
     // =====================================
@@ -481,9 +674,11 @@ const LiveScore = () => {
     //
     // GOOD / NO LIFT
     //
-    // Backend clears currentEntryId.
+    // Current athlete remains selected
+    // when another attempt exists.
     //
-    // NO automatic next athlete.
+    // Official can immediately declare
+    // the athlete's next attempt.
     // =====================================
 
     const handleProcessLift =
@@ -493,11 +688,17 @@ const LiveScore = () => {
                 !currentAthlete ||
                 processingLift
             ) {
+
                 return;
+
             }
 
             try {
-                setProcessingLift(true);
+
+                setProcessingLift(
+                    true
+                );
+
                 setLiftMessage("");
                 setLiftError("");
 
@@ -518,17 +719,22 @@ const LiveScore = () => {
                         : "No Lift saved successfully."
                 );
 
-                // The lift has finished. The next attempt
-                // (if any) must get a fresh declaration field.
+                // ---------------------------------
+                // Fresh declaration for next
+                // attempt.
+                // ---------------------------------
+
                 setDeclaredWeight("");
 
-                lastDeclarationKey.current = null;
+                lastDeclarationKey.current =
+                    null;
 
                 await loadLiveCompetition(
                     false
                 );
 
             } catch (error) {
+
                 console.error(
                     "Failed to process lift:",
                     error
@@ -543,8 +749,13 @@ const LiveScore = () => {
                 );
 
             } finally {
-                setProcessingLift(false);
+
+                setProcessingLift(
+                    false
+                );
+
             }
+
         };
 
     // =====================================
@@ -566,26 +777,37 @@ const LiveScore = () => {
             return null;
         }
 
+        // ---------------------------------
         // Declared weight
+        // ---------------------------------
+
         if (
             attempt.declaredWeight != null &&
             attempt.declaredWeight > 0
         ) {
+
             return attempt.declaredWeight;
+
         }
 
+        // ---------------------------------
         // Attempt 1
+        // ---------------------------------
+
         if (
             attempt.attemptNo === 1
         ) {
+
             return (
                 attempt.phase === "SNATCH"
                     ? athlete.openingSnatch
                     : athlete.openingCleanJerk
             );
+
         }
 
         return null;
+
     };
 
     // =====================================
@@ -612,21 +834,25 @@ const LiveScore = () => {
         if (
             attempt.result === "GOOD"
         ) {
+
             return (
                 <span className="attempt-good">
                     {displayWeight ?? "-"} ✓
                 </span>
             );
+
         }
 
         if (
             attempt.result === "NO_LIFT"
         ) {
+
             return (
                 <span className="attempt-fail">
                     {displayWeight ?? "-"} ✗
                 </span>
             );
+
         }
 
         return (
@@ -634,14 +860,11 @@ const LiveScore = () => {
                 {displayWeight ?? "-"}
             </span>
         );
+
     };
 
     // =====================================
     // OFFICIAL ATHLETE LIST
-    //
-    // Backend provides ALL athletes.
-    //
-    // Official chooses manually.
     // =====================================
 
     const officialAthletes =
@@ -654,17 +877,21 @@ const LiveScore = () => {
     // =====================================
 
     if (loading) {
+
         return (
             <div className="live-score-page">
 
                 <div className="live-score-loading">
+
                     <h2>
                         Loading Live Competition...
                     </h2>
+
                 </div>
 
             </div>
         );
+
     }
 
     // =====================================
@@ -862,6 +1089,7 @@ const LiveScore = () => {
                             <div className="current-athlete-meta">
 
                                 <div>
+
                                     <strong>
                                         Lot
                                     </strong>
@@ -872,9 +1100,11 @@ const LiveScore = () => {
                                                 .lotNumber
                                         }
                                     </span>
+
                                 </div>
 
                                 <div>
+
                                     <strong>
                                         Attempt
                                     </strong>
@@ -889,9 +1119,11 @@ const LiveScore = () => {
                                                 ?.attemptNo
                                         }
                                     </span>
+
                                 </div>
 
                                 <div>
+
                                     <strong>
                                         Weight
                                     </strong>
@@ -902,6 +1134,7 @@ const LiveScore = () => {
                                             "-"
                                         } kg
                                     </span>
+
                                 </div>
 
                             </div>
@@ -927,7 +1160,6 @@ const LiveScore = () => {
                                         declaredWeight
                                     }
                                     disabled={
-                                        isAttemptOne ||
                                         savingDeclaration ||
                                         processingLift
                                     }
@@ -944,7 +1176,6 @@ const LiveScore = () => {
                                         handleSaveDeclaration
                                     }
                                     disabled={
-                                        isAttemptOne ||
                                         savingDeclaration ||
                                         processingLift ||
                                         !declaredWeight
@@ -959,8 +1190,29 @@ const LiveScore = () => {
 
                             {isAttemptOne && (
                                 <small>
-                                    Attempt 1 uses the
-                                    opening weight.
+                                    Attempt 1 starts with the
+                                    opening weight, but the
+                                    declaration can be edited
+                                    before the lift is judged.
+                                </small>
+                            )}
+
+                            {/* =================================
+                                SELECTION STATE
+                            ================================= */}
+
+                            {!canSelectAnotherAthlete && (
+                                <small>
+                                    Declare this athlete's next
+                                    attempt before selecting
+                                    another athlete.
+                                </small>
+                            )}
+
+                            {canSelectAnotherAthlete && (
+                                <small>
+                                    Declaration saved. You can
+                                    now select the next athlete.
                                 </small>
                             )}
 
@@ -1028,6 +1280,31 @@ const LiveScore = () => {
                             The system will not decide who
                             lifts next.
                         </p>
+
+                        {/* =================================
+                            SELECTION STATUS
+                        ================================= */}
+
+                        {currentAthlete &&
+                            !canSelectAnotherAthlete && (
+
+                            <p className="selection-locked-message">
+                                Current athlete must have the
+                                next attempt declared before
+                                another athlete can be selected.
+                            </p>
+
+                        )}
+
+                        {currentAthlete &&
+                            canSelectAnotherAthlete && (
+
+                            <p className="selection-ready-message">
+                                Ready — select the next eligible
+                                athlete.
+                            </p>
+
+                        )}
 
                     </div>
 
@@ -1102,6 +1379,24 @@ const LiveScore = () => {
                                         attempt.phase !==
                                         currentPhase;
 
+                                    // =================================
+                                    // CAN THIS ATHLETE BE SELECTED?
+                                    //
+                                    // Backend is the final authority,
+                                    // but frontend disables obviously
+                                    // invalid choices.
+                                    // =================================
+
+                                    const canSelectThisAthlete =
+                                        !selectingAthlete &&
+                                        !isSelected &&
+                                        !isCompleted &&
+                                        !wrongPhase &&
+                                        (
+                                            !currentAthlete ||
+                                            canSelectAnotherAthlete
+                                        );
+
                                     return (
 
                                         <tr
@@ -1174,10 +1469,7 @@ const LiveScore = () => {
                                                     type="button"
                                                     className="select-athlete-btn"
                                                     disabled={
-                                                        !!currentAthlete ||
-                                                        selectingAthlete ||
-                                                        isCompleted ||
-                                                        wrongPhase
+                                                        !canSelectThisAthlete
                                                     }
                                                     onClick={() =>
                                                         handleSelectAthlete(
@@ -1194,6 +1486,9 @@ const LiveScore = () => {
                                                         ? "WRONG PHASE"
                                                         : selectingAthlete
                                                         ? "SELECTING..."
+                                                        : currentAthlete &&
+                                                          !canSelectAnotherAthlete
+                                                        ? "DECLARATION REQUIRED"
                                                         : "SELECT"}
 
                                                 </button>
@@ -1203,6 +1498,7 @@ const LiveScore = () => {
                                         </tr>
 
                                     );
+
                                 }
                             )}
 
@@ -1460,6 +1756,7 @@ const LiveScore = () => {
                                         </tr>
 
                                     );
+
                                 }
                             )}
 
