@@ -45,7 +45,6 @@ const LiveScore = () => {
 
     const {
         currentAthlete,
-        lastLiftAthlete,
         prepareAthlete,
         nextAthlete,
         declarationQueue,
@@ -56,18 +55,14 @@ const LiveScore = () => {
     } = liveCompetition || {};
 
     // -----------------------------------
-    // Athlete displayed in Current Lift
+    // REAL CURRENT PLATFORM ATHLETE
     //
-    // Real platform athlete has priority.
-    //
-    // If platform is temporarily empty,
-    // show the last completed lift.
+    // Do not fall back to an old/previous
+    // athlete.
     // -----------------------------------
 
     const displayedAthlete =
-        currentAthlete ||
-        lastLiftAthlete ||
-        null;
+        currentAthlete ?? null;
 
     // -----------------------------------
     // Initial live competition load
@@ -191,6 +186,10 @@ const LiveScore = () => {
             setLiftMessage(
                 "Declaration saved successfully."
             );
+
+            // -----------------------------------
+            // Refresh complete live state
+            // -----------------------------------
 
             await loadLiveCompetition();
 
