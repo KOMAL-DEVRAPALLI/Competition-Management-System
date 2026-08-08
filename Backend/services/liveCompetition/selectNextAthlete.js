@@ -1,14 +1,25 @@
 import getCurrentAttempt from "./getCurrentAttempt.js";
 
+// -----------------------------------
+// Get attempt weight
+// -----------------------------------
+
 const getAttemptWeight = (
     entry,
     attempt
 ) => {
 
+    if (!attempt) {
+        return Number.MAX_SAFE_INTEGER;
+    }
+
     if (
-        attempt.declaredWeight != null
+        attempt.declaredWeight != null &&
+        attempt.declaredWeight > 0
     ) {
-        return attempt.declaredWeight;
+        return Number(
+            attempt.declaredWeight
+        );
     }
 
     const openingWeight =
@@ -17,16 +28,26 @@ const getAttemptWeight = (
             : entry.openingCleanJerk;
 
     return (
-        openingWeight ??
-        Number.MAX_SAFE_INTEGER
+        openingWeight != null &&
+        openingWeight > 0
+            ? Number(openingWeight)
+            : Number.MAX_SAFE_INTEGER
     );
 };
+
+
+// -----------------------------------
+// Get declaration time
+// -----------------------------------
 
 const getDeclarationTime = (
     attempt
 ) => {
 
-    if (!attempt.declaredAt) {
+    if (
+        !attempt ||
+        !attempt.declaredAt
+    ) {
         return Number.MAX_SAFE_INTEGER;
     }
 
@@ -39,6 +60,11 @@ const getDeclarationTime = (
         ? Number.MAX_SAFE_INTEGER
         : time;
 };
+
+
+// -----------------------------------
+// Select next athlete
+// -----------------------------------
 
 const selectNextAthlete = (
     entries
@@ -62,10 +88,6 @@ const selectNextAthlete = (
                         b.competitionEntry
                     );
 
-                // -----------------------------------
-                // 1. Lowest declared weight
-                // -----------------------------------
-
                 const weightA =
                     getAttemptWeight(
                         a,
@@ -78,19 +100,6 @@ const selectNextAthlete = (
                         attemptB
                     );
 
-                if (
-                    weightA !== weightB
-                ) {
-                    return (
-                        weightA -
-                        weightB
-                    );
-                }
-
-                // -----------------------------------
-                // 2. Earliest declaration
-                // -----------------------------------
-
                 const declarationA =
                     getDeclarationTime(
                         attemptA
@@ -101,20 +110,6 @@ const selectNextAthlete = (
                         attemptB
                     );
 
-                if (
-                    declarationA !==
-                    declarationB
-                ) {
-                    return (
-                        declarationA -
-                        declarationB
-                    );
-                }
-
-                // -----------------------------------
-                // 3. Lowest lot number
-                // -----------------------------------
-
                 const lotA =
                     a.lotNumber ??
                     Number.MAX_SAFE_INTEGER;
@@ -123,12 +118,131 @@ const selectNextAthlete = (
                     b.lotNumber ??
                     Number.MAX_SAFE_INTEGER;
 
-                if (lotA !== lotB) {
-                    return lotA - lotB;
-                }
 
                 // -----------------------------------
-                // 4. Stable fallback
+                // DEBUG
+                // -----------------------------------
+
+                console.log(
+                    "===== ATHLETE ORDER DATA ====="
+                );
+
+                console.log(
+                    "ATHLETE A:",
+                    {
+                        name:
+                            a.name,
+
+                        entryId:
+                            a.entryId?.toString(),
+
+                        phase:
+                            attemptA?.phase,
+
+                        attempt:
+                            attemptA?.attemptNo,
+
+                        weight:
+                            weightA,
+
+                        declaredWeight:
+                            attemptA?.declaredWeight,
+
+                        declaredAt:
+                            attemptA?.declaredAt,
+
+                        declarationTime:
+                            declarationA,
+
+                        lot:
+                            lotA,
+                    }
+                );
+
+                console.log(
+                    "ATHLETE B:",
+                    {
+                        name:
+                            b.name,
+
+                        entryId:
+                            b.entryId?.toString(),
+
+                        phase:
+                            attemptB?.phase,
+
+                        attempt:
+                            attemptB?.attemptNo,
+
+                        weight:
+                            weightB,
+
+                        declaredWeight:
+                            attemptB?.declaredWeight,
+
+                        declaredAt:
+                            attemptB?.declaredAt,
+
+                        declarationTime:
+                            declarationB,
+
+                        lot:
+                            lotB,
+                    }
+                );
+
+
+                // -----------------------------------
+                // 1. LOWEST WEIGHT
+                // -----------------------------------
+
+                if (
+                    weightA !== weightB
+                ) {
+
+                    return (
+                        weightA -
+                        weightB
+                    );
+
+                }
+
+
+                // -----------------------------------
+                // 2. EARLIEST DECLARATION
+                // -----------------------------------
+
+                if (
+                    declarationA !==
+                    declarationB
+                ) {
+
+                    return (
+                        declarationA -
+                        declarationB
+                    );
+
+                }
+
+
+                // -----------------------------------
+                // 3. LOWEST LOT NUMBER
+                // -----------------------------------
+
+                if (
+                    lotA !== lotB
+                ) {
+
+                    return (
+                        lotA -
+                        lotB
+                    );
+
+                }
+
+
+                // -----------------------------------
+                // 4. STABLE FALLBACK
                 // -----------------------------------
 
                 return (
@@ -143,7 +257,58 @@ const selectNextAthlete = (
             }
         );
 
-    return sortedEntries[0];
+
+    // -----------------------------------
+    // FINAL SELECTION DEBUG
+    // -----------------------------------
+
+    console.log(
+        "===== SELECTED NEXT ATHLETE ====="
+    );
+
+    const selected =
+        sortedEntries[0];
+
+    const selectedAttempt =
+        getCurrentAttempt(
+            selected.competitionEntry
+        );
+
+    console.log(
+        {
+            name:
+                selected.name,
+
+            entryId:
+                selected.entryId?.toString(),
+
+            phase:
+                selectedAttempt?.phase,
+
+            attempt:
+                selectedAttempt?.attemptNo,
+
+            weight:
+                getAttemptWeight(
+                    selected,
+                    selectedAttempt
+                ),
+
+            declaredWeight:
+                selectedAttempt
+                    ?.declaredWeight,
+
+            declaredAt:
+                selectedAttempt
+                    ?.declaredAt,
+
+            lot:
+                selected.lotNumber,
+        }
+    );
+
+
+    return selected;
 };
 
 export default selectNextAthlete;
