@@ -7,8 +7,8 @@
     min-height: 100vh;
     background: #081a33;
     overflow: hidden;
+    box-sizing: border-box;
 }
-
 
 /* =========================================================
    HEADER
@@ -34,18 +34,14 @@
 
 .header-info {
     margin-top: 5px;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     gap: 15px;
-
     color: #ffd54f;
     font-size: 15px;
     font-weight: 600;
 }
-
 
 /* =========================================================
    CONTENT
@@ -63,6 +59,10 @@
     background: #081a33;
 }
 
+/* =========================================================
+   TABLE
+========================================================= */
+
 .score-table {
     width: 100%;
     min-width: 1150px;
@@ -70,48 +70,8 @@
     table-layout: fixed;
 }
 
+/* Keep real table layout */
 
-
-/* =========================================================
-   COLUMN WIDTHS
-========================================================= */
-
-.col-lot {
-    width: 60px;
-}
-
-.col-athlete {
-    width: 240px;
-}
-
-.col-event {
-    width: 70px;
-}
-
-.col-bw {
-    width: 70px;
-}
-
-.col-attempt {
-    width: 65px;
-}
-
-.col-best {
-    width: 70px;
-}
-
-.col-total {
-    width: 75px;
-}
-
-.col-rank {
-    width: 65px;
-}
-
-
-/* =========================================================
-   TABLE HEADER
-========================================================= */
 .score-table thead {
     display: table-header-group;
 }
@@ -129,6 +89,50 @@
     display: table-cell !important;
     box-sizing: border-box;
 }
+
+/* =========================================================
+   COLUMN WIDTHS
+========================================================= */
+
+.score-table th:nth-child(1),
+.score-table td:nth-child(1) {
+    width: 60px;
+}
+
+.score-table th:nth-child(2),
+.score-table td:nth-child(2) {
+    width: 240px;
+}
+
+.score-table th:nth-child(3),
+.score-table td:nth-child(3) {
+    width: 70px;
+}
+
+.score-table th:nth-child(4),
+.score-table td:nth-child(4) {
+    width: 70px;
+}
+
+.score-table th:nth-child(n+5):nth-child(-n+12),
+.score-table td:nth-child(n+5):nth-child(-n+12) {
+    width: 65px;
+}
+
+.score-table th:nth-child(13),
+.score-table td:nth-child(13) {
+    width: 75px;
+}
+
+.score-table th:nth-child(14),
+.score-table td:nth-child(14) {
+    width: 65px;
+}
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
 .score-table thead th {
     background: #1b3f6d;
     color: #ffffff;
@@ -147,7 +151,6 @@
     top: 0;
     z-index: 10;
 }
-
 
 /* =========================================================
    TABLE BODY
@@ -169,8 +172,6 @@
     white-space: nowrap;
 }
 
-
-
 /* =========================================================
    ATHLETE NAME
 ========================================================= */
@@ -188,7 +189,6 @@
 
     text-overflow: ellipsis;
 }
-
 
 /* =========================================================
    CATEGORY ROW
@@ -229,7 +229,6 @@
 
 .category-left strong {
     color: #ffffff;
-
     font-size: 18px;
 }
 
@@ -239,10 +238,8 @@
 
 .category-right strong {
     color: #ffffff;
-
     font-size: 16px;
 }
-
 
 /* =========================================================
    CURRENT ATHLETE
@@ -257,11 +254,6 @@
     font-weight: 700;
 }
 
-
-/* =========================================================
-   NEXT ATHLETE
-========================================================= */
-
 /* =========================================================
    NEXT ATHLETE
 ========================================================= */
@@ -273,6 +265,7 @@
 .next-athlete-row td {
     border-top: 2px dashed #00ffff !important;
     border-bottom: 2px dashed #00ffff !important;
+
     color: #000000 !important;
     font-weight: 700;
 }
@@ -291,7 +284,9 @@
     font-weight: 700;
 }
 
-
+.current-attempt span {
+    color: #000000 !important;
+}
 
 /* =========================================================
    LIFT RESULTS
@@ -311,11 +306,14 @@
     color: #ffffff;
 }
 
+/* =========================================================
+   BEST LIFT
+========================================================= */
+
 .best-lift {
-    color: #6dff6d;
+    color: #6dff6d !important;
     font-weight: 700;
 }
-
 
 /* =========================================================
    TOTAL
@@ -326,11 +324,14 @@
     font-weight: 700;
 }
 
+/* =========================================================
+   RANK
+========================================================= */
+
 .rank-cell {
     color: #ffd54f !important;
     font-weight: 700;
 }
-
 
 /* =========================================================
    MOBILE / SMALL SCREEN
