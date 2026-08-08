@@ -4,7 +4,6 @@
 
 .live-score-current {
     width: 100%;
-
     box-sizing: border-box;
 
     margin-bottom: 28px;
@@ -41,7 +40,6 @@
     color: #ffffff;
 }
 
-
 .live-score-current-header h2 {
     margin: 0;
 
@@ -51,7 +49,6 @@
 
     font-weight: 800;
 }
-
 
 .live-score-current-header span {
     padding: 7px 12px;
@@ -91,7 +88,6 @@
     background: #f8fafc;
 }
 
-
 .live-score-empty h2 {
     margin: 0 0 8px;
 
@@ -101,7 +97,6 @@
 
     font-weight: 900;
 }
-
 
 .live-score-empty p {
     margin: 0;
@@ -144,7 +139,6 @@
     margin-bottom: 24px;
 }
 
-
 .current-athlete-label {
     margin-bottom: 5px;
 
@@ -156,7 +150,6 @@
 
     letter-spacing: 1px;
 }
-
 
 .current-athlete-main h1 {
     margin: 0;
@@ -185,7 +178,6 @@
     flex-wrap: wrap;
 }
 
-
 .current-athlete-meta > div {
     min-width: 110px;
 
@@ -204,7 +196,6 @@
     text-align: center;
 }
 
-
 .current-athlete-meta strong {
     color: #713f12;
 
@@ -212,7 +203,6 @@
 
     text-transform: uppercase;
 }
-
 
 .current-athlete-meta span {
     color: #422006;
@@ -234,7 +224,6 @@
 
     background: rgba(255, 255, 255, 0.50);
 }
-
 
 .current-athlete-declaration label {
     display: block;
@@ -259,7 +248,6 @@
     gap: 10px;
 }
 
-
 .declaration-control input {
     width: 180px;
 
@@ -282,14 +270,12 @@
     font-weight: 800;
 }
 
-
 .declaration-control input:focus {
     border-color: #422006;
 
     box-shadow:
         0 0 0 3px rgba(66, 32, 6, 0.15);
 }
-
 
 .declaration-control input:disabled {
     background: #f8fafc;
@@ -298,7 +284,6 @@
 
     opacity: 0.75;
 }
-
 
 .declaration-control button {
     padding: 12px 20px;
@@ -316,18 +301,29 @@
     font-weight: 800;
 
     cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        transform 0.1s ease,
+        opacity 0.15s ease;
 }
 
-
-.declaration-control button:hover {
+.declaration-control button:hover:not(:disabled) {
     background: #713f12;
+
+    transform: translateY(-1px);
 }
 
+.declaration-control button:active:not(:disabled) {
+    transform: translateY(1px);
+}
 
 .declaration-control button:disabled {
     opacity: 0.5;
 
     cursor: not-allowed;
+
+    transform: none;
 }
 
 
@@ -349,6 +345,106 @@
 
 
 /* =========================================================
+   LIFT DECISION AREA
+========================================================= */
+
+.lift-decision {
+    width: 100%;
+
+    display: flex;
+
+    gap: 14px;
+
+    margin-top: 18px;
+}
+
+
+/* =========================================================
+   LIFT BUTTON COMMON STYLE
+========================================================= */
+
+.lift-decision button {
+    flex: 1;
+
+    min-height: 58px;
+
+    padding: 14px 20px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    color: #ffffff;
+
+    font-size: 20px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    box-sizing: border-box;
+
+    transition:
+        transform 0.12s ease,
+        filter 0.12s ease,
+        opacity 0.12s ease;
+}
+
+
+/* =========================================================
+   GOOD LIFT
+========================================================= */
+
+.lift-decision .good-btn {
+    background: #176b36;
+}
+
+.lift-decision .good-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+
+    transform: translateY(-1px);
+}
+
+.lift-decision .good-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+
+/* =========================================================
+   NO LIFT
+========================================================= */
+
+.lift-decision .no-lift-btn {
+    background: #a7191f;
+}
+
+.lift-decision .no-lift-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+
+    transform: translateY(-1px);
+}
+
+.lift-decision .no-lift-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+
+/* =========================================================
+   LIFT BUTTON DISABLED
+========================================================= */
+
+.lift-decision button:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    filter: none;
+}
+
+
+/* =========================================================
    RESPONSIVE
 ========================================================= */
 
@@ -363,7 +459,6 @@
     .current-athlete-meta {
         justify-content: flex-start;
     }
-
 }
 
 
@@ -397,4 +492,21 @@
         width: 100%;
     }
 
+    .declaration-control button {
+        width: 100%;
+    }
+
+    .lift-decision {
+        flex-direction: column;
+
+        gap: 10px;
+    }
+
+    .lift-decision button {
+        width: 100%;
+
+        min-height: 54px;
+
+        font-size: 18px;
+    }
 }
