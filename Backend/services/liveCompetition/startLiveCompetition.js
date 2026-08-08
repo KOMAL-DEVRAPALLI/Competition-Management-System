@@ -1,7 +1,6 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
 import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
-import selectNextAthlete from "./selectNextAthlete.js";
 
 const startLiveCompetition = async ({
     competitionId,
@@ -10,10 +9,21 @@ const startLiveCompetition = async ({
     selectedWeightCategories = [],
 }) => {
 
+    // -----------------------------------
+    // Normalize gender
+    // -----------------------------------
+
+    const normalizedGender =
+        gender.toLowerCase();
+
+    // -----------------------------------
+    // Build working sheet
+    // -----------------------------------
+
     let entries =
         await buildWorkingSheetData(
             competitionId,
-            gender,
+            normalizedGender,
             true
         );
 
@@ -29,6 +39,10 @@ const startLiveCompetition = async ({
             category: athlete.weightCategory,
         }))
     );
+
+    // -----------------------------------
+    // Filter selected weight categories
+    // -----------------------------------
 
     if (
         selectedWeightCategories.length > 0
@@ -51,10 +65,16 @@ const startLiveCompetition = async ({
         }))
     );
 
+    // -----------------------------------
+    // Validate athletes
+    // -----------------------------------
+
     if (!entries.length) {
+
         throw new Error(
             "No athletes found for this session."
         );
+
     }
 
     // -----------------------------------
@@ -62,80 +82,23 @@ const startLiveCompetition = async ({
     // -----------------------------------
 
     await LiveCompetition.deleteMany({
+
         competitionId,
-        gender,
+
+        gender:
+            normalizedGender,
+
     });
 
     // -----------------------------------
-    // Find athletes who can start
-    // in Snatch
-    // -----------------------------------
-
-    const eligibleEntries =
-        entries.filter((athlete) => {
-
-            const attempt =
-                getCurrentAttempt(
-                    athlete.competitionEntry
-                );
-
-            return (
-                !attempt.completed &&
-                attempt.phase === "SNATCH"
-            );
-
-        });
-
-    // -----------------------------------
-    // Select first athlete
-    // -----------------------------------
-
-    const firstAthlete =
-        selectNextAthlete(
-            eligibleEntries
-        );
-
-    if (!firstAthlete) {
-        throw new Error(
-            "Unable to determine first athlete."
-        );
-    }
-
-    console.log(
-        "===== FIRST ATHLETE SELECTED ====="
-    );
-
-    console.log(
-        "Entry ID:",
-        firstAthlete.entryId?.toString()
-    );
-
-    console.log(
-        "Name:",
-        firstAthlete.name
-    );
-
-    console.log(
-        "Lot Number:",
-        firstAthlete.lotNumber
-    );
-
-    console.log(
-        "Phase:",
-        getCurrentAttempt(
-            firstAthlete.competitionEntry
-        ).phase
-    );
-
-    console.log(
-        "Attempt:",
-        getCurrentAttempt(
-            firstAthlete.competitionEntry
-        ).attemptNo
-    );
-
-    // -----------------------------------
-    // Create live competition session
+    // CREATE NEW LIVE SESSION
+    //
+    // IMPORTANT:
+    //
+    // NO ATHLETE IS SELECTED HERE.
+    //
+    // The official must manually select
+    // the athlete.
     // -----------------------------------
 
     const session =
@@ -143,30 +106,37 @@ const startLiveCompetition = async ({
 
             competitionId,
 
-            gender,
+            gender:
+                normalizedGender,
 
             sessionName,
 
             selectedWeightCategories,
 
             currentEntryId:
-                firstAthlete.entryId,
+                null,
 
-            prepareEntryId: null,
+            prepareEntryId:
+                null,
 
             currentPhase:
                 "SNATCH",
 
-            status: "READY",
+            status:
+                "READY",
 
         });
 
     // -----------------------------------
-    // Verify created Mongoose document
+    // Verify created session
     // -----------------------------------
 
     console.log(
-        "===== LIVE SESSION CREATED ====="
+        "===================================="
+    );
+
+    console.log(
+        "LIVE COMPETITION CREATED"
     );
 
     console.log(
@@ -175,58 +145,55 @@ const startLiveCompetition = async ({
     );
 
     console.log(
-        "Created Current Entry ID:",
-        session.currentEntryId?.toString()
+        "Competition ID:",
+        competitionId.toString()
     );
 
     console.log(
-        "Created Prepare Entry ID:",
-        session.prepareEntryId?.toString()
+        "Gender:",
+        normalizedGender
     );
 
     console.log(
-        "Created Phase:",
+        "Current Entry:",
+        session.currentEntryId
+            ?.toString() ??
+            "NONE"
+    );
+
+    console.log(
+        "Prepare Entry:",
+        session.prepareEntryId
+            ?.toString() ??
+            "NONE"
+    );
+
+    console.log(
+        "Current Phase:",
         session.currentPhase
     );
 
-    // -----------------------------------
-    // Verify actual MongoDB document
-    // -----------------------------------
-
-    const savedSession =
-        await LiveCompetition.findById(
-            session._id
-        );
-
     console.log(
-        "===== LIVE SESSION FROM DATABASE ====="
+        "Status:",
+        session.status
     );
 
     console.log(
-        "DB Session ID:",
-        savedSession?._id?.toString()
+        "Total Athletes:",
+        entries.length
     );
 
     console.log(
-        "DB Current Entry ID:",
-        savedSession?.currentEntryId?.toString()
-    );
-
-    console.log(
-        "DB Prepare Entry ID:",
-        savedSession?.prepareEntryId?.toString()
-    );
-
-    console.log(
-        "DB Current Phase:",
-        savedSession?.currentPhase
+        "===================================="
     );
 
     // -----------------------------------
-    // Map athlete for response
+    // Map athlete
     // -----------------------------------
 
-    const mapAthlete = (athlete) => ({
+    const mapAthlete = (
+        athlete
+    ) => ({
 
         entryId:
             athlete.entryId,
@@ -295,43 +262,24 @@ const startLiveCompetition = async ({
     });
 
     // -----------------------------------
-    // Find current athlete
+    // No current athlete at startup
     // -----------------------------------
 
     const currentAthlete =
-        entries.find(
-            (athlete) =>
-                athlete.entryId.toString() ===
-                session.currentEntryId.toString()
-        );
+        null;
 
     // -----------------------------------
-    // Build declaration queue
+    // IMPORTANT
+    //
+    // Declaration queue is no longer
+    // used for automatic athlete
+    // selection.
+    //
+    // Officials manually select from
+    // the complete athlete list.
     // -----------------------------------
 
-    const queue =
-        entries
-            .filter((athlete) => {
-
-                if (
-                    athlete.entryId.toString() ===
-                    session.currentEntryId.toString()
-                ) {
-                    return false;
-                }
-
-                const attempt =
-                    getCurrentAttempt(
-                        athlete.competitionEntry
-                    );
-
-                return (
-                    !attempt.completed &&
-                    attempt.declaredWeight != null
-                );
-
-            })
-            .map(mapAthlete);
+    const queue = [];
 
     // -----------------------------------
     // Return session
@@ -341,20 +289,19 @@ const startLiveCompetition = async ({
 
         session,
 
-        currentAthlete:
-            currentAthlete
-                ? mapAthlete(
-                      currentAthlete
-                  )
-                : null,
+        currentAthlete,
 
         queue,
 
         totalAthletes:
             entries.length,
 
-    };
+        athletes:
+            entries.map(
+                mapAthlete
+            ),
 
+    };
 };
 
 export default startLiveCompetition;
