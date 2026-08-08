@@ -99,31 +99,17 @@ const LiveScoreBoard = () => {
     // It only reads the latest server state.
     // =====================================
 
-    useEffect(() => {
+   useEffect(() => {
+    loadScoreBoard();
 
+    const interval = setInterval(() => {
         loadScoreBoard();
+    }, 2000);
 
-
-        const interval =
-            setInterval(() => {
-
-                loadScoreBoard();
-
-            }, 1000);
-
-
-        return () => {
-
-            clearInterval(
-                interval
-            );
-
-        };
-
-    }, [
-        competitionId,
-        gender,
-    ]);
+    return () => {
+        clearInterval(interval);
+    };
+}, [competitionId, gender]);
 
 
     // =====================================
