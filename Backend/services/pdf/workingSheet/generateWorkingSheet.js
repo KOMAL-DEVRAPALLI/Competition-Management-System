@@ -1,5 +1,3 @@
-
-
 import puppeteer from "puppeteer";
 import { workingSheetTemplate } from "./workingSheetTemplate.js";
 
@@ -8,55 +6,92 @@ export const generateWorkingSheet = async (
     workingSheetData,
     gender
 ) => {
-    
-    const browser = await puppeteer.launch({
 
-        headless: true,
-
-        executablePath:
-            "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-
-        args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-        ],
-
-    });
+    let browser;
 
     try {
 
-        const page = await browser.newPage();
+        const launchOptions = {
+            headless: true,
 
-        const html = workingSheetTemplate(
-            competition,
-            workingSheetData,
-            gender
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+            ],
+        };
+
+        /*
+         * Optional browser executable.
+         *
+         * If PUPPETEER_EXECUTABLE_PATH is configured,
+         * Puppeteer will use it.
+         *
+         * Otherwise Puppeteer uses its bundled browser.
+         *
+         * This allows:
+         *
+         * Local Windows:
+         * PUPPETEER_EXECUTABLE_PATH can point to
+         * Chrome/Edge if required.
+         *
+         * Render/Linux:
+         * Leave it unset and use Puppeteer's
+         * installed browser.
+         */
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+
+            launchOptions.executablePath =
+                process.env.PUPPETEER_EXECUTABLE_PATH;
+
+        }
+
+        browser =
+            await puppeteer.launch(
+                launchOptions
+            );
+
+        const page =
+            await browser.newPage();
+
+        const html =
+            workingSheetTemplate(
+                competition,
+                workingSheetData,
+                gender
+            );
+
+        await page.setContent(
+            html,
+            {
+                waitUntil: "networkidle0",
+            }
         );
 
-        await page.setContent(html, {
-            waitUntil: "networkidle0",
-        });
+        const pdf =
+            await page.pdf({
 
-        const pdf = await page.pdf({
+                format: "A4",
 
-            format: "A4",
+                printBackground: true,
 
-            printBackground: true,
+                margin: {
+                    top: "10mm",
+                    right: "10mm",
+                    bottom: "10mm",
+                    left: "10mm",
+                },
 
-            margin: {
-                top: "10mm",
-                right: "10mm",
-                bottom: "10mm",
-                left: "10mm",
-            },
-
-        });
+            });
 
         return pdf;
 
     } finally {
 
-        await browser.close();
+        if (browser) {
+
+            await browser.close();
+
+        }
 
     }
 
