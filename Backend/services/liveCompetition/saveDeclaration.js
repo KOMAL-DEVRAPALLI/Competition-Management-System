@@ -8,6 +8,10 @@ const saveDeclaration = async ({
     declaredWeight,
 }) => {
 
+    // -----------------------------------
+    // Validate declared weight
+    // -----------------------------------
+
     if (
         declaredWeight == null ||
         declaredWeight <= 0
@@ -16,6 +20,10 @@ const saveDeclaration = async ({
             "Invalid declared weight."
         );
     }
+
+    // -----------------------------------
+    // Find competition entry
+    // -----------------------------------
 
     const competitionEntry =
         await CompetitionEntry.findById(
@@ -28,6 +36,10 @@ const saveDeclaration = async ({
         );
     }
 
+    // -----------------------------------
+    // Determine current attempt
+    // -----------------------------------
+
     const currentAttempt =
         getCurrentAttempt(
             competitionEntry
@@ -39,16 +51,21 @@ const saveDeclaration = async ({
         );
     }
 
+    // -----------------------------------
+    // Select correct attempt array
+    // -----------------------------------
+
     const attempts =
         currentAttempt.phase === "SNATCH"
             ? competitionEntry.snatchAttempts
             : competitionEntry.cleanJerkAttempts;
 
-    const attempt = attempts.find(
-        (item) =>
-            item.attemptNo ===
-            currentAttempt.attemptNo
-    );
+    const attempt =
+        attempts.find(
+            (item) =>
+                item.attemptNo ===
+                currentAttempt.attemptNo
+        );
 
     if (!attempt) {
         throw new Error(
@@ -58,22 +75,40 @@ const saveDeclaration = async ({
 
     // -----------------------------------
     // Save declaration
+    //
+    // IMPORTANT:
+    //
+    // declaredAt represents the time
+    // at which the official entered/
+    // updated this declaration.
+    //
+    // This timestamp is later used by
+    // selectNextAthlete() when two
+    // athletes have the same weight.
     // -----------------------------------
 
-    attempt.declaredWeight =
-        declaredWeight;
-
-    attempt.declaredAt =
+    const declarationTime =
         new Date();
 
+    attempt.declaredWeight =
+        Number(declaredWeight);
+
+    attempt.declaredAt =
+        declarationTime;
+
     await competitionEntry.save();
+
+    // -----------------------------------
+    // Populate athlete
+    // -----------------------------------
 
     await competitionEntry.populate(
         "athleteId"
     );
 
     const gender =
-        competitionEntry.athleteId
+        competitionEntry
+            .athleteId
             ?.personalInfo
             ?.gender;
 
@@ -85,6 +120,10 @@ const saveDeclaration = async ({
 
     const normalizedGender =
         gender.toLowerCase();
+
+    // -----------------------------------
+    // Debug declaration
+    // -----------------------------------
 
     console.log(
         "===== SAVE DECLARATION ====="
@@ -121,17 +160,25 @@ const saveDeclaration = async ({
 
     console.log(
         "Declared Weight:",
-        declaredWeight
+        attempt.declaredWeight
+    );
+
+    console.log(
+        "Declared At:",
+        attempt.declaredAt
     );
 
     // -----------------------------------
-    // Try to put a ready athlete on the
-    // platform.
+    // Try to place athlete on platform
     //
-    // If the platform is occupied,
+    // If platform is occupied,
     // updateCurrentPlatformAthlete()
     // will leave the current athlete
     // unchanged.
+    //
+    // If platform is empty, the newly
+    // declared athlete can be selected
+    // according to lifting order.
     // -----------------------------------
 
     await updateCurrentPlatformAthlete(
@@ -141,8 +188,7 @@ const saveDeclaration = async ({
     );
 
     // -----------------------------------
-    // Check the actual platform state
-    // after attempting to update it.
+    // Check actual platform state
     // -----------------------------------
 
     const session =
@@ -162,20 +208,21 @@ const saveDeclaration = async ({
     }
 
     // -----------------------------------
-    // Only remove this athlete from
-    // Prepare if this athlete actually
-    // became the current platform athlete.
+    // Remove from Prepare only if this
+    // athlete actually became the
+    // current platform athlete.
     // -----------------------------------
 
     if (
         session.currentEntryId &&
         session.currentEntryId
             .toString() ===
-            competitionEntry._id
-                .toString()
+        competitionEntry._id
+            .toString()
     ) {
 
-        session.prepareEntryId = null;
+        session.prepareEntryId =
+            null;
 
         await session.save();
 
@@ -194,6 +241,10 @@ const saveDeclaration = async ({
         );
 
     }
+
+    // -----------------------------------
+    // Return updated entry
+    // -----------------------------------
 
     return await CompetitionEntry.findById(
         entryId
