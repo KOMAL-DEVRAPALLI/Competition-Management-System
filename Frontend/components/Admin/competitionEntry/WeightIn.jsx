@@ -75,10 +75,6 @@ const WeighInSection = ({ athlete, setAthlete }) => {
             }, {})
             console.log("Preview Entries:", previewEntries);
 
-            const selectedCategories = previewEntries.reduce((acc, entry) => {
-                acc[entry.entryId] = entry.assignedCategory;
-                return acc;
-            }, {});
 
             console.log("Selected Categories:", selectedCategories);
             const saveData = {
