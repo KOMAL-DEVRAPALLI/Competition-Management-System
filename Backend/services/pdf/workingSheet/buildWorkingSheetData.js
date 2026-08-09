@@ -70,7 +70,11 @@ const buildWorkingSheetData = async (
                     "_id personalInfo.fullName personalInfo.gender",
             })
             .lean();
+            console.time("buildWorkingSheetData - processing");
 
+// existing grouping / filtering / sorting code
+
+console.timeEnd("buildWorkingSheetData - processing");
 
     // =====================================
     // GROUP ROWS
