@@ -2,7 +2,6 @@ import LiveCompetition from "../../models/LiveCompetition.js";
 import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
 
-
 const getLiveCompetition = async (
     competitionId,
     gender
@@ -72,10 +71,58 @@ const getLiveCompetition = async (
 
 
     // =====================================
-    // CURRENT ENTRY LOOKUP
+    // AUTO-RECONCILE GLOBAL PHASE
     //
-    // Map gives O(1) lookup instead of
-    // entries.find() every time.
+    // If every athlete in this live
+    // session has completed all 3
+    // Snatch attempts, the competition
+    // must be in CLEAN_JERK.
+    //
+    // This fixes a stale session where
+    // currentPhase is still SNATCH.
+    // =====================================
+
+    if (
+        session.currentPhase ===
+        "SNATCH"
+    ) {
+
+        const allSnatchCompleted =
+            entries.every(
+                (entry) => {
+
+                    const snatchAttempts =
+                        entry.competitionEntry
+                            ?.snatchAttempts ?? [];
+
+                    return (
+                        snatchAttempts.length >= 3 &&
+                        snatchAttempts.every(
+                            (attempt) =>
+                                attempt.result !==
+                                "PENDING"
+                        )
+                    );
+                }
+            );
+
+
+        if (allSnatchCompleted) {
+
+            session.currentPhase =
+                "CLEAN_JERK";
+
+            session.status =
+                "RUNNING";
+
+            await session.save();
+
+        }
+    }
+
+
+    // =====================================
+    // CURRENT ENTRY LOOKUP
     // =====================================
 
     const entryMap =
@@ -92,17 +139,14 @@ const getLiveCompetition = async (
     const currentEntry =
         session.currentEntryId
             ? entryMap.get(
-                  session.currentEntryId
-                      .toString()
-              ) ?? null
+                session.currentEntryId
+                    .toString()
+            ) ?? null
             : null;
 
 
     // =====================================
     // ATHLETE MAPPER
-    //
-    // currentAttempt is passed in instead
-    // of calculating it repeatedly.
     // =====================================
 
     const mapAthlete = (
@@ -176,18 +220,6 @@ const getLiveCompetition = async (
 
     // =====================================
     // BUILD BOTH LISTS IN ONE PASS
-    //
-    // BEFORE:
-    //
-    // entries.map() → competitionResults
-    // entries.map() → athletes
-    //
-    // NOW:
-    //
-    // ONE LOOP → both lists
-    //
-    // Also calculate currentAttempt only
-    // once for each athlete.
     // =====================================
 
     const competitionResults = [];
@@ -408,10 +440,10 @@ const getLiveCompetition = async (
     const currentAthlete =
         currentEntry
             ? mapAthlete(
-                  currentEntry,
-                  currentAthleteAttempt,
-                  "ON_PLATFORM"
-              )
+                currentEntry,
+                currentAthleteAttempt,
+                "ON_PLATFORM"
+            )
             : null;
 
 
@@ -433,40 +465,16 @@ const getLiveCompetition = async (
         currentPhase:
             session.currentPhase,
 
-        // ---------------------------------
-        // CURRENT ATHLETE
-        // ---------------------------------
-
         currentAthlete,
-
-        // ---------------------------------
-        // SELECTION CONTROL
-        // ---------------------------------
 
         canSelectAnotherAthlete,
 
-        // ---------------------------------
-        // OFFICIAL ATHLETE LIST
-        // ---------------------------------
-
         athletes,
-
-        // ---------------------------------
-        // TV SCOREBOARD
-        // ---------------------------------
 
         competitionResults,
 
-        // ---------------------------------
-        // COMPATIBILITY
-        // ---------------------------------
-
         declarationQueue:
             athletes,
-
-        // ---------------------------------
-        // TOTAL
-        // ---------------------------------
 
         totalAthletes:
             athletes.length,
