@@ -1,7 +1,9 @@
 import CompetitionEntry from "../../models/CompetitionEntry.js";
 import LiveCompetition from "../../models/LiveCompetition.js";
+
 import updateCompetitionResults from "../calculations/updateCompetitionResults.js";
 import getCurrentAttempt from "./getCurrentAttempt.js";
+
 
 const processLift = async ({
     entryId,
@@ -25,13 +27,45 @@ const processLift = async ({
 
 
     // =====================================
-    // FIND COMPETITION ENTRY
+    // VALIDATE GENDER
     // =====================================
 
-    const competitionEntry =
-        await CompetitionEntry.findById(
-            entryId
+    if (!gender) {
+        throw new Error(
+            "Gender is required."
         );
+    }
+
+
+    const normalizedGender =
+        gender.toLowerCase();
+
+
+    // =====================================
+    // LOAD ENTRY + LIVE SESSION
+    // IN PARALLEL
+    // =====================================
+
+    const [
+        competitionEntry,
+        session,
+    ] = await Promise.all([
+
+        CompetitionEntry.findById(
+            entryId
+        ),
+
+        LiveCompetition.findOne({
+            competitionId,
+            gender: normalizedGender,
+        }),
+
+    ]);
+
+
+    // =====================================
+    // VALIDATE ENTRY
+    // =====================================
 
     if (!competitionEntry) {
         throw new Error(
@@ -41,25 +75,8 @@ const processLift = async ({
 
 
     // =====================================
-    // FIND LIVE SESSION
+    // VALIDATE SESSION
     // =====================================
-
-    if (!gender) {
-        throw new Error(
-            "Gender is required."
-        );
-    }
-
-    const normalizedGender =
-        gender
-            .toLowerCase()
-            .trim();
-
-    const session =
-        await LiveCompetition.findOne({
-            competitionId,
-            gender: normalizedGender,
-        });
 
     if (!session) {
         throw new Error(
@@ -93,6 +110,7 @@ const processLift = async ({
         getCurrentAttempt(
             competitionEntry
         );
+
 
     if (
         currentAttempt.completed
@@ -156,7 +174,10 @@ const processLift = async ({
 
 
     // =====================================
-    // SAVE RESULT
+    // SAVE RESULT IN MEMORY
+    //
+    // updateCompetitionResults()
+    // performs the CompetitionEntry save.
     // =====================================
 
     attempt.result =
@@ -166,37 +187,26 @@ const processLift = async ({
         new Date();
 
 
-    await competitionEntry.save();
-
-
     // =====================================
     // UPDATE RESULTS
-    // =====================================
-
-    await updateCompetitionResults(
-        entryId
-    );
-
-
-    // =====================================
-    // RELOAD ATHLETE
+    //
+    // IMPORTANT:
+    //
+    // Pass the actual CompetitionEntry
+    // document, NOT entryId.
+    //
+    // updateCompetitionResults() expects
+    // the complete Mongoose document.
     // =====================================
 
     const updatedEntry =
-        await CompetitionEntry.findById(
-            entryId
+        await updateCompetitionResults(
+            competitionEntry
         );
-
-
-    if (!updatedEntry) {
-        throw new Error(
-            "Competition entry could not be reloaded."
-        );
-    }
 
 
     // =====================================
-    // DETERMINE ATHLETE'S NEXT ATTEMPT
+    // DETERMINE NEXT ATTEMPT
     // =====================================
 
     const nextAttempt =
@@ -205,45 +215,17 @@ const processLift = async ({
         );
 
 
-    console.log(
-        "===================================="
-    );
-
-    console.log(
-        "PROCESS LIFT"
-    );
-
-    console.log(
-        "Athlete:",
-        updatedEntry._id.toString()
-    );
-
-    console.log(
-        "Finished Phase:",
-        currentAttempt.phase
-    );
-
-    console.log(
-        "Finished Attempt:",
-        currentAttempt.attemptNo
-    );
-
-    console.log(
-        "Result:",
-        result
-    );
-
-    console.log(
-        "Athlete Next Attempt:",
-        nextAttempt
-    );
-
-
     // =====================================
     // CASE 1
     //
-    // ATHLETE HAS ANOTHER ATTEMPT IN
-    // THE SAME PHASE
+    // SAME PHASE CONTINUES
+    //
+    // S1 → S2
+    // S2 → S3
+    // CJ1 → CJ2
+    // CJ2 → CJ3
+    //
+    // KEEP SAME ATHLETE SELECTED.
     // =====================================
 
     if (
@@ -258,29 +240,7 @@ const processLift = async ({
         session.status =
             "RUNNING";
 
-
         await session.save();
-
-
-        console.log(
-            "===== SAME ATHLETE CONTINUES ====="
-        );
-
-        console.log(
-            "Current Entry:",
-            session.currentEntryId
-                .toString()
-        );
-
-        console.log(
-            "Current Phase:",
-            session.currentPhase
-        );
-
-        console.log(
-            "Next Attempt:",
-            nextAttempt.attemptNo
-        );
 
 
         return {
@@ -308,11 +268,11 @@ const processLift = async ({
     //
     // ATHLETE FINISHED SNATCH
     //
-    // NEXT ATTEMPT IS CLEAN & JERK.
+    // NEXT PHASE = CLEAN & JERK
     //
-    // DO NOT START C&J FOR THIS ATHLETE
-    // UNTIL THE ENTIRE LIVE SNATCH PHASE
-    // IS COMPLETE.
+    // Do not start CJ for this athlete
+    // until ALL athletes have completed
+    // their Snatch attempts.
     // =====================================
 
     if (
@@ -323,7 +283,7 @@ const processLift = async ({
     ) {
 
         // ---------------------------------
-        // LOAD COMPETITION ENTRIES
+        // Load competition entries.
         // ---------------------------------
 
         const sessionEntries =
@@ -334,68 +294,34 @@ const processLift = async ({
                 .populate({
                     path: "athleteId",
                     select:
-                        "personalInfo.fullName personalInfo.gender",
-                });
+                        "personalInfo.gender",
+                })
+                .lean();
 
 
         // ---------------------------------
-        // DETERMINE ACTUAL LIVE ENTRIES
-        //
-        // Use the same basic eligibility
-        // rules as buildWorkingSheetData().
-        //
-        // This prevents unrelated or
-        // incomplete entries from blocking
-        // the global phase transition.
+        // Determine athletes participating
+        // in this live session.
         // ---------------------------------
 
         const liveEntries =
             sessionEntries.filter(
                 (entry) => {
 
-                    const athlete =
-                        entry.athleteId;
-
-
-                    if (!athlete) {
-                        return false;
-                    }
-
-
                     const athleteGender =
-                        athlete.personalInfo
+                        entry.athleteId
+                            ?.personalInfo
                             ?.gender;
 
 
-                    const weightCategory =
-                        entry.official
-                            ?.finalWeightCategory;
-
-
-                    // -----------------------------
-                    // Required live competition data
-                    // -----------------------------
-
-                    if (
-                        !entry.opening
-                            ?.snatch ||
-                        !entry.opening
-                            ?.cleanJerk ||
-                        !athleteGender ||
-                        !weightCategory
-                    ) {
+                    if (!athleteGender) {
                         return false;
                     }
 
 
-                    // -----------------------------
-                    // Gender
-                    // -----------------------------
-
                     if (
                         athleteGender
-                            .toLowerCase()
-                            .trim() !==
+                            .toLowerCase() !==
                         normalizedGender
                     ) {
                         return false;
@@ -417,19 +343,17 @@ const processLift = async ({
                     ) {
 
                         const category =
-                            weightCategory
-                                .trim();
+                            entry
+                                .official
+                                ?.finalWeightCategory
+                                ?.trim();
 
 
-                        if (
-                            !session
-                                .selectedWeightCategories
-                                .includes(
-                                    category
-                                )
-                        ) {
-                            return false;
-                        }
+                        return session
+                            .selectedWeightCategories
+                            .includes(
+                                category
+                            );
 
                     }
 
@@ -445,7 +369,6 @@ const processLift = async ({
         // ---------------------------------
 
         const allSnatchCompleted =
-            liveEntries.length > 0 &&
             liveEntries.every(
                 (entry) => {
 
@@ -469,23 +392,11 @@ const processLift = async ({
             );
 
 
-        console.log(
-            "===== SNATCH PHASE CHECK ====="
-        );
-
-        console.log(
-            "Live Athletes:",
-            liveEntries.length
-        );
-
-        console.log(
-            "All Snatch Completed:",
-            allSnatchCompleted
-        );
-
-
         // =================================
         // SNATCH STILL IN PROGRESS
+        //
+        // Official may select another
+        // athlete manually.
         // =================================
 
         if (
@@ -495,43 +406,13 @@ const processLift = async ({
             session.currentPhase =
                 "SNATCH";
 
-
             session.currentEntryId =
                 updatedEntry._id;
-
 
             session.status =
                 "RUNNING";
 
-
             await session.save();
-
-
-            console.log(
-                "===== SNATCH STILL IN PROGRESS ====="
-            );
-
-
-            console.log(
-                "Current athlete remains selected."
-            );
-
-
-            console.log(
-                "Current Entry:",
-                session.currentEntryId
-                    .toString()
-            );
-
-
-            console.log(
-                "Other athletes still have Snatch attempts."
-            );
-
-
-            console.log(
-                "Clean & Jerk has NOT started."
-            );
 
 
             return {
@@ -558,47 +439,24 @@ const processLift = async ({
 
 
         // =================================
-        // ALL ATHLETES FINISHED SNATCH
+        // ALL SNATCH COMPLETED
         //
-        // START GLOBAL CLEAN & JERK PHASE.
+        // MOVE TO CLEAN & JERK.
         //
-        // DO NOT AUTOMATICALLY SELECT
-        // AN ATHLETE.
+        // Do NOT automatically select
+        // another athlete.
         // =================================
 
         session.currentPhase =
             "CLEAN_JERK";
 
-
         session.currentEntryId =
             updatedEntry._id;
-
 
         session.status =
             "RUNNING";
 
-
         await session.save();
-
-
-        console.log(
-            "===== SNATCH COMPLETE ====="
-        );
-
-
-        console.log(
-            "Competition phase changed to CLEAN_JERK."
-        );
-
-
-        console.log(
-            "Current athlete remains selected."
-        );
-
-
-        console.log(
-            "Official may now select the first CJ athlete."
-        );
 
 
         return {
@@ -627,8 +485,7 @@ const processLift = async ({
     // =====================================
     // CASE 3
     //
-    // ATHLETE HAS COMPLETED ENTIRE
-    // COMPETITION.
+    // ATHLETE COMPLETED ENTIRE COMPETITION
     // =====================================
 
     if (
@@ -638,27 +495,10 @@ const processLift = async ({
         session.currentEntryId =
             updatedEntry._id;
 
-
         session.status =
             "RUNNING";
 
-
         await session.save();
-
-
-        console.log(
-            "===== ATHLETE COMPLETED ====="
-        );
-
-
-        console.log(
-            "Current athlete remains selected."
-        );
-
-
-        console.log(
-            "Official may select another athlete."
-        );
 
 
         return {
@@ -691,10 +531,8 @@ const processLift = async ({
     session.currentEntryId =
         updatedEntry._id;
 
-
     session.status =
         "RUNNING";
-
 
     await session.save();
 
