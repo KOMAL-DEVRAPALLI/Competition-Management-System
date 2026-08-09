@@ -1,13 +1,39 @@
+import { useState } from "react";
+
 import "./AthleteSelectionTable.css";
+
 
 const AthleteSelectionTable = ({
     athletes = [],
     currentAthlete = null,
+
     currentPhase = "SNATCH",
+
     canSelectAnotherAthlete = false,
+
     selectingAthlete = false,
+
     onSelectAthlete,
+
+    // =====================================
+    // DECLARATION EDITING
+    // =====================================
+
+    onEditDeclaration,
+
+    savingDeclarationEntryId = null,
 }) => {
+
+    // =====================================
+    // LOCAL EDIT STATE
+    // =====================================
+
+    const [editingEntryId, setEditingEntryId] =
+        useState(null);
+
+    const [editingWeight, setEditingWeight] =
+        useState("");
+
 
     // =====================================
     // CURRENT ATHLETE ATTEMPT
@@ -28,8 +54,10 @@ const AthleteSelectionTable = ({
     const completedAthletes =
         athletes.filter(
             (athlete) =>
-                athlete.status === "COMPLETED" ||
-                athlete.currentAttempt?.completed
+                athlete.status ===
+                    "COMPLETED" ||
+                athlete.currentAttempt
+                    ?.completed
         ).length;
 
 
@@ -41,7 +69,9 @@ const AthleteSelectionTable = ({
                     athlete.status ===
                     "COMPLETED"
                 ) {
+
                     return false;
+
                 }
 
 
@@ -49,7 +79,9 @@ const AthleteSelectionTable = ({
                     athlete.currentAttempt
                         ?.completed
                 ) {
+
                     return false;
+
                 }
 
 
@@ -58,17 +90,25 @@ const AthleteSelectionTable = ({
                         ?.phase !==
                     currentPhase
                 ) {
+
                     return false;
+
                 }
 
 
                 return true;
+
             }
         ).length;
 
 
     // =====================================
     // HANDLE SELECTION
+    //
+    // IMPORTANT:
+    //
+    // Selection and declaration editing are
+    // completely separate actions.
     // =====================================
 
     const handleSelect =
@@ -77,14 +117,18 @@ const AthleteSelectionTable = ({
         if (
             selectingAthlete
         ) {
+
             return;
+
         }
 
 
         if (
             !athlete
         ) {
+
             return;
+
         }
 
 
@@ -97,20 +141,20 @@ const AthleteSelectionTable = ({
             athlete.entryId?.toString() ===
             currentAthlete.entryId?.toString()
         ) {
+
             return;
+
         }
 
 
         // =================================
         // CURRENT ATHLETE DECLARATION
         //
-        // The current athlete can remain
-        // selected after Good / No Lift.
+        // This restriction applies ONLY
+        // to selecting another athlete.
         //
-        // Another athlete can only be
-        // selected after the current
-        // athlete's next declaration
-        // has been saved.
+        // It does NOT prevent editing
+        // another athlete's declaration.
         // =================================
 
         if (
@@ -119,6 +163,7 @@ const AthleteSelectionTable = ({
         ) {
 
             return;
+
         }
 
 
@@ -130,7 +175,9 @@ const AthleteSelectionTable = ({
             !athlete.currentAttempt ||
             athlete.currentAttempt.completed
         ) {
+
             return;
+
         }
 
 
@@ -142,7 +189,9 @@ const AthleteSelectionTable = ({
             athlete.currentAttempt.phase !==
             currentPhase
         ) {
+
             return;
+
         }
 
 
@@ -160,12 +209,341 @@ const AthleteSelectionTable = ({
             );
 
             return;
+
         }
 
 
         onSelectAthlete(
             athlete
         );
+
+    };
+
+
+    // =====================================
+    // CAN EDIT DECLARATION?
+    //
+    // This is intentionally independent
+    // from canSelectAnotherAthlete.
+    //
+    // Therefore:
+    //
+    // A = current athlete
+    // E = future athlete
+    //
+    // Even if A still needs declaration,
+    // E's declaration can be edited.
+    // =====================================
+
+    const canEditDeclaration =
+        (athlete) => {
+
+        if (
+            !athlete
+        ) {
+
+            return false;
+
+        }
+
+
+        // ---------------------------------
+        // Current athlete
+        //
+        // Current athlete uses the main
+        // CurrentAthletePanel.
+        // ---------------------------------
+
+        if (
+            currentAthlete &&
+            athlete.entryId?.toString() ===
+            currentAthlete.entryId?.toString()
+        ) {
+
+            return false;
+
+        }
+
+
+        // ---------------------------------
+        // Completed athlete
+        // ---------------------------------
+
+        if (
+            athlete.status ===
+            "COMPLETED"
+        ) {
+
+            return false;
+
+        }
+
+
+        // ---------------------------------
+        // Completed current attempt
+        // ---------------------------------
+
+        if (
+            athlete.currentAttempt
+                ?.completed
+        ) {
+
+            return false;
+
+        }
+
+
+        // ---------------------------------
+        // No attempt
+        // ---------------------------------
+
+        if (
+            !athlete.currentAttempt
+        ) {
+
+            return false;
+
+        }
+
+
+        // ---------------------------------
+        // WRONG PHASE
+        //
+        // Example:
+        //
+        // Competition = SNATCH
+        // Athlete's current attempt = C&J
+        //
+        // Do not allow editing.
+        // ---------------------------------
+
+        if (
+            athlete.currentAttempt.phase !==
+            currentPhase
+        ) {
+
+            return false;
+
+        }
+
+
+        // ---------------------------------
+        // Attempt already completed
+        // ---------------------------------
+
+        if (
+            athlete.currentAttempt.result &&
+            athlete.currentAttempt.result !==
+                "PENDING"
+        ) {
+
+            return false;
+
+        }
+
+
+        return true;
+
+    };
+
+
+    // =====================================
+    // START EDITING DECLARATION
+    // =====================================
+
+    const handleStartEdit =
+        (athlete) => {
+
+        if (
+            !canEditDeclaration(
+                athlete
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        // ---------------------------------
+        // Prevent another edit while one
+        // is already being saved.
+        // ---------------------------------
+
+        if (
+            savingDeclarationEntryId
+        ) {
+
+            return;
+
+        }
+
+
+        // ---------------------------------
+        // Existing declaration
+        // ---------------------------------
+
+        const existingWeight =
+            athlete.currentAttempt
+                ?.declaredWeight;
+
+
+        setEditingEntryId(
+            athlete.entryId
+        );
+
+
+        setEditingWeight(
+            existingWeight != null
+                ? String(existingWeight)
+                : ""
+        );
+
+    };
+
+
+    // =====================================
+    // CANCEL EDIT
+    // =====================================
+
+    const handleCancelEdit =
+        () => {
+
+        if (
+            savingDeclarationEntryId
+        ) {
+
+            return;
+
+        }
+
+
+        setEditingEntryId(
+            null
+        );
+
+        setEditingWeight(
+            ""
+        );
+
+    };
+
+
+    // =====================================
+    // SAVE EDITED DECLARATION
+    // =====================================
+
+    const handleSaveEdit =
+        async (athlete) => {
+
+        if (
+            !athlete
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !canEditDeclaration(
+                athlete
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        // ---------------------------------
+        // Prevent duplicate save
+        // ---------------------------------
+
+        if (
+            savingDeclarationEntryId
+        ) {
+
+            return;
+
+        }
+
+
+        // ---------------------------------
+        // Validate weight
+        // ---------------------------------
+
+        const weight =
+            Number(
+                editingWeight
+            );
+
+
+        if (
+            Number.isNaN(weight) ||
+            weight <= 0
+        ) {
+
+            return;
+
+        }
+
+
+        // ---------------------------------
+        // Parent performs API request.
+        //
+        // This component does NOT call API.
+        // ---------------------------------
+
+        if (
+            typeof onEditDeclaration !==
+            "function"
+        ) {
+
+            console.error(
+                "AthleteSelectionTable: onEditDeclaration is not a function."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            await onEditDeclaration({
+
+                entryId:
+                    athlete.entryId,
+
+                declaredWeight:
+                    weight,
+
+            });
+
+
+            // ---------------------------------
+            // Close editor only after the
+            // parent operation resolves.
+            // ---------------------------------
+
+            setEditingEntryId(
+                null
+            );
+
+            setEditingWeight(
+                ""
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to edit declaration:",
+                error
+            );
+
+        }
+
     };
 
 
@@ -189,7 +567,9 @@ const AthleteSelectionTable = ({
         if (
             isCurrent
         ) {
+
             return "CURRENT";
+
         }
 
 
@@ -203,7 +583,9 @@ const AthleteSelectionTable = ({
             athlete.currentAttempt
                 ?.completed
         ) {
+
             return "COMPLETED";
+
         }
 
 
@@ -216,20 +598,28 @@ const AthleteSelectionTable = ({
             athlete.currentAttempt.phase !==
             currentPhase
         ) {
+
             return "WRONG_PHASE";
+
         }
 
 
         // ---------------------------------
         // CURRENT ATHLETE STILL NEEDS
         // NEXT DECLARATION
+        //
+        // This affects SELECT only.
+        //
+        // It does NOT affect EDIT.
         // ---------------------------------
 
         if (
             currentAthlete &&
             !canSelectAnotherAthlete
         ) {
+
             return "WAITING_DECLARATION";
+
         }
 
 
@@ -238,6 +628,7 @@ const AthleteSelectionTable = ({
         // ---------------------------------
 
         return "AVAILABLE";
+
     };
 
 
@@ -252,7 +643,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "CURRENT"
         ) {
+
             return "SELECTED";
+
         }
 
 
@@ -260,7 +653,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "COMPLETED"
         ) {
+
             return "COMPLETED";
+
         }
 
 
@@ -268,7 +663,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "WRONG_PHASE"
         ) {
+
             return "NOT ELIGIBLE";
+
         }
 
 
@@ -276,23 +673,28 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "WAITING_DECLARATION"
         ) {
+
             return "WAIT";
+
         }
 
 
         if (
             selectingAthlete
         ) {
+
             return "SELECTING...";
+
         }
 
 
         return "SELECT";
+
     };
 
 
     // =====================================
-    // BUTTON DISABLED
+    // SELECTION BUTTON DISABLED
     // =====================================
 
     const isButtonDisabled =
@@ -306,7 +708,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "CURRENT"
         ) {
+
             return true;
+
         }
 
 
@@ -318,7 +722,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "COMPLETED"
         ) {
+
             return true;
+
         }
 
 
@@ -330,7 +736,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "WRONG_PHASE"
         ) {
+
             return true;
+
         }
 
 
@@ -343,7 +751,9 @@ const AthleteSelectionTable = ({
             rowStatus ===
             "WAITING_DECLARATION"
         ) {
+
             return true;
+
         }
 
 
@@ -354,11 +764,14 @@ const AthleteSelectionTable = ({
         if (
             selectingAthlete
         ) {
+
             return true;
+
         }
 
 
         return false;
+
     };
 
 
@@ -369,6 +782,7 @@ const AthleteSelectionTable = ({
     return (
 
         <section className="official-athlete-list">
+
 
             {/* =================================
                 HEADER
@@ -393,12 +807,29 @@ const AthleteSelectionTable = ({
                     <p>
 
                         {currentAthlete
+
                             ? canSelectAnotherAthlete
+
                                 ? "Current athlete's declaration is saved. You can now select any eligible athlete."
+
                                 : "Declare the current athlete's next attempt before selecting another athlete."
+
                             : "Select any eligible athlete for the current phase."
+
                         }
 
+                    </p>
+
+
+                    {/* =================================
+                        DECLARATION EDIT INFORMATION
+                    ================================= */}
+
+                    <p>
+                        Officials can edit a future
+                        athlete's pending declaration
+                        without selecting that athlete
+                        or giving a lift decision.
                     </p>
 
                 </div>
@@ -462,7 +893,9 @@ const AthleteSelectionTable = ({
                                     colSpan="6"
                                     className="no-athletes-cell"
                                 >
+
                                     No athletes available.
+
                                 </td>
 
                             </tr>
@@ -488,20 +921,43 @@ const AthleteSelectionTable = ({
                                         );
 
 
+                                    const isEditing =
+                                        editingEntryId
+                                            ?.toString() ===
+                                        athlete.entryId
+                                            ?.toString();
+
+
+                                    const isSaving =
+                                        savingDeclarationEntryId
+                                            ?.toString() ===
+                                        athlete.entryId
+                                            ?.toString();
+
+
+                                    const editable =
+                                        canEditDeclaration(
+                                            athlete
+                                        );
+
+
                                     return (
 
                                         <tr
                                             key={
                                                 athlete.entryId
                                             }
+
                                             className={`
                                                 official-athlete-row
+
                                                 ${
                                                     rowStatus ===
                                                     "CURRENT"
                                                         ? "official-selected-row"
                                                         : ""
                                                 }
+
                                                 ${
                                                     rowStatus ===
                                                     "COMPLETED"
@@ -510,6 +966,7 @@ const AthleteSelectionTable = ({
                                                 }
                                             `}
                                         >
+
 
                                             {/* =========================
                                                 LOT
@@ -532,9 +989,11 @@ const AthleteSelectionTable = ({
                                             <td>
 
                                                 <strong>
+
                                                     {
                                                         athlete.name
                                                     }
+
                                                 </strong>
 
                                             </td>
@@ -562,10 +1021,13 @@ const AthleteSelectionTable = ({
                                             <td>
 
                                                 {attempt
+
                                                     ? `${attempt.phase === "SNATCH"
                                                         ? "SNATCH"
                                                         : "CLEAN & JERK"} ${attempt.attemptNo}`
+
                                                     : "-"
+
                                                 }
 
                                             </td>
@@ -577,14 +1039,72 @@ const AthleteSelectionTable = ({
 
                                             <td>
 
-                                                {
+                                                {isEditing ? (
+
+                                                    <input
+                                                        type="number"
+
+                                                        min="1"
+
+                                                        step="1"
+
+                                                        value={
+                                                            editingWeight
+                                                        }
+
+                                                        disabled={
+                                                            isSaving
+                                                        }
+
+                                                        onChange={
+                                                            (event) =>
+                                                                setEditingWeight(
+                                                                    event.target.value
+                                                                )
+                                                        }
+
+                                                        onKeyDown={
+                                                            (event) => {
+
+                                                                if (
+                                                                    event.key ===
+                                                                    "Enter"
+                                                                ) {
+
+                                                                    handleSaveEdit(
+                                                                        athlete
+                                                                    );
+
+                                                                }
+
+
+                                                                if (
+                                                                    event.key ===
+                                                                    "Escape"
+                                                                ) {
+
+                                                                    handleCancelEdit();
+
+                                                                }
+
+                                                            }
+                                                        }
+
+                                                        autoFocus
+                                                    />
+
+                                                ) : (
+
                                                     attempt?.declaredWeight != null &&
                                                     Number(
                                                         attempt.declaredWeight
                                                     ) > 0
+
                                                         ? `${attempt.declaredWeight} kg`
+
                                                         : "-"
-                                                }
+
+                                                )}
 
                                             </td>
 
@@ -595,26 +1115,134 @@ const AthleteSelectionTable = ({
 
                                             <td>
 
-                                                <button
-                                                    type="button"
-                                                    className="select-athlete-btn"
-                                                    disabled={
-                                                        buttonDisabled
-                                                    }
-                                                    onClick={() =>
-                                                        handleSelect(
-                                                            athlete
-                                                        )
-                                                    }
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        gap: "8px",
+                                                        alignItems: "center",
+                                                        flexWrap: "wrap",
+                                                    }}
                                                 >
 
-                                                    {
-                                                        getButtonText(
-                                                            rowStatus
-                                                        )
-                                                    }
 
-                                                </button>
+                                                    {/* =====================
+                                                        SELECT
+                                                    ===================== */}
+
+                                                    <button
+                                                        type="button"
+
+                                                        className="select-athlete-btn"
+
+                                                        disabled={
+                                                            buttonDisabled ||
+                                                            isEditing ||
+                                                            !!savingDeclarationEntryId
+                                                        }
+
+                                                        onClick={() =>
+                                                            handleSelect(
+                                                                athlete
+                                                            )
+                                                        }
+                                                    >
+
+                                                        {
+                                                            getButtonText(
+                                                                rowStatus
+                                                            )
+                                                        }
+
+                                                    </button>
+
+
+                                                    {/* =====================
+                                                        EDIT DECLARATION
+                                                    ===================== */}
+
+                                                    {editable &&
+                                                        !isEditing && (
+
+                                                        <button
+                                                            type="button"
+
+                                                            className="edit-declaration-btn"
+
+                                                            disabled={
+                                                                !!savingDeclarationEntryId ||
+                                                                selectingAthlete
+                                                            }
+
+                                                            onClick={() =>
+                                                                handleStartEdit(
+                                                                    athlete
+                                                                )
+                                                            }
+                                                        >
+
+                                                            EDIT
+
+                                                        </button>
+
+                                                    )}
+
+
+                                                    {/* =====================
+                                                        SAVE / CANCEL
+                                                    ===================== */}
+
+                                                    {isEditing && (
+
+                                                        <>
+
+                                                            <button
+                                                                type="button"
+
+                                                                className="save-declaration-btn"
+
+                                                                disabled={
+                                                                    isSaving ||
+                                                                    !editingWeight
+                                                                }
+
+                                                                onClick={() =>
+                                                                    handleSaveEdit(
+                                                                        athlete
+                                                                    )
+                                                                }
+                                                            >
+
+                                                                {isSaving
+                                                                    ? "SAVING..."
+                                                                    : "SAVE"
+                                                                }
+
+                                                            </button>
+
+
+                                                            <button
+                                                                type="button"
+
+                                                                className="cancel-declaration-btn"
+
+                                                                disabled={
+                                                                    isSaving
+                                                                }
+
+                                                                onClick={
+                                                                    handleCancelEdit
+                                                                }
+                                                            >
+
+                                                                CANCEL
+
+                                                            </button>
+
+                                                        </>
+
+                                                    )}
+
+                                                </div>
 
                                             </td>
 
@@ -656,9 +1284,11 @@ const AthleteSelectionTable = ({
 
             </div>
 
+
         </section>
 
     );
+
 };
 
 
