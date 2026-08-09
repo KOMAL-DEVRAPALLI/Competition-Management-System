@@ -1,10 +1,7 @@
-import CompetitionEntry from "../../models/CompetitionEntry.js";
-
 import calculateBestSnatch from "./calculateBestSnatch.js";
 import calculateBestCleanJerk from "./calculateBestCleanJerk.js";
 import calculateTotal from "./calculateTotal.js";
 import updateCategoryRanking from "./updateCategoryRanking.js";
-
 
 const updateCompetitionResults = async (
     competitionEntry
@@ -18,6 +15,31 @@ const updateCompetitionResults = async (
         throw new Error(
             "Competition entry not found."
         );
+    }
+
+
+    // =====================================
+    // ENSURE RESULTS OBJECT EXISTS
+    //
+    // Important for older CompetitionEntry
+    // documents that were created before the
+    // results field existed.
+    // =====================================
+
+    if (!competitionEntry.results) {
+
+        competitionEntry.results = {
+
+            bestSnatch: 0,
+
+            bestCleanJerk: 0,
+
+            total: 0,
+
+            rank: null,
+
+        };
+
     }
 
 
@@ -68,10 +90,6 @@ const updateCompetitionResults = async (
 
     // =====================================
     // SAVE ENTRY
-    //
-    // This is the only save required for
-    // the CompetitionEntry in the optimized
-    // processLift flow.
     // =====================================
 
     await competitionEntry.save();
@@ -91,7 +109,6 @@ const updateCompetitionResults = async (
     // =====================================
 
     return competitionEntry;
-
 };
 
 
