@@ -1,6 +1,5 @@
 import "./CompetitionPanel.css";
 
-
 const CurrentAthletePanel = ({
     currentAthlete,
     currentPhase,
@@ -15,52 +14,22 @@ const CurrentAthletePanel = ({
     processingLift,
 }) => {
 
-    // =====================================
-    // CURRENT ATTEMPT
-    // =====================================
-
     const currentAttempt =
         currentAthlete?.currentAttempt ?? null;
 
 
-    // =====================================
-    // DECLARATION LOCK
-    //
-    // Clean & Jerk declaration must remain
-    // locked while the competition is still
-    // in the Snatch phase.
-    //
-    // Once the live competition actually
-    // enters CLEAN_JERK, the declaration
-    // becomes editable.
-    // =====================================
-
     const declarationLocked =
-        currentAttempt?.phase === "CLEAN_JERK" &&
-        currentPhase !== "CLEAN_JERK";
+        currentPhase === "SNATCH" &&
+        currentAttempt?.phase === "CLEAN_JERK";
 
-
-    // =====================================
-    // CURRENT WEIGHT
-    //
-    // Currently declared weight.
-    // =====================================
 
     const currentWeight =
         currentAttempt?.declaredWeight;
 
 
-    // =====================================
-    // RENDER
-    // =====================================
-
     return (
 
         <section className="live-score-current">
-
-            {/* =================================
-                HEADER
-            ================================= */}
 
             <div className="live-score-current-header">
 
@@ -79,10 +48,6 @@ const CurrentAthletePanel = ({
 
             </div>
 
-
-            {/* =================================
-                EMPTY PLATFORM
-            ================================= */}
 
             {!currentAthlete ? (
 
@@ -104,10 +69,6 @@ const CurrentAthletePanel = ({
 
                 <div className="current-athlete-panel">
 
-                    {/* =============================
-                        ATHLETE INFORMATION
-                    ============================= */}
-
                     <div className="current-athlete-main">
 
                         <div>
@@ -126,13 +87,7 @@ const CurrentAthletePanel = ({
                         </div>
 
 
-                        {/* =============================
-                            ATHLETE META
-                        ============================= */}
-
                         <div className="current-athlete-meta">
-
-                            {/* LOT */}
 
                             <div>
 
@@ -151,8 +106,6 @@ const CurrentAthletePanel = ({
 
                             </div>
 
-
-                            {/* ATTEMPT */}
 
                             <div>
 
@@ -177,8 +130,6 @@ const CurrentAthletePanel = ({
                             </div>
 
 
-                            {/* WEIGHT */}
-
                             <div>
 
                                 <strong>
@@ -201,10 +152,6 @@ const CurrentAthletePanel = ({
 
                     </div>
 
-
-                    {/* =============================
-                        DECLARATION
-                    ============================= */}
 
                     <div className="current-athlete-declaration">
 
@@ -272,15 +219,11 @@ const CurrentAthletePanel = ({
                         </div>
 
 
-                        {/* =============================
-                            DECLARATION INFORMATION
-                        ============================= */}
-
                         <small>
 
                             {
                                 declarationLocked
-                                    ? "Clean & Jerk declaration is locked until all Snatch attempts are completed."
+                                    ? "Clean & Jerk declaration is locked until the global Snatch phase is completed."
                                     : "Enter or modify the declared weight before the lift."
                             }
 
@@ -288,10 +231,6 @@ const CurrentAthletePanel = ({
 
                     </div>
 
-
-                    {/* =============================
-                        LIFT CONTROLS
-                    ============================= */}
 
                     <div className="lift-decision">
 
@@ -345,6 +284,5 @@ const CurrentAthletePanel = ({
     );
 
 };
-
 
 export default CurrentAthletePanel;
