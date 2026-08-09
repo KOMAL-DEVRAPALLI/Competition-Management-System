@@ -23,17 +23,9 @@ const LiveScore = () => {
     } = useParams();
 
 
-    // =====================================
-    // API
-    // =====================================
-
     const SELECT_ATHLETE_URL =
         "/live-competition/select-official-athlete";
 
-
-    // =====================================
-    // STATE
-    // =====================================
 
     const [loading, setLoading] =
         useState(true);
@@ -41,67 +33,40 @@ const LiveScore = () => {
     const [liveCompetition, setLiveCompetition] =
         useState(null);
 
-    // -------------------------------------
-    // Current athlete declaration
-    // -------------------------------------
 
     const [declaredWeight, setDeclaredWeight] =
         useState("");
 
-    // -------------------------------------
-    // Lift processing
-    // -------------------------------------
 
     const [processingLift, setProcessingLift] =
         useState(false);
 
-    // -------------------------------------
-    // Current athlete declaration saving
-    // -------------------------------------
 
     const [savingDeclaration, setSavingDeclaration] =
         useState(false);
 
-    // -------------------------------------
-    // Future / queue athlete declaration
-    //
-    // Stores entryId of the athlete whose
-    // declaration is currently being edited.
-    // -------------------------------------
 
     const [
         savingDeclarationEntryId,
         setSavingDeclarationEntryId,
     ] = useState(null);
 
-    // -------------------------------------
-    // Athlete selection
-    // -------------------------------------
 
     const [selectingAthlete, setSelectingAthlete] =
         useState(false);
 
-    // -------------------------------------
-    // Competition start
-    // -------------------------------------
 
     const [startingCompetition, setStartingCompetition] =
         useState(false);
 
-    // -------------------------------------
-    // Messages
-    // -------------------------------------
 
     const [liftMessage, setLiftMessage] =
         useState("");
 
+
     const [liftError, setLiftError] =
         useState("");
 
-
-    // =====================================
-    // LIVE DATA
-    // =====================================
 
     const {
         currentAthlete = null,
@@ -113,39 +78,12 @@ const LiveScore = () => {
     } = liveCompetition || {};
 
 
-    // =====================================
-    // CURRENT ATTEMPT
-    // =====================================
-
     const currentAttempt =
         currentAthlete?.currentAttempt ?? null;
 
 
-    // =====================================
-    // CAN SELECT ANOTHER ATHLETE
-    //
-    // IMPORTANT:
-    //
-    // This remains completely manual.
-    //
-    // The system does NOT automatically
-    // select another athlete.
-    // =====================================
+    const canSelectAnotherAthlete = true;
 
-    const canSelectAnotherAthlete =
-        !currentAthlete ||
-        (
-            currentAttempt &&
-            currentAttempt.declaredWeight != null &&
-            Number(
-                currentAttempt.declaredWeight
-            ) > 0
-        );
-
-
-    // =====================================
-    // LOAD LIVE COMPETITION
-    // =====================================
 
     const loadLiveCompetition = async () => {
 
@@ -157,9 +95,11 @@ const LiveScore = () => {
                     "GET"
                 );
 
+
             setLiveCompetition(
                 response.data
             );
+
 
             return response.data;
 
@@ -170,10 +110,12 @@ const LiveScore = () => {
                 error
             );
 
+
             console.log(
                 "Backend Response:",
                 error.response?.data
             );
+
 
             setLiftError(
                 error.response
@@ -188,12 +130,9 @@ const LiveScore = () => {
             setLoading(false);
 
         }
+
     };
 
-
-    // =====================================
-    // INITIAL LOAD
-    // =====================================
 
     useEffect(() => {
 
@@ -201,10 +140,6 @@ const LiveScore = () => {
 
     }, [competitionId, gender]);
 
-
-    // =====================================
-    // SYNC CURRENT ATHLETE DECLARATION
-    // =====================================
 
     useEffect(() => {
 
@@ -230,10 +165,6 @@ const LiveScore = () => {
         }
 
 
-        // =================================
-        // EXISTING DECLARATION
-        // =================================
-
         if (
             attempt.declaredWeight != null &&
             Number(
@@ -249,10 +180,6 @@ const LiveScore = () => {
 
         }
 
-
-        // =================================
-        // ATTEMPT 1
-        // =================================
 
         if (
             attempt.attemptNo === 1
@@ -273,22 +200,10 @@ const LiveScore = () => {
         }
 
 
-        // =================================
-        // ATTEMPT 2 / 3
-        // =================================
-
         setDeclaredWeight("");
 
     }, [currentAthlete]);
 
-
-    // =====================================
-    // START COMPETITION
-    //
-    // ONLY CREATES THE SESSION.
-    //
-    // DOES NOT SELECT ATHLETE.
-    // =====================================
 
     const handleStartCompetition =
         async () => {
@@ -346,16 +261,9 @@ const LiveScore = () => {
             setStartingCompetition(false);
 
         }
+
     };
 
-
-    // =====================================
-    // SELECT ATHLETE
-    //
-    // OFFICIAL MANUALLY CHOOSES ATHLETE.
-    //
-    // NO AUTOMATIC ORDERING.
-    // =====================================
 
     const handleSelectAthlete =
         async (athlete) => {
@@ -370,21 +278,6 @@ const LiveScore = () => {
         }
 
 
-        // =================================
-        // DO NOT CHANGE CURRENT ATHLETE
-        // =================================
-
-        if (currentAthlete) {
-
-            setLiftError(
-                "Declare the current athlete's next attempt before selecting another athlete."
-            );
-
-            return;
-
-        }
-
-
         try {
 
             setSelectingAthlete(true);
@@ -393,27 +286,19 @@ const LiveScore = () => {
             setLiftMessage("");
 
 
-            console.time(
-                "SELECT ATHLETE - POST"
-            );
-
-
             const response =
                 await apiRequest(
                     SELECT_ATHLETE_URL,
                     "POST",
                     {
                         competitionId,
+
                         gender,
+
                         entryId:
                             athlete.entryId,
                     }
                 );
-
-
-            console.timeEnd(
-                "SELECT ATHLETE - POST"
-            );
 
 
             console.log(
@@ -427,26 +312,7 @@ const LiveScore = () => {
             );
 
 
-            // =================================
-            // GET ONLY AFTER ATHLETE SELECTION
-            //
-            // Selection changes platform state,
-            // so refreshing the live state is
-            // appropriate here.
-            // =================================
-
-            console.time(
-                "SELECT ATHLETE - GET"
-            );
-
-
             await loadLiveCompetition();
-
-
-            console.timeEnd(
-                "SELECT ATHLETE - GET"
-            );
-
 
         } catch (error) {
 
@@ -469,18 +335,9 @@ const LiveScore = () => {
             setSelectingAthlete(false);
 
         }
+
     };
 
-
-    // =====================================
-    // SAVE CURRENT ATHLETE DECLARATION
-    //
-    // This is the declaration from the
-    // CurrentAthletePanel.
-    //
-    // It does NOT select an athlete.
-    // It does NOT process a lift.
-    // =====================================
 
     const handleSaveDeclaration =
         async () => {
@@ -533,12 +390,6 @@ const LiveScore = () => {
 
             });
 
-
-            // =================================
-            // UPDATE CURRENT ATHLETE LOCALLY
-            //
-            // No extra GET required.
-            // =================================
 
             setLiveCompetition(
                 (previous) => {
@@ -618,7 +469,6 @@ const LiveScore = () => {
                 "Declaration saved successfully."
             );
 
-
         } catch (error) {
 
             console.error(
@@ -640,31 +490,9 @@ const LiveScore = () => {
             setSavingDeclaration(false);
 
         }
+
     };
 
-
-    // =====================================
-    // EDIT ANY ATHLETE DECLARATION
-    //
-    // IMPORTANT:
-    //
-    // This is NOT athlete selection.
-    //
-    // Official can edit another athlete's
-    // pending declaration while somebody
-    // else is currently on the platform.
-    //
-    // Example:
-    //
-    // Current athlete = A
-    // Future athlete  = E
-    //
-    // E: 60 -> 65
-    //
-    // A remains current.
-    //
-    // NO GOOD / NO LIFT is required.
-    // =====================================
 
     const handleEditDeclaration =
         async ({
@@ -681,10 +509,6 @@ const LiveScore = () => {
 
         }
 
-
-        // =================================
-        // FIND ATHLETE
-        // =================================
 
         const athlete =
             athletes.find(
@@ -707,10 +531,6 @@ const LiveScore = () => {
         }
 
 
-        // =================================
-        // FIND PENDING ATTEMPT
-        // =================================
-
         const attempt =
             athlete.currentAttempt;
 
@@ -726,10 +546,6 @@ const LiveScore = () => {
         }
 
 
-        // =================================
-        // COMPLETED ATHLETE
-        // =================================
-
         if (
             attempt.completed ||
             athlete.status === "COMPLETED"
@@ -743,22 +559,6 @@ const LiveScore = () => {
 
         }
 
-
-        // =================================
-        // PHASE CHECK
-        //
-        // A future athlete can only have
-        // their declaration changed for the
-        // currently active phase.
-        //
-        // Example:
-        //
-        // SNATCH phase
-        // E's SNATCH declaration → allowed
-        //
-        // SNATCH phase
-        // E's C&J declaration → blocked
-        // =================================
 
         if (
             attempt.phase !== currentPhase
@@ -780,10 +580,6 @@ const LiveScore = () => {
         }
 
 
-        // =================================
-        // ATTEMPT ALREADY COMPLETED
-        // =================================
-
         if (
             attempt.result &&
             attempt.result !== "PENDING"
@@ -797,10 +593,6 @@ const LiveScore = () => {
 
         }
 
-
-        // =================================
-        // VALIDATE WEIGHT
-        // =================================
 
         const weight =
             Number(
@@ -832,12 +624,6 @@ const LiveScore = () => {
             setLiftMessage("");
 
 
-            // =================================
-            // SAME DECLARATION API
-            //
-            // No new endpoint.
-            // =================================
-
             await saveDeclaredWeight({
 
                 entryId,
@@ -847,14 +633,6 @@ const LiveScore = () => {
 
             });
 
-
-            // =================================
-            // UPDATE ONLY THIS ATHLETE LOCALLY
-            //
-            // NO GET REQUEST.
-            //
-            // CURRENT ATHLETE IS NOT CHANGED.
-            // =================================
 
             setLiveCompetition(
                 (previous) => {
@@ -911,27 +689,13 @@ const LiveScore = () => {
 
                         ...previous,
 
-                        // ---------------------------------
-                        // CURRENT ATHLETE
-                        //
-                        // If E is edited, A remains A.
-                        // ---------------------------------
-
                         currentAthlete:
                             previous.currentAthlete,
-
-                        // ---------------------------------
-                        // OFFICIAL ATHLETE LIST
-                        // ---------------------------------
 
                         athletes:
                             previous.athletes?.map(
                                 updateAthlete
                             ),
-
-                        // ---------------------------------
-                        // TV RESULT LIST
-                        // ---------------------------------
 
                         competitionResults:
                             previous
@@ -949,7 +713,6 @@ const LiveScore = () => {
             setLiftMessage(
                 `${athlete.name}'s declaration updated to ${weight} kg.`
             );
-
 
         } catch (error) {
 
@@ -972,18 +735,9 @@ const LiveScore = () => {
             setSavingDeclarationEntryId(null);
 
         }
+
     };
 
-
-    // =====================================
-    // PROCESS LIFT
-    //
-    // GOOD / NO LIFT
-    //
-    // CURRENT ATHLETE REMAINS SELECTED.
-    //
-    // NO AUTOMATIC NEXT ATHLETE.
-    // =====================================
 
     const handleProcessLift =
         async (result) => {
@@ -1006,13 +760,6 @@ const LiveScore = () => {
             setLiftError("");
 
 
-            // =================================
-            // PROCESS LIFT
-            //
-            // Backend returns updated athlete
-            // and live session.
-            // =================================
-
             const response =
                 await processLift({
 
@@ -1031,10 +778,6 @@ const LiveScore = () => {
             const data =
                 response?.data;
 
-
-            // =================================
-            // SAFETY CHECK
-            // =================================
 
             if (
                 !data ||
@@ -1057,20 +800,9 @@ const LiveScore = () => {
                 null;
 
 
-            // =================================
-            // UPDATE CURRENT ATHLETE LOCALLY
-            //
-            // NO SECOND GET.
-            // =================================
-
             const updatedCurrentAthlete = {
 
                 ...currentAthlete,
-
-
-                // ---------------------------------
-                // ATTEMPT DATA
-                // ---------------------------------
 
                 snatchAttempts:
                     updatedEntry.snatchAttempts ??
@@ -1079,11 +811,6 @@ const LiveScore = () => {
                 cleanJerkAttempts:
                     updatedEntry.cleanJerkAttempts ??
                     currentAthlete.cleanJerkAttempts,
-
-
-                // ---------------------------------
-                // RESULTS
-                // ---------------------------------
 
                 bestSnatch:
                     updatedEntry.results
@@ -1105,85 +832,67 @@ const LiveScore = () => {
                         ?.rank ??
                     currentAthlete.place,
 
-
-                // ---------------------------------
-                // NEXT ATTEMPT
-                // ---------------------------------
-
                 currentAttempt:
                     nextAttempt,
 
             };
 
 
-            // =====================================
-            // UPDATE CURRENT ATHLETE IN LIST
-            // =====================================
-
             const updatedAthletes =
                 athletes.map(
                     (athlete) => {
 
-                        if (
-                            athlete.entryId
-                                ?.toString() ===
-                            currentAthlete.entryId
-                                ?.toString()
-                        ) {
+                    if (
+                        athlete.entryId
+                            ?.toString() ===
+                        currentAthlete.entryId
+                            ?.toString()
+                    ) {
 
-                            return {
+                        return {
 
-                                ...athlete,
+                            ...athlete,
 
-                                ...updatedCurrentAthlete,
+                            ...updatedCurrentAthlete,
 
-                            };
-
-                        }
-
-
-                        return athlete;
+                        };
 
                     }
-                );
 
 
-            // =====================================
-            // UPDATE TV RESULT LIST
-            // =====================================
+                    return athlete;
+
+                }
+            );
+
 
             const updatedCompetitionResults =
                 competitionResults.map(
                     (athlete) => {
 
-                        if (
-                            athlete.entryId
-                                ?.toString() ===
-                            currentAthlete.entryId
-                                ?.toString()
-                        ) {
+                    if (
+                        athlete.entryId
+                            ?.toString() ===
+                        currentAthlete.entryId
+                            ?.toString()
+                    ) {
 
-                            return {
+                        return {
 
-                                ...athlete,
+                            ...athlete,
 
-                                ...updatedCurrentAthlete,
+                            ...updatedCurrentAthlete,
 
-                            };
-
-                        }
-
-
-                        return athlete;
+                        };
 
                     }
-                );
 
 
-            // =====================================
-            // DETERMINE WHETHER ANOTHER ATHLETE
-            // CAN BE SELECTED
-            // =====================================
+                    return athlete;
+
+                }
+            );
+
 
             let updatedCanSelect =
                 false;
@@ -1196,8 +905,7 @@ const LiveScore = () => {
                 updatedCanSelect =
                     true;
 
-            }
-            else if (
+            } else if (
                 nextAttempt &&
                 nextAttempt.declaredWeight != null &&
                 Number(
@@ -1210,14 +918,6 @@ const LiveScore = () => {
 
             }
 
-
-            // =====================================
-            // UPDATE LIVE COMPETITION STATE
-            //
-            // ONE React state update.
-            //
-            // NO SECOND GET.
-            // =====================================
 
             setLiveCompetition(
                 (previous) => ({
@@ -1250,23 +950,14 @@ const LiveScore = () => {
             );
 
 
-            // =====================================
-            // CLEAR DECLARATION INPUT
-            // =====================================
-
             setDeclaredWeight("");
 
-
-            // =====================================
-            // SUCCESS MESSAGE
-            // =====================================
 
             setLiftMessage(
                 result === "GOOD"
                     ? "Good Lift saved successfully."
                     : "No Lift saved successfully."
             );
-
 
         } catch (error) {
 
@@ -1293,10 +984,6 @@ const LiveScore = () => {
     };
 
 
-    // =====================================
-    // LOADING
-    // =====================================
-
     if (loading) {
 
         return (
@@ -1318,10 +1005,6 @@ const LiveScore = () => {
     }
 
 
-    // =====================================
-    // STATUS MESSAGE
-    // =====================================
-
     const showStatus =
         liftMessage ||
         liftError ||
@@ -1332,18 +1015,9 @@ const LiveScore = () => {
         savingDeclarationEntryId;
 
 
-    // =====================================
-    // UI
-    // =====================================
-
     return (
 
         <div className="live-score-page">
-
-
-            {/* =================================
-                HEADER
-            ================================= */}
 
             <LiveScoreHeader
 
@@ -1365,10 +1039,6 @@ const LiveScore = () => {
 
             />
 
-
-            {/* =================================
-                STATUS MESSAGE
-            ================================= */}
 
             {showStatus && (
 
@@ -1427,10 +1097,6 @@ const LiveScore = () => {
             )}
 
 
-            {/* =================================
-                START COMPETITION
-            ================================= */}
-
             {!currentAthlete &&
                 status === "READY" && (
 
@@ -1461,20 +1127,11 @@ const LiveScore = () => {
             )}
 
 
-            {/* =================================
-                CURRENT ATHLETE
-            ================================= */}
-
             <CurrentAthletePanel
 
                 currentAthlete={
                     currentAthlete
                 }
-
-                // IMPORTANT:
-                // CurrentAthletePanel uses this
-                // to lock C&J declaration while
-                // competition is still in Snatch.
 
                 currentPhase={
                     currentPhase
@@ -1507,10 +1164,6 @@ const LiveScore = () => {
             />
 
 
-            {/* =================================
-                OFFICIAL ATHLETE SELECTION
-            ================================= */}
-
             <AthleteSelectionTable
 
                 athletes={
@@ -1537,16 +1190,6 @@ const LiveScore = () => {
                     handleSelectAthlete
                 }
 
-                // =================================
-                // NEW:
-                //
-                // Allows official to edit the
-                // pending declaration of ANY
-                // athlete in the table.
-                //
-                // This does NOT select the athlete.
-                // =================================
-
                 onEditDeclaration={
                     handleEditDeclaration
                 }
@@ -1557,10 +1200,6 @@ const LiveScore = () => {
 
             />
 
-
-            {/* =================================
-                LIVE SCOREBOARD
-            ================================= */}
 
             <CompetitionResults
 
