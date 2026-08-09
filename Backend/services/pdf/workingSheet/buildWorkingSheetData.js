@@ -36,42 +36,39 @@ const buildWorkingSheetData = async (
     // the previous working behavior.
     // =====================================
 
-    const entries =
-        await CompetitionEntry
-            .find({
-                competitionId,
-            })
-            .select(
-                [
-                    "_id",
-                    "athleteId",
+    console.time("buildWorkingSheetData - DB");
 
-                    "competitionCategory.ageCategory",
+const entries =
+    await CompetitionEntry
+        .find({
+            competitionId,
+        })
+        .select(
+            [
+                "_id",
+                "athleteId",
+                "competitionCategory.ageCategory",
+                "official.bodyWeight",
+                "official.finalWeightCategory",
+                "official.lotNumber",
+                "opening.snatch",
+                "opening.cleanJerk",
+                "results.bestSnatch",
+                "results.bestCleanJerk",
+                "results.total",
+                "results.rank",
+                "snatchAttempts",
+                "cleanJerkAttempts",
+            ].join(" ")
+        )
+        .populate({
+            path: "athleteId",
+            select:
+                "_id personalInfo.fullName personalInfo.gender",
+        })
+        .lean();
 
-                    "official.bodyWeight",
-                    "official.finalWeightCategory",
-                    "official.lotNumber",
-
-                    "opening.snatch",
-                    "opening.cleanJerk",
-
-                    "results.bestSnatch",
-                    "results.bestCleanJerk",
-                    "results.total",
-                    "results.rank",
-
-                    "snatchAttempts",
-                    "cleanJerkAttempts",
-                ].join(" ")
-            )
-            .populate({
-                path: "athleteId",
-                select:
-                    "_id personalInfo.fullName personalInfo.gender",
-            })
-            .lean();
-            console.time("buildWorkingSheetData - processing");
-
+console.timeEnd("buildWorkingSheetData - DB");
 // existing grouping / filtering / sorting code
 
 console.timeEnd("buildWorkingSheetData - processing");
