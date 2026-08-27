@@ -44,15 +44,13 @@ Start List
 Live Competition
         ↓
 Public Scoreboard
-
-
-✨ Features
+✨ Key Features
 📝 Athlete Registration
 Online athlete registration
 Automatic registration number generation
 Personal information management
 Competition participation selection
-Age-category eligibility
+Age-category eligibility calculation
 Weight-category selection
 Document uploads
 Form validation
@@ -62,358 +60,293 @@ Registration receipt generation
 
 The administration side allows officials to manage registered athletes and competition information.
 
-Includes
-View registrations
-Review athlete information
-Review submitted documents
-Verify registrations
+Includes:
+
+View registered athletes
+View registration details
+Verify submitted documents
+Verify athlete registration
 Manage competition information
-Manage competition entries
+Manage registration data
 Export registration data
-📋 Start List
+📋 Start List Management
 
-The start-list module prepares athletes for competition.
+The system generates and manages competition start lists from registered athletes.
 
-It manages information such as:
+Includes:
 
-Athlete name
-Lot number
-Bodyweight
-Weight category
-Age category
-Opening attempts
-
-The generated start list becomes the foundation for the live competition workflow.
-
+Athlete start-list generation
+Lot number assignment
+Bodyweight recording
+Weight-category information
+Opening weight information
+Competition ordering
+Gender-based start lists
 🏋️ Live Competition
 
-The live competition module is designed around the actual flow of a weightlifting competition.
-
-Officials Control
+The live competition module is designed around the actual workflow of a weightlifting competition.
 
 Officials can:
 
 View the current athlete
 View the next athlete
-Update declared weights
-Record Good Lift / No Lift
-Track attempts
-Progress through competition phases
-Manage Snatch attempts
-Manage Clean & Jerk attempts
-Follow automatic calling order
-Advance the competition
-Public Scoreboard
+Record declared weights
+Process Good Lift / No Lift decisions
+Track athlete attempts
+Progress through competition attempts
+Automatically determine the next athlete
+Follow competition calling order
+Manage Snatch and Clean & Jerk phases
+📺 Public Scoreboard
 
-A separate public-facing scoreboard displays competition information without exposing official controls.
+A separate public-facing scoreboard displays competition information in real time.
 
-              OFFICIALS
-                  │
-                  ▼
-        Competition State
-                  │
-                  ▼
-         PUBLIC SCOREBOARD
+Displays:
 
-This separates competition control from the public display.
+Current athlete
+Athlete attempts
+Declared weights
+Lift results
+Competition phase
+Next athlete
+Competition status
+
+The public scoreboard is read-only and is designed for spectators and competition viewing.
 
 🧠 Competition Logic
 
-One of the more challenging parts of the project is the live competition logic.
+The system is not simply a registration form. It contains competition-specific logic to support the operational workflow of a weightlifting competition.
 
-The next athlete is not simply selected by moving to the next row.
+Key areas include:
 
-The system has to consider information such as:
-
-Current competition phase
-Current athlete
-Current attempt
-Declared weight
-Completed attempts
-Athlete progression
-Calling order
-Queue state
-Next athlete
-
-The application contains separate logic for handling:
-
-Current attempt selection
-Next athlete selection
-Declared-weight updates
-Queue generation
-Queue recalculation
+Age-category eligibility
+Weight-category selection
+Athlete competition entry
+Start-list generation
+Athlete calling order
+Declared-weight handling
+Attempt tracking
+Good Lift / No Lift processing
 Competition progression
-Snatch progression
-Clean & Jerk progression
-Competition completion
+Automatic next-athlete selection
+Live scoreboard updates
+👥 User Roles
+👤 Athlete
 
-This was implemented to make the system behave according to the competition workflow rather than acting as a simple CRUD application.
+Athletes can:
 
-🔄 Competition Flow
-                 Competition Started
-                         │
-                         ▼
-                      SNATCH
-                         │
-              ┌──────────┼──────────┐
-              ▼          ▼          ▼
-          Attempt 1   Attempt 2   Attempt 3
-                         │
-                         ▼
-                   Optional Break
-                         │
-                         ▼
-                   CLEAN & JERK
-                         │
-              ┌──────────┼──────────┐
-              ▼          ▼          ▼
-          Attempt 1   Attempt 2   Attempt 3
-                         │
-                         ▼
-                Competition Completed
-🏗️ Architecture
+Register for a competition
+Enter personal information
+Select eligible categories
+Upload required documents
+Submit registration
+Receive registration confirmation
+🛠️ Officials / Administrators
 
-The application follows a separate frontend and backend architecture.
+Officials can:
 
-┌─────────────────────────────┐
-│            Users            │
-│                             │
-│ Athletes | Officials | Public│
-└──────────────┬──────────────┘
-               │
-               ▼
-┌─────────────────────────────┐
-│          Frontend           │
-│           React.js          │
-└──────────────┬──────────────┘
-               │
-             REST API
-               │
-               ▼
-┌─────────────────────────────┐
-│          Backend            │
-│     Node.js + Express.js    │
-└──────────────┬──────────────┘
-               │
-               ▼
-┌─────────────────────────────┐
-│          MongoDB            │
-└─────────────────────────────┘
+Manage competitions
+Review registrations
+Verify athletes and documents
+Generate and manage start lists
+Operate the live competition
+Record lift results
+Control competition progression
+👀 Public
 
-External services are integrated where required for features such as file storage, email, document generation, and deployment.
+The public can:
 
+View the live competition
+Follow athlete attempts
+See lift results
+View the current competition status
+🏗️ System Architecture
+
+The application follows a full-stack architecture with separate frontend and backend applications.
+
+                    ┌─────────────────────┐
+                    │      Athlete        │
+                    │   Registration UI   │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │      Frontend       │
+                    │       React         │
+                    └──────────┬──────────┘
+                               │
+                         REST API
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │       Backend       │
+                    │   Node.js + Express │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │      MongoDB        │
+                    │      Database       │
+                    └─────────────────────┘
 🛠️ Technology Stack
-Category	Technologies
-Frontend	React.js, JavaScript, HTML5, CSS3
-Backend	Node.js, Express.js
-Database	MongoDB, Mongoose
-API	REST API
-File Storage	Cloudinary
-Email	Nodemailer
-PDF	PDFKit
-Data Export	XLSX
-Testing / API Tools	Postman
-Version Control	Git, GitHub
-Containerization	Docker
-Deployment	Vercel, Render
-📂 Project Structure
-Backend
-Backend/
-├── assets/
-├── config/
-├── controllers/
-├── middleware/
-├── models/
-├── routes/
-├── seed/
-├── services/
-├── validators/
-├── app.js
-├── server.js
-└── package.json
-Backend responsibilities
-API endpoints
-Business logic
-Database operations
-Authentication and authorization
-Request validation
-File handling
-Competition state management
 Frontend
-Frontend/
-├── api/
-├── calculation/
-├── components/
-├── hooks/
-├── pages/
-├── services/
-├── src/
-├── index.html
-└── package.json
-Frontend responsibilities
-User interfaces
-Forms
-API communication
-Admin interfaces
-Start-list interface
-Live competition control
-Public scoreboard
-🖼️ Screenshots
-
-Screenshots of the major application workflows can be added here.
-
-Athlete Registration
-
-Add screenshot here.
-
-Administration
-
-Add screenshot here.
-
-Start List
-
-Add screenshot here.
-
-Officials Control Screen
-
-Add screenshot here.
-
-Public Scoreboard
-
-Add screenshot here.
-
-🔐 Application Considerations
-
-The project also deals with several concerns that appear in real-world applications:
-
-Input validation
-API validation
-Authentication
-Authorization
-Error handling
-Environment variables
-Database operations
-File uploads
-External service integration
-Frontend/backend communication
-Deployment configuration
-Competition state management
-🚀 Running the Project Locally
-Prerequisites
-
-Make sure you have installed:
-
+React.js
+JavaScript
+HTML5
+CSS3
+Vite
+Backend
 Node.js
-npm
-MongoDB or MongoDB Atlas
-1. Clone the Repository
+Express.js
+REST APIs
+Database
+MongoDB
+Mongoose
+Additional Technologies
+Cloudinary — document/image storage
+Nodemailer — email communication
+PDFKit — registration receipt generation
+XLSX — spreadsheet export
+Puppeteer — PDF/browser-related processing
+Docker — backend deployment support
+Vercel — frontend deployment
+Render — backend deployment
+Development Tools
+Git
+GitHub
+Postman
+VS Code
+📂 Project Structure
+Competition-Management-System/
+│
+├── Backend/
+│   ├── assets/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── seed/
+│   ├── services/
+│   ├── validators/
+│   ├── app.js
+│   └── server.js
+│
+├── Frontend/
+│   ├── api/
+│   ├── calculation/
+│   ├── components/
+│   ├── hooks/
+│   ├── pages/
+│   ├── services/
+│   ├── src/
+│   └── index.html
+│
+└── README.md
+🔄 Competition Flow
+
+The competition workflow is divided into several stages:
+
+1. Registration
+
+Athletes submit their personal information, competition participation details, and required documents.
+
+2. Verification
+
+Officials review submitted information and verify athlete registrations.
+
+3. Competition Entry
+
+Verified athletes become eligible for competition entry and start-list generation.
+
+4. Start List
+
+The system organizes athletes according to competition requirements and generates the start list.
+
+5. Live Competition
+
+Officials operate the competition through the live control interface while recording athlete attempts and results.
+
+6. Public Display
+
+Competition information is presented through a separate read-only scoreboard for spectators.
+
+📌 Project Status
+
+The system currently includes the core workflow from athlete registration through live competition operations.
+
+Implemented
+Athlete registration
+Registration number generation
+Document submission
+Registration verification
+Competition management
+Start-list management
+Live competition control
+Attempt tracking
+Good Lift / No Lift processing
+Automatic athlete progression
+Public scoreboard
+Future Improvements
+
+Possible future extensions include:
+
+Competition result reports
+Certificates
+Advanced statistics
+Historical competition records
+Athlete performance history
+Enhanced public scoreboard features
+Additional competition formats
+🚀 Running the Project Locally
+Clone the repository
 git clone https://github.com/KOMAL-DEVRAPALLI/Competition-Management-System.git
 cd Competition-Management-System
-2. Install Backend Dependencies
+Backend
 cd Backend
 npm install
-3. Configure Backend
-
-Create a .env file inside the Backend directory.
-
-Add the required environment variables for:
-
-MongoDB
-Cloudinary
-Email service
-Authentication
-Other backend configuration
-
-Do not commit .env files or secrets to GitHub.
-
-4. Start the Backend
 npm start
-5. Install Frontend Dependencies
+Frontend
 
 Open another terminal:
 
 cd Frontend
 npm install
-6. Configure Frontend
-
-Create a .env file inside the Frontend directory.
-
-Configure the backend API URL.
-
-7. Start the Frontend
 npm run dev
 
-The frontend and backend will run separately during local development.
+The frontend and backend environment variables should be configured locally before running the application.
 
-📚 What This Project Demonstrates
+🎓 What I Learned
 
-This project demonstrates practical experience with:
+This project gave me practical experience in building a real-world full-stack application rather than only developing isolated CRUD projects.
 
-Full-Stack Development
-Building a React frontend
-Building REST APIs
-Connecting frontend and backend
-Working with MongoDB
-Structuring an Express application
-Backend Development
-Controllers
-Services
-Routes
-Middleware
-Validation
-Database operations
-Business logic
-Frontend Development
-Component-based architecture
-State management
-Forms
+Through this project I worked with:
+
+REST API design
+Database modelling
+Authentication and authorization
+Form validation
+File uploads
+Email services
+PDF generation
+Spreadsheet generation
+Frontend state management
 API integration
-Conditional rendering
-Interactive competition interfaces
-Real-World Problem Solving
+Competition-specific business logic
+Deployment and environment configuration
+Debugging production issues
+Designing software around a real operational workflow
+👩‍💻 Developer
 
-The project required translating an actual sports competition workflow into software.
-
-This involved handling:
-
-Athlete progression
-Competition phases
-Attempt tracking
-Declared weights
-Calling order
-Queue recalculation
-Official decisions
-Public display state
-📈 Project Status
-
-Active Development
-
-The system is being developed incrementally as additional competition workflows, edge cases, and improvements are identified.
-
-👩‍💻 About the Developer
 Komal Devrapalli
 
 BCA Graduate | MCA Student | Full-Stack Web Developer
 
-I build practical web applications using React.js, Node.js, Express.js, and MongoDB.
-
-My approach is focused on understanding real-world problems and converting business workflows into usable software.
+I build practical web applications using React, Node.js, Express.js, and MongoDB, with a focus on solving real-world workflow problems.
 
 Connect
-💼 LinkedIn: https://www.linkedin.com/in/komal-devrapalli-10062k25
-💻 GitHub: https://github.com/KOMAL-DEVRAPALLI
-⭐ Project Highlights
-Built around a real-world sports competition workflow
-Full-stack React + Node.js application
-MongoDB database integration
-REST API architecture
-Athlete registration and verification
-Start-list management
-Live competition control
-Automatic competition progression logic
-Public scoreboard
-External service integrations
-Deployment and production configuration
+💼 LinkedIn: linkedin.com/in/komal-devrapalli-10062k25
+🐙 GitHub: github.com/KOMAL-DEVRAPALLI
+📄 License
 
-
-<p align="center"> Built with React.js • Node.js • Express.js • MongoDB </p> ```
+This project is developed as a personal/academic project and is maintained by Komal Devrapalli.
