@@ -31,84 +31,71 @@ Live Competition
         ↓
 Public Scoreboard
 
-# ✨ Key Features
+✨ Key Features
+📝 Athlete Registration
+Online athlete registration
+Automatic registration number generation
+Personal information collection
+Competition participation selection
+Age-category eligibility handling
+Weight-category selection
+Document upload
+Form validation
+Email confirmation
+Registration receipt generation
+🛡️ Administration
 
-## 📝 Athlete Registration
+Administrators can manage the information submitted through the registration system.
 
-* Online athlete registration
-* Automatic registration number generation
-* Personal information collection
-* Competition participation selection
-* Age-category eligibility handling
-* Weight-category selection
-* Document upload
-* Form validation
-* Email confirmation
-* Registration receipt generation
-
----
-
-## 🛡️ Administration
-
-Administrators can manage information submitted through the registration system.
-
-### Includes
-
-* View registered athletes
-* Review athlete information
-* Review submitted documents
-* Verify athlete registrations
-* Manage competition information
-* Manage competition entries
-* Export registration data
-
----
-
-## 📋 Start List
+Includes
+View registered athletes
+Review athlete information
+Review submitted documents
+Verify athlete registrations
+Manage competition information
+Manage competition entries
+Export registration data
+📋 Start List
 
 The start-list module prepares registered athletes for competition.
 
 It handles information such as:
 
-* Athlete name
-* Lot number
-* Bodyweight
-* Weight category
-* Age category
-* Opening attempts
+Athlete name
+Lot number
+Bodyweight
+Weight category
+Age category
+Opening attempts
 
 The start list is then used as the basis for the live competition workflow.
 
----
-
-# 🏋️ Live Competition
+🏋️ Live Competition
 
 The live competition module is designed around the actual flow of a weightlifting competition.
 
 It uses competition state and athlete attempt information to determine how the competition progresses.
 
-## Officials Control Screen
+Officials Control Screen
 
 Officials can:
 
-* View the current athlete
-* View the next athlete
-* Manage declared weights
-* Record Good Lift / No Lift
-* Track athlete attempts
-* Progress through competition phases
-* Manage Snatch attempts
-* Manage Clean & Jerk attempts
-* Follow automatic athlete calling order
-* Progress the competition from one athlete to the next
-
-## Public Scoreboard
+View the current athlete
+View the next athlete
+Manage declared weights
+Record Good Lift / No Lift
+Track athlete attempts
+Progress through competition phases
+Manage Snatch attempts
+Manage Clean & Jerk attempts
+Follow automatic athlete calling order
+Progress the competition from one athlete to the next
+Public Scoreboard
 
 A separate public-facing scoreboard displays competition information without exposing official controls.
 
 This creates two distinct experiences:
 
-```text
 Officials
    │
    │ Control Competition
@@ -117,9 +104,6 @@ Live Competition State
    │
    ▼
 Public Scoreboard
-```
-
----
 
 # 🧠 Competition Logic
 
