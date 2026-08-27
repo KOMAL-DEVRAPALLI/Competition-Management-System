@@ -1,30 +1,32 @@
 # 🏋️ Competition Management System
 
-> A full-stack web application for managing sports competitions — from athlete registration and verification to start lists and live competition operations.
+> A full-stack web application designed to digitize sports competition workflows — from athlete registration and verification to start lists and live competition operations.
 
 ---
 
 ## 📌 About the Project
 
-Organising a sports competition involves handling athlete registrations, documents, categories, start lists, officials, and competition-day operations.
+Organising a sports competition involves managing athlete registrations, documents, categories, start lists, officials, and competition-day operations.
 
-This project was built to bring these workflows into a single web-based system and reduce repetitive manual work.
+The **Competition Management System** brings these workflows together into a single web application to reduce repetitive manual work and make competition management more organised.
 
-The system is designed around the actual workflow of a weightlifting competition, with separate experiences for administrators, competition officials, and the public.
+The project is based on the real workflow of a weightlifting competition and includes separate functionality for administrators, competition officials, and public viewers.
 
 ---
 
-## 🎯 What This System Does
+## 🎯 Project Workflow
 
 ```text
 Athlete Registration
         ↓
-Document Verification
+Document Submission
+        ↓
+Registration Verification
         ↓
 Competition Entry
         ↓
 Start List
         ↓
-Live Competition Control
+Live Competition
         ↓
 Public Scoreboard
