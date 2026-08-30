@@ -1,63 +1,234 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiRequest } from "../services/axios";
+import { apiRequest } from "../../api/axios";
+
+import "./StartList.css";
 
 const StartList = () => {
-    const { competitionId } = useParams();
+
+    const {
+        competitionId,
+        gender: sessionGender
+    } = useParams();
 
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchEntries = async () => {
-            try {
-                const response = await apiRequest(
-    `/competition-entry/competition/${competitionId}`,
-    "GET"
-);
 
-const groupedEntries = Object.values(
-    response.data.reduce((acc, entry) => {
-        const athleteId = entry.athleteId._id;
+    // =====================================
+    // GENERATE ALL FOUR PDFs
+    // =====================================
 
-        if (!acc[athleteId]) {
-            acc[athleteId] = {
-                ...entry,
-                competitionEntries: [entry],
-            };
-        } else {
-            acc[athleteId].competitionEntries.push(entry);
-        }
+    const downloadPDFs = () => {
 
-        return acc;
-    }, {})
-);
-
-setEntries(groupedEntries);
-                
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
+        const sessions = [
+            {
+                gender: "male",
+                ageCategory: "U-17"
+            },
+            {
+                gender: "female",
+                ageCategory: "U-17"
+            },
+            {
+                gender: "male",
+                ageCategory: "U-19"
+            },
+            {
+                gender: "female",
+                ageCategory: "U-19"
             }
-        };
+        ];
+
+
+        sessions.forEach(
+            ({
+                gender,
+                ageCategory
+            }) => {
+
+                const url =
+                    `${import.meta.env.VITE_API_URL}` +
+                    `/working-sheet/` +
+                    `${competitionId}/` +
+                    `${gender}/` +
+                    `${encodeURIComponent(ageCategory)}`;
+
+
+                window.open(
+                    url,
+                    "_blank"
+                );
+
+            }
+        );
+
+    };
+
+
+    useEffect(() => {
 
         fetchEntries();
-    }, [competitionId]);
+
+    }, []);
+
+
+    const fetchEntries = async () => {
+
+        try {
+
+            const response =
+                await apiRequest(
+                    `/working-sheet/data/` +
+                    `${competitionId}/` +
+                    `${sessionGender}`,
+                    "GET"
+                );
+
+
+            setEntries(
+                response.data
+            );
+
+        } catch (error) {
+
+            console.log(error);
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
+    };
+
 
     if (loading) {
-        return <h2>Loading...</h2>;
+
+        return (
+            <div className="loading-page">
+                Loading Start List...
+            </div>
+        );
+
     }
 
-    return (
-        <div>
-            <h1>Start List</h1>
 
-            <pre>
-                {JSON.stringify(entries, null, 2)}
-            </pre>
+    return (
+
+        <div className="start-list-page">
+
+            <div className="start-list-header">
+
+                <div>
+
+                    <h1 className="page-title">
+
+                        {sessionGender === "female"
+                            ? "Women's Start List"
+                            : "Men's Start List"}
+
+                    </h1>
+
+                    <p className="page-subtitle">
+                        Competition ID : {competitionId}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div className="start-list-actions">
+
+                <button
+                    className="pdf-btn"
+                    onClick={downloadPDFs}
+                >
+                    📄 Download 4 Start List PDFs
+                </button>
+
+            </div>
+
+
+            <div className="table-wrapper">
+
+                <table className="start-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Lot</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Body Weight</th>
+                            <th>Weight Category</th>
+                            <th>Opening Snatch</th>
+                            <th>Opening C&J</th>
+                            <th>Status</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {entries.map(
+                            (entry) => (
+
+                                <tr
+                                    key={entry.entryId}
+                                >
+
+                                    <td>
+                                        {entry.lotNumber}
+                                    </td>
+
+                                    <td>
+                                        {entry.name}
+                                    </td>
+
+                                    <td>
+                                        {entry.gender}
+                                    </td>
+
+                                    <td>
+                                        {entry.bodyWeight}
+                                    </td>
+
+                                    <td>
+                                        {entry.displayWeightCategory}
+                                    </td>
+
+                                    <td>
+                                        {entry.openingSnatch}
+                                    </td>
+
+                                    <td>
+                                        {entry.openingCleanJerk}
+                                    </td>
+
+                                    <td>
+                                        READY
+                                    </td>
+
+                                </tr>
+
+                            )
+                        )}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
         </div>
+
     );
+
 };
 
 export default StartList;
