@@ -4,7 +4,9 @@ const buildWorkingSheetData = async (
     competitionId,
     gender,
     flat = false,
-    selectedWeightCategories = []
+    selectedWeightCategories = [],
+    dbSession = null,
+    ageCategory = null
 ) => {
 
     // =====================================
@@ -12,7 +14,9 @@ const buildWorkingSheetData = async (
     // =====================================
 
     const normalizedGender =
-        String(gender ?? "").trim().toLowerCase();
+        String(gender ?? "")
+            .trim()
+            .toLowerCase();
 
     const normalizedCategories =
         Array.isArray(selectedWeightCategories)
@@ -22,6 +26,11 @@ const buildWorkingSheetData = async (
                 )
                 .filter(Boolean)
             : [];
+
+    const normalizedAgeCategory =
+        String(ageCategory ?? "")
+            .trim()
+            .toLowerCase();
 
 
     // =====================================
@@ -34,44 +43,67 @@ const buildWorkingSheetData = async (
     // Do NOT add opening/final-category
     // filters to MongoDB because that changes
     // the previous working behavior.
+    //
+    // TRANSACTION SUPPORT:
+    //
+    // When dbSession is supplied, this read
+    // participates in the caller's MongoDB
+    // transaction.
     // =====================================
 
-    console.time("buildWorkingSheetData - DB");
+    console.time(
+        "buildWorkingSheetData - DB"
+    );
 
-const entries =
-    await CompetitionEntry
-        .find({
-            competitionId,
-        })
-        .select(
-            [
-                "_id",
-                "athleteId",
-                "competitionCategory.ageCategory",
-                "official.bodyWeight",
-                "official.finalWeightCategory",
-                "official.lotNumber",
-                "opening.snatch",
-                "opening.cleanJerk",
-                "results.bestSnatch",
-                "results.bestCleanJerk",
-                "results.total",
-                "results.rank",
-                "snatchAttempts",
-                "cleanJerkAttempts",
-            ].join(" ")
-        )
-        .populate({
-            path: "athleteId",
-            select:
-                "_id personalInfo.fullName personalInfo.gender",
-        })
-        .lean();
 
-console.timeEnd("buildWorkingSheetData - DB");
-// existing grouping / filtering / sorting code
+    let query =
+        CompetitionEntry
+            .find({
+                competitionId,
+            })
+            .select(
+                [
+                    "_id",
+                    "athleteId",
+                    "competitionCategory.ageCategory",
+                    "official.bodyWeight",
+                    "official.finalWeightCategory",
+                    "official.lotNumber",
+                    "opening.snatch",
+                    "opening.cleanJerk",
+                    "results.bestSnatch",
+                    "results.bestCleanJerk",
+                    "results.total",
+                    "results.rank",
+                    "snatchAttempts",
+                    "cleanJerkAttempts",
+                ].join(" ")
+            )
+            .populate({
+                path: "athleteId",
+                select:
+                    "_id personalInfo.fullName personalInfo.gender",
+            });
 
-console.timeEnd("buildWorkingSheetData - processing");
+
+    if (dbSession) {
+
+        query =
+            query.session(
+                dbSession
+            );
+
+    }
+
+
+    const entries =
+        await query.lean();
+
+
+    console.timeEnd(
+        "buildWorkingSheetData - DB"
+    );
+
 
     // =====================================
     // GROUP ROWS
@@ -124,9 +156,31 @@ console.timeEnd("buildWorkingSheetData - processing");
         // =================================
 
         if (
-            athleteGender
-                .toLowerCase() !==
+            athleteGender.toLowerCase() !==
             normalizedGender
+        ) {
+            continue;
+        }
+
+
+        // =================================
+        // AGE CATEGORY FILTER
+        //
+        // Empty/null ageCategory means
+        // no age-category filtering.
+        //
+        // This preserves existing
+        // association competition behavior.
+        // =================================
+
+        if (
+            normalizedAgeCategory &&
+            String(
+                entry.competitionCategory?.ageCategory ?? ""
+            )
+                .trim()
+                .toLowerCase() !==
+            normalizedAgeCategory
         ) {
             continue;
         }
@@ -189,8 +243,7 @@ console.timeEnd("buildWorkingSheetData - processing");
                     entry._id,
 
                 lotNumber:
-                    entry.official
-                        ?.lotNumber,
+                    entry.official?.lotNumber,
 
                 gender:
                     athleteGender,
@@ -202,12 +255,10 @@ console.timeEnd("buildWorkingSheetData - processing");
                     displayWeightCategory,
 
                 name:
-                    athlete.personalInfo
-                        ?.fullName,
+                    athlete.personalInfo?.fullName,
 
                 bodyWeight:
-                    entry.official
-                        ?.bodyWeight,
+                    entry.official?.bodyWeight,
 
                 isYouth:
                     false,
@@ -219,33 +270,28 @@ console.timeEnd("buildWorkingSheetData - processing");
                     false,
 
                 openingSnatch:
-                    entry.opening
-                        ?.snatch,
+                    entry.opening?.snatch,
 
                 openingCleanJerk:
-                    entry.opening
-                        ?.cleanJerk,
+                    entry.opening?.cleanJerk,
 
                 bestSnatch:
-                    entry.results
-                        ?.bestSnatch ?? 0,
+                    entry.results?.bestSnatch ?? 0,
 
                 bestCleanJerk:
-                    entry.results
-                        ?.bestCleanJerk ?? 0,
+                    entry.results?.bestCleanJerk ?? 0,
 
                 total:
-                    entry.results
-                        ?.total ?? 0,
+                    entry.results?.total ?? 0,
 
                 place:
-                    entry.results
-                        ?.rank ?? "",
+                    entry.results?.rank ?? "",
 
                 competitionEntry:
                     entry,
 
             };
+
         }
 
 
@@ -409,7 +455,7 @@ console.timeEnd("buildWorkingSheetData - processing");
 
         })
     );
-};
 
+};
 
 export default buildWorkingSheetData;

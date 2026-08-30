@@ -3,7 +3,8 @@ import { workingSheetStyles } from "./WorkingSheetStyle.js";
 export const workingSheetTemplate = (
     competition,
     workingSheetData,
-    gender
+    gender,
+    ageCategory
 ) => {
 
     return `
@@ -36,22 +37,26 @@ ${workingSheetData.map(section => `
         <div class="header">
 
             <h2>
-                SURAT DISTRICT WEIGHTLIFTING ASSOCIATION
+                ${competition.competitionName}
             </h2>
 
 
             <h3>
                 ${
-                    gender === "female"
-                        ? "WOMEN'S WORKING SHEET"
-                        : "MEN'S WORKING SHEET"
+                    ageCategory
+                        ? `${ageCategory.toUpperCase()} ${
+                            gender === "female"
+                                ? "WOMEN'S"
+                                : "MEN'S"
+                        } WORKING SHEET`
+                        : gender === "female"
+                            ? "WOMEN'S WORKING SHEET"
+                            : "MEN'S WORKING SHEET"
                 }
             </h3>
 
 
             <p>
-                Surat District Weightlifting Championship
-                <br>
                 Venue : ${competition.venue}
                 <br>
                 Date : ${new Date().toLocaleDateString("en-IN")}

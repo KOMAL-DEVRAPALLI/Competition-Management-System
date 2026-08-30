@@ -4,7 +4,8 @@ import { workingSheetTemplate } from "./workingSheetTemplate.js";
 export const generateWorkingSheet = async (
     competition,
     workingSheetData,
-    gender
+    gender,
+    ageCategory
 ) => {
 
     let browser;
@@ -20,6 +21,7 @@ export const generateWorkingSheet = async (
             ],
         };
 
+
         /*
          * Optional browser executable.
          *
@@ -27,16 +29,6 @@ export const generateWorkingSheet = async (
          * Puppeteer will use it.
          *
          * Otherwise Puppeteer uses its bundled browser.
-         *
-         * This allows:
-         *
-         * Local Windows:
-         * PUPPETEER_EXECUTABLE_PATH can point to
-         * Chrome/Edge if required.
-         *
-         * Render/Linux:
-         * Leave it unset and use Puppeteer's
-         * installed browser.
          */
         if (process.env.PUPPETEER_EXECUTABLE_PATH) {
 
@@ -45,20 +37,25 @@ export const generateWorkingSheet = async (
 
         }
 
+
         browser =
             await puppeteer.launch(
                 launchOptions
             );
 
+
         const page =
             await browser.newPage();
+
 
         const html =
             workingSheetTemplate(
                 competition,
                 workingSheetData,
-                gender
+                gender,
+                ageCategory
             );
+
 
         await page.setContent(
             html,
@@ -66,6 +63,7 @@ export const generateWorkingSheet = async (
                 waitUntil: "networkidle0",
             }
         );
+
 
         const pdf =
             await page.pdf({
@@ -82,6 +80,7 @@ export const generateWorkingSheet = async (
                 },
 
             });
+
 
         return pdf;
 
