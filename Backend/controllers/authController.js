@@ -88,22 +88,14 @@ export const logoutController = async (
     res
 ) => {
 
-    res.clearCookie(
-        "adminToken",
-        {
-            httpOnly: true,
-
-            secure:
-                process.env.NODE_ENV ===
-                "production",
-
-            sameSite:
-                process.env.NODE_ENV ===
-                "production"
-                    ? "none"
-                    : "lax",
-        }
-    );
+   res.clearCookie(
+    "adminToken",
+    {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+    }
+);
 
     return res.status(200).json({
 
