@@ -14,16 +14,21 @@ export const loginController = async (req, res) => {
                 email,
                 password
             );
+const isProduction =
+    process.env.NODE_ENV === "production";
 
-       res.cookie(
+res.cookie(
     "adminToken",
     result.token,
     {
         httpOnly: true,
 
-        secure: true,
+        secure: isProduction,
 
-        sameSite: "none",
+        sameSite:
+            isProduction
+                ? "none"
+                : "lax",
 
         maxAge:
             8 * 60 * 60 * 1000,
