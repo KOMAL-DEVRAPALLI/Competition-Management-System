@@ -1,108 +1,128 @@
-import { generateWorkingSheetService } from "../services/pdf/workingSheet/workingSheetService.js";
-import buildWorkingSheetData from "../services/pdf/workingSheet/buildWorkingSheetData.js";
+import {
+    generateWorkingSheetService,
+} from "../services/pdf/workingSheet/workingSheetService.js";
+
+import buildWorkingSheetData
+    from "../services/pdf/workingSheet/buildWorkingSheetData.js";
 
 
-export const generateWorkingSheetController = async (
-    req,
-    res
-) => {
+export const generateWorkingSheetController =
+    async (req, res) => {
 
-    try {
+        try {
 
-        const {
-            competitionId,
-            gender,
-            ageCategory
-        } = req.params;
-
-
-        const pdf =
-            await generateWorkingSheetService(
+            const {
                 competitionId,
                 gender,
-                ageCategory
+                ageCategory,
+            } = req.params;
+
+
+            console.log(
+                "GENERATE WORKING SHEET:",
+                {
+                    competitionId,
+                    gender,
+                    ageCategory,
+                }
             );
 
 
-        res.setHeader(
-            "Content-Type",
-            "application/pdf"
-        );
+            const pdf =
+                await generateWorkingSheetService(
+                    competitionId,
+                    gender,
+                    ageCategory
+                );
 
 
-        res.setHeader(
-            "Content-Disposition",
-            "inline; filename=WorkingSheet.pdf"
-        );
+            res.setHeader(
+                "Content-Type",
+                "application/pdf"
+            );
 
 
-        return res.send(pdf);
-
-    } catch (error) {
-
-        console.error(error);
-
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: error.message,
-
-        });
-
-    }
-
-};
+            res.setHeader(
+                "Content-Disposition",
+                `inline; filename="${ageCategory}-${gender}-WorkingSheet.pdf"`
+            );
 
 
-export const getWorkingSheetDataController = async (
-    req,
-    res
-) => {
+            return res.send(pdf);
 
-    try {
+        } catch (error) {
 
-        const {
-            competitionId,
-            gender
-        } = req.params;
+            console.error(
+                "Working sheet generation error:",
+                error
+            );
 
 
-        const workingSheetData =
-            await buildWorkingSheetData(
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+export const getWorkingSheetDataController =
+    async (req, res) => {
+
+        try {
+
+            const {
                 competitionId,
-                gender
-            );
+                gender,
+            } = req.params;
 
 
-        const athletes =
-            workingSheetData.flatMap(
-                (group) =>
-                    group.athletes
-            );
+            const workingSheetData =
+                await buildWorkingSheetData(
+                    competitionId,
+                    gender
+                );
 
 
-        return res.status(200).json({
+            const athletes =
+                workingSheetData.flatMap(
+                    (group) =>
+                        group.athletes
+                );
 
-            success: true,
 
-            count: athletes.length,
+            return res.status(200).json({
 
-            data: athletes,
+                success: true,
 
-        });
+                count:
+                    athletes.length,
 
-    } catch (error) {
+                data:
+                    athletes,
 
-        return res.status(500).json({
+            });
 
-            success: false,
+        } catch (error) {
 
-            message: error.message,
+            console.error(error);
 
-        });
 
-    }
+            return res.status(500).json({
 
-};
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };

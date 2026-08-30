@@ -113,7 +113,35 @@ const StartList = () => {
 
     }
 
+const openWorkingSheet = (
+    gender,
+    ageCategory
+) => {
 
+    const url =
+        `${import.meta.env.VITE_API_URL}` +
+        `/working-sheet/` +
+        `${competitionId}/` +
+        `${gender}/` +
+        `${ageCategory}`;
+
+
+    console.log(
+        "OPEN WORKING SHEET:",
+        {
+            gender,
+            ageCategory,
+            url,
+        }
+    );
+
+
+    window.open(
+        url,
+        "_blank"
+    );
+
+};
     return (
 
         <div className="start-list-page">
@@ -142,16 +170,60 @@ const StartList = () => {
             </div>
 
 
-            <div className="start-list-actions">
+          <div className="start-list-actions">
 
-                <button
-                    className="pdf-btn"
-                    onClick={downloadPDFs}
-                >
-                    📄 Download 4 Start List PDFs
-                </button>
+    <button
+        className="pdf-btn"
+        onClick={() =>
+            openWorkingSheet(
+                "male",
+                "U17"
+            )
+        }
+    >
+        📄 Men U-17
+    </button>
 
-            </div>
+
+    <button
+        className="pdf-btn"
+        onClick={() =>
+            openWorkingSheet(
+                "female",
+                "U17"
+            )
+        }
+    >
+        📄 Women U-17
+    </button>
+
+
+    <button
+        className="pdf-btn"
+        onClick={() =>
+            openWorkingSheet(
+                "male",
+                "U19"
+            )
+        }
+    >
+        📄 Men U-19
+    </button>
+
+
+    <button
+        className="pdf-btn"
+        onClick={() =>
+            openWorkingSheet(
+                "female",
+                "U19"
+            )
+        }
+    >
+        📄 Women U-19
+    </button>
+
+</div>
 
 
             <div className="table-wrapper">

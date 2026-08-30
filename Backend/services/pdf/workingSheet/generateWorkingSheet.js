@@ -1,72 +1,76 @@
 import puppeteer from "puppeteer";
-import { workingSheetTemplate } from "./workingSheetTemplate.js";
 
-export const generateWorkingSheet = async (
-    competition,
-    workingSheetData,
-    gender,
-    ageCategory
-) => {
-
-    let browser;
-
-    try {
-
-        const launchOptions = {
-            headless: true,
-
-            args: [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-            ],
-        };
+import {
+    workingSheetTemplate,
+} from "./workingSheetTemplate.js";
 
 
-        /*
-         * Optional browser executable.
-         *
-         * If PUPPETEER_EXECUTABLE_PATH is configured,
-         * Puppeteer will use it.
-         *
-         * Otherwise Puppeteer uses its bundled browser.
-         */
-        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+export const generateWorkingSheet =
+    async (
+        competition,
+        workingSheetData,
+        gender,
+        ageCategory
+    ) => {
 
-            launchOptions.executablePath =
-                process.env.PUPPETEER_EXECUTABLE_PATH;
-
-        }
+        let browser;
 
 
-        browser =
-            await puppeteer.launch(
-                launchOptions
-            );
+        try {
+
+            const launchOptions = {
+
+                headless: true,
+
+                args: [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                ],
+
+            };
 
 
-        const page =
-            await browser.newPage();
+            if (
+                process.env
+                    .PUPPETEER_EXECUTABLE_PATH
+            ) {
 
+                launchOptions.executablePath =
+                    process.env
+                        .PUPPETEER_EXECUTABLE_PATH;
 
-        const html =
-            workingSheetTemplate(
-                competition,
-                workingSheetData,
-                gender,
-                ageCategory
-            );
-
-
-        await page.setContent(
-            html,
-            {
-                waitUntil: "networkidle0",
             }
-        );
 
 
-        const pdf =
-            await page.pdf({
+            browser =
+                await puppeteer.launch(
+                    launchOptions
+                );
+
+
+            const page =
+                await browser.newPage();
+
+
+            const html =
+                workingSheetTemplate(
+                    competition,
+                    workingSheetData,
+                    gender,
+                    ageCategory
+                );
+
+
+            await page.setContent(
+                html,
+                {
+                    waitUntil:
+                        "networkidle0",
+                }
+            );
+
+
+            return await page.pdf({
 
                 format: "A4",
 
@@ -81,17 +85,14 @@ export const generateWorkingSheet = async (
 
             });
 
+        } finally {
 
-        return pdf;
+            if (browser) {
 
-    } finally {
+                await browser.close();
 
-        if (browser) {
-
-            await browser.close();
+            }
 
         }
 
-    }
-
-};
+    };

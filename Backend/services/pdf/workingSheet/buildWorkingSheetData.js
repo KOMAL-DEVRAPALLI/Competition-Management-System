@@ -1,4 +1,57 @@
-import CompetitionEntry from "../../../models/CompetitionEntry.js";
+import CompetitionEntry
+    from "../../../models/CompetitionEntry.js";
+
+
+const normalizeAgeCategory = (value) => {
+
+    const normalized =
+        String(value ?? "")
+            .trim()
+            .toUpperCase()
+            .replace(/\s+/g, "")
+            .replace("-", "");
+
+
+    if (
+        normalized === "U17"
+    ) {
+
+        return "U17";
+
+    }
+
+
+    if (
+        normalized === "U19"
+    ) {
+
+        return "U19";
+
+    }
+
+
+    if (
+        normalized === "YOUTH"
+    ) {
+
+        return "U17";
+
+    }
+
+
+    if (
+        normalized === "JUNIOR"
+    ) {
+
+        return "U19";
+
+    }
+
+
+    return normalized;
+
+};
+
 
 const buildWorkingSheetData = async (
     competitionId,
@@ -9,52 +62,36 @@ const buildWorkingSheetData = async (
     ageCategory = null
 ) => {
 
-    // =====================================
-    // NORMALIZE INPUT
-    // =====================================
-
     const normalizedGender =
         String(gender ?? "")
             .trim()
             .toLowerCase();
 
+
+    const normalizedAgeCategory =
+        ageCategory
+            ? normalizeAgeCategory(
+                ageCategory
+            )
+            : null;
+
+
     const normalizedCategories =
-        Array.isArray(selectedWeightCategories)
+        Array.isArray(
+            selectedWeightCategories
+        )
             ? selectedWeightCategories
-                .map((category) =>
-                    String(category).trim()
+                .map(
+                    (category) =>
+                        String(category).trim()
                 )
                 .filter(Boolean)
             : [];
 
-    const normalizedAgeCategory =
-        String(ageCategory ?? "")
-            .trim()
-            .toLowerCase();
-
 
     // =====================================
-    // LOAD COMPETITION ENTRIES
-    //
-    // IMPORTANT:
-    //
-    // Only filter by competitionId here.
-    //
-    // Do NOT add opening/final-category
-    // filters to MongoDB because that changes
-    // the previous working behavior.
-    //
-    // TRANSACTION SUPPORT:
-    //
-    // When dbSession is supplied, this read
-    // participates in the caller's MongoDB
-    // transaction.
+    // LOAD ENTRIES
     // =====================================
-
-    console.time(
-        "buildWorkingSheetData - DB"
-    );
-
 
     let query =
         CompetitionEntry
@@ -100,13 +137,21 @@ const buildWorkingSheetData = async (
         await query.lean();
 
 
-    console.timeEnd(
-        "buildWorkingSheetData - DB"
+    console.log(
+        "WORKING SHEET REQUEST:",
+        {
+            competitionId,
+            gender: normalizedGender,
+            ageCategory:
+                normalizedAgeCategory,
+            totalEntries:
+                entries.length,
+        }
     );
 
 
     // =====================================
-    // GROUP ROWS
+    // GROUP
     // =====================================
 
     const groupedRows = {};
@@ -118,71 +163,95 @@ const buildWorkingSheetData = async (
             entry.athleteId;
 
 
-        // =================================
-        // SAFETY CHECK
-        // =================================
-
         if (!athlete) {
             continue;
         }
 
 
         const athleteGender =
-            athlete.personalInfo?.gender;
+            String(
+                athlete.personalInfo?.gender ?? ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const entryAgeCategory =
+            normalizeAgeCategory(
+                entry.competitionCategory
+                    ?.ageCategory
+            );
 
 
         const rawWeightCategory =
-            entry.official?.finalWeightCategory;
+            entry.official
+                ?.finalWeightCategory;
+
+
+        console.log(
+            "ENTRY CHECK:",
+            {
+                name:
+                    athlete.personalInfo
+                        ?.fullName,
+
+                gender:
+                    athleteGender,
+
+                ageCategory:
+                    entryAgeCategory,
+
+                requestedGender:
+                    normalizedGender,
+
+                requestedAge:
+                    normalizedAgeCategory,
+            }
+        );
 
 
         // =================================
-        // REQUIRED EXISTING DATA
-        //
-        // Same business rules as before.
+        // REQUIRED DATA
         // =================================
 
         if (
-            !entry.opening?.snatch ||
-            !entry.opening?.cleanJerk ||
+            entry.opening?.snatch == null ||
+            entry.opening?.cleanJerk == null ||
             !athleteGender ||
             !rawWeightCategory
         ) {
+
             continue;
+
         }
 
 
         // =================================
-        // GENDER FILTER
+        // GENDER
         // =================================
 
         if (
-            athleteGender.toLowerCase() !==
+            athleteGender !==
             normalizedGender
         ) {
+
             continue;
+
         }
 
 
         // =================================
-        // AGE CATEGORY FILTER
-        //
-        // Empty/null ageCategory means
-        // no age-category filtering.
-        //
-        // This preserves existing
-        // association competition behavior.
+        // AGE
         // =================================
 
         if (
             normalizedAgeCategory &&
-            String(
-                entry.competitionCategory?.ageCategory ?? ""
-            )
-                .trim()
-                .toLowerCase() !==
-            normalizedAgeCategory
+            entryAgeCategory !==
+                normalizedAgeCategory
         ) {
+
             continue;
+
         }
 
 
@@ -191,14 +260,10 @@ const buildWorkingSheetData = async (
         // =================================
 
         const displayWeightCategory =
-            rawWeightCategory.trim();
+            String(
+                rawWeightCategory
+            ).trim();
 
-
-        // =================================
-        // SESSION CATEGORY FILTER
-        //
-        // Empty array = ALL categories.
-        // =================================
 
         if (
             normalizedCategories.length > 0 &&
@@ -206,13 +271,11 @@ const buildWorkingSheetData = async (
                 displayWeightCategory
             )
         ) {
+
             continue;
+
         }
 
-
-        // =================================
-        // NORMALIZE WEIGHT CATEGORY
-        // =================================
 
         const normalizedWeight =
             displayWeightCategory
@@ -220,17 +283,15 @@ const buildWorkingSheetData = async (
                 .replace(/\s+/g, "");
 
 
-        // =================================
-        // UNIQUE ATHLETE/CATEGORY KEY
-        // =================================
+        // IMPORTANT:
+        // Include age in key so U17/U19
+        // entries can never merge.
 
         const key =
-            `${athlete._id}-${normalizedWeight}`;
+            `${athlete._id}-` +
+            `${entryAgeCategory}-` +
+            `${normalizedWeight}`;
 
-
-        // =================================
-        // CREATE ROW
-        // =================================
 
         if (!groupedRows[key]) {
 
@@ -243,10 +304,15 @@ const buildWorkingSheetData = async (
                     entry._id,
 
                 lotNumber:
-                    entry.official?.lotNumber,
+                    entry.official
+                        ?.lotNumber,
 
                 gender:
-                    athleteGender,
+                    athlete.personalInfo
+                        ?.gender,
+
+                ageCategory:
+                    entryAgeCategory,
 
                 weightCategory:
                     normalizedWeight,
@@ -255,37 +321,48 @@ const buildWorkingSheetData = async (
                     displayWeightCategory,
 
                 name:
-                    athlete.personalInfo?.fullName,
+                    athlete.personalInfo
+                        ?.fullName,
 
                 bodyWeight:
-                    entry.official?.bodyWeight,
+                    entry.official
+                        ?.bodyWeight,
 
                 isYouth:
-                    false,
+                    entryAgeCategory ===
+                    "U17",
 
                 isJunior:
-                    false,
+                    entryAgeCategory ===
+                    "U19",
 
                 isSenior:
-                    false,
+                    entryAgeCategory ===
+                    "SENIOR",
 
                 openingSnatch:
-                    entry.opening?.snatch,
+                    entry.opening
+                        ?.snatch,
 
                 openingCleanJerk:
-                    entry.opening?.cleanJerk,
+                    entry.opening
+                        ?.cleanJerk,
 
                 bestSnatch:
-                    entry.results?.bestSnatch ?? 0,
+                    entry.results
+                        ?.bestSnatch ?? 0,
 
                 bestCleanJerk:
-                    entry.results?.bestCleanJerk ?? 0,
+                    entry.results
+                        ?.bestCleanJerk ?? 0,
 
                 total:
-                    entry.results?.total ?? 0,
+                    entry.results
+                        ?.total ?? 0,
 
                 place:
-                    entry.results?.rank ?? "",
+                    entry.results
+                        ?.rank ?? "",
 
                 competitionEntry:
                     entry,
@@ -294,44 +371,11 @@ const buildWorkingSheetData = async (
 
         }
 
-
-        // =================================
-        // AGE CATEGORY FLAGS
-        // =================================
-
-        const age =
-            entry.competitionCategory
-                ?.ageCategory;
-
-
-        if (age === "Youth") {
-
-            groupedRows[key]
-                .isYouth = true;
-
-        }
-
-
-        if (age === "Junior") {
-
-            groupedRows[key]
-                .isJunior = true;
-
-        }
-
-
-        if (age === "Senior") {
-
-            groupedRows[key]
-                .isSenior = true;
-
-        }
-
     }
 
 
     // =====================================
-    // OBJECT → ARRAY
+    // ARRAY
     // =====================================
 
     const rows =
@@ -344,44 +388,45 @@ const buildWorkingSheetData = async (
     // SORT
     // =====================================
 
-    rows.sort((a, b) => {
+    rows.sort(
+        (a, b) => {
 
-        const weightA =
-            parseFloat(
-                a.weightCategory
-            );
-
-        const weightB =
-            parseFloat(
-                b.weightCategory
-            );
+            const weightA =
+                parseFloat(
+                    a.weightCategory
+                );
 
 
-        if (
-            weightA !==
-            weightB
-        ) {
+            const weightB =
+                parseFloat(
+                    b.weightCategory
+                );
+
+
+            if (
+                weightA !==
+                weightB
+            ) {
+
+                return (
+                    weightA -
+                    weightB
+                );
+
+            }
+
 
             return (
-                weightA -
-                weightB
+                (a.lotNumber ?? 9999) -
+                (b.lotNumber ?? 9999)
             );
 
         }
-
-
-        return (
-            (a.lotNumber ?? 9999) -
-            (b.lotNumber ?? 9999)
-        );
-
-    });
+    );
 
 
     // =====================================
-    // FLAT MODE
-    //
-    // Used by live scoring.
+    // FLAT
     // =====================================
 
     if (flat) {
@@ -392,9 +437,7 @@ const buildWorkingSheetData = async (
 
 
     // =====================================
-    // GROUPED MODE
-    //
-    // Used by working-sheet PDF.
+    // GROUP BY WEIGHT
     // =====================================
 
     const grouped = {};
@@ -421,7 +464,7 @@ const buildWorkingSheetData = async (
 
 
     // =====================================
-    // FINAL WORKING SHEET STRUCTURE
+    // FINAL
     // =====================================
 
     return Object.entries(
@@ -457,5 +500,6 @@ const buildWorkingSheetData = async (
     );
 
 };
+
 
 export default buildWorkingSheetData;
