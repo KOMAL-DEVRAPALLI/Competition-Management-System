@@ -54,16 +54,21 @@ ${workingSheetData.map(section => `
 
         <div class="header">
 
-            <h2>
-                ${competitionName}
-            </h2>
+         <h2>
+    જિલ્લા રમત ગમત અધિકારી
+</h2>
+
 <h3>
-    WEIGHTLIFTING
+    જિલ્લા રમત પ્રશિક્ષણ કેન્દ્ર, સુરત
 </h3>
 
-            <h3>
-                ${sessionTitle}
-            </h3>
+<h3>
+    (સુરત ગ્રામ્ય વેઇટ લિફ્ટિંગ સ્પર્ધા)
+</h3>
+
+<h4>
+    ${sessionTitle}
+</h4>
 
             <p>
                 Venue : ${competition?.venue ?? ""}
