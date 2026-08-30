@@ -1,0 +1,48 @@
+.competition-management-page {
+    min-height: 100vh;
+    padding: 40px;
+    background: #f5f7fb;
+}
+
+.competition-management-header {
+    max-width: 900px;
+    margin: 0 auto 30px;
+}
+
+.competition-management-header h1 {
+    margin: 0;
+    font-size: 30px;
+    color: #1f2937;
+}
+
+.competition-management-header p {
+    margin-top: 8px;
+    color: #6b7280;
+}
+
+.competition-management-actions {
+    max-width: 900px;
+    margin: 0 auto;
+
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.competition-management-actions button {
+    padding: 24px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.competition-management-actions button:hover {
+    background: #f9fafb;
+}

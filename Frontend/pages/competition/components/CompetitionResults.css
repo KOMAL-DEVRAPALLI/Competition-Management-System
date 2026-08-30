@@ -1,270 +1,475 @@
-/* =========================================================
-   OFFICIAL ATHLETE SELECTION
-========================================================= */
+/* =====================================
+   LIVE SCORE SHEET
+===================================== */
 
-.official-athlete-list {
+.scoreboard {
     width: 100%;
+
+    margin-top: 12px;
+
+    border: 1px solid #cfd6e0;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #172033;
+
+    overflow: hidden;
+}
+
+
+/* =====================================
+   HEADER
+===================================== */
+
+.scoreboard-header {
+    display: flex;
+    align-items: center;
+
+    min-height: 52px;
 
     box-sizing: border-box;
 
-    margin-bottom: 28px;
+    padding: 9px 15px;
 
-    background: #ffffff;
+    border-bottom: 1px solid #d9dee7;
 
-    color: #111827;
-
-    border-radius: 16px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.18);
+    background: #f4f6f8;
 }
 
 
-/* =========================================================
-   HEADER
-========================================================= */
-
-.official-list-header {
-    display: flex;
-
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 20px;
-
-    padding: 20px 22px;
-
-    background: #0f2d50;
-
-    color: #ffffff;
-}
-
-
-.official-list-header h2 {
-    margin: 0 0 5px;
-
-    color: #ffffff;
-
-    font-size: 22px;
-
-    font-weight: 800;
-}
-
-
-.official-list-header p {
+.scoreboard-header h2 {
     margin: 0;
 
-    color: #cbd5e1;
+    font-size: 17px;
+    font-weight: 800;
 
-    font-size: 13px;
+    line-height: 1.2;
+
+    color: #172033;
 }
 
 
-.official-list-header > strong {
-    white-space: nowrap;
+.scoreboard-athlete-count {
+    display: block;
 
-    padding: 9px 14px;
+    margin-top: 3px;
 
-    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
 
-    background: #1e40af;
-
-    color: #ffffff;
-
-    font-size: 13px;
+    color: #687386;
 }
 
 
-/* =========================================================
+/* =====================================
    TABLE WRAPPER
-========================================================= */
+===================================== */
 
-.official-list-table-wrapper {
+.scoreboard-wrapper {
     width: 100%;
 
     overflow-x: auto;
+    overflow-y: visible;
+
+    background: #ffffff;
 }
 
 
-/* =========================================================
+/* =====================================
    TABLE
-========================================================= */
+===================================== */
 
-.official-athlete-table {
+.scoreboard-table {
     width: 100%;
 
-    min-width: 850px;
+    min-width: 1120px;
 
     border-collapse: collapse;
 
-    color: #111827;
-}
-
-
-.official-athlete-table th {
-    padding: 13px 12px;
-
-    background: #2563eb;
-
-    color: #ffffff;
-
-    text-align: center;
-
-    font-size: 13px;
-
-    font-weight: 800;
-
-    white-space: nowrap;
-}
-
-
-.official-athlete-table td {
-    padding: 13px 12px;
-
-    border-bottom: 1px solid #e5e7eb;
-
     background: #ffffff;
 
-    color: #111827;
-
-    text-align: center;
+    color: #344054;
 
     font-size: 14px;
 }
 
 
-.official-athlete-table td:nth-child(2) {
-    min-width: 230px;
+/* =====================================
+   TABLE HEADER
+===================================== */
+
+.scoreboard-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    box-sizing: border-box;
+
+    padding: 10px 8px;
+
+    border-right: 1px solid #dfe3e9;
+    border-bottom: 1px solid #cfd5df;
+
+    background: #e9edf2;
+
+    color: #475467;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
+
+
+.scoreboard-table thead th:last-child {
+    border-right: 0;
+}
+
+
+.scoreboard-table thead th:nth-child(2) {
+    text-align: left;
+}
+
+
+/* =====================================
+   BODY ROW
+===================================== */
+
+.scoreboard-table tbody tr {
+    background: #ffffff;
+}
+
+
+.scoreboard-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* =====================================
+   BODY CELLS
+===================================== */
+
+.scoreboard-table tbody td {
+    height: 48px;
+
+    box-sizing: border-box;
+
+    padding: 7px 8px;
+
+    border-right: 1px solid #e5e8ed;
+    border-bottom: 1px solid #e5e8ed;
+
+    background: #ffffff;
+
+    color: #344054;
+
+    font-size: 14px;
+
+    line-height: 1.25;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
+
+
+.scoreboard-table tbody td:last-child {
+    border-right: 0;
+}
+
+
+.scoreboard-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+
+.scoreboard-table tbody td:nth-child(2) {
+    min-width: 190px;
 
     text-align: left;
 }
 
 
-.official-athlete-table td:nth-child(2) strong {
-    color: inherit;
+.scoreboard-table tbody td strong {
+    color: #172033;
+
+    font-size: 14px;
+    font-weight: 750;
 }
 
 
-/* =========================================================
-   HOVER
-========================================================= */
+/* =====================================
+   CURRENT ATHLETE
+===================================== */
 
-.official-athlete-table tbody tr {
-    transition:
-        background 0.15s ease;
+.scoreboard-current-row td {
+    background: #fff8d8;
 }
 
 
-.official-athlete-table tbody tr:hover td {
-    background: #f8fafc;
+.scoreboard-current-row:hover td {
+    background: #fff4c2;
 }
 
 
-/* =========================================================
-   SELECTED
-========================================================= */
+.scoreboard-current-row td:first-child {
+    position: relative;
+}
 
-.official-selected-row td {
-    background: #fef3c7 !important;
 
-    color: #422006 !important;
+.scoreboard-current-row td:first-child::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 5px;
+    bottom: 5px;
+
+    width: 4px;
+
+    border-radius: 0 2px 2px 0;
+
+    background: #122f52;
+}
+
+
+/* =====================================
+   COMPLETED ATHLETE
+===================================== */
+
+.scoreboard-completed-row td {
+    background: #fafafa;
+
+    color: #667085;
+}
+
+
+.scoreboard-completed-row td strong {
+    color: #475467;
+}
+
+
+/* =====================================
+   NO LIFT
+===================================== */
+
+.attempt-no-lift {
+    display: inline-block;
+
+    color: #b42318;
 
     font-weight: 800;
+
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
 }
 
 
-.official-selected-row td:nth-child(2),
-.official-selected-row td:nth-child(2) strong {
-    color: #422006 !important;
+/* =====================================
+   DECLARATION COLUMN
+===================================== */
+
+.scoreboard-table th:last-child,
+.scoreboard-table td:last-child {
+    min-width: 170px;
 }
 
 
-/* =========================================================
-   COMPLETED
-========================================================= */
+/* =====================================
+   DECLARATION EDITOR
+===================================== */
 
-.official-completed-row td {
-    background: #f3f4f6;
+.scoreboard-declaration-editor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    color: #9ca3af;
+    gap: 6px;
+
+    margin: 0;
+}
+
+
+.scoreboard-declaration-attempt {
+    min-width: 28px;
+
+    color: #687386;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-align: center;
+}
+
+
+/* =====================================
+   DECLARATION INPUT
+===================================== */
+
+.scoreboard-declaration-input-wrapper {
+    position: relative;
+
+    width: 72px;
+}
+
+
+.scoreboard-declaration-input-wrapper input {
+    width: 100%;
+    height: 34px;
+
+    box-sizing: border-box;
+
+    padding: 0 25px 0 7px;
+
+    border: 1px solid #b8c0cc;
+    border-radius: 5px;
+
+    background: #ffffff;
+    color: #172033;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: center;
+
+    outline: none;
+}
+
+
+.scoreboard-declaration-input-wrapper input:focus {
+    border-color: #122f52;
+
+    box-shadow:
+        0 0 0 1px #122f52;
+}
+
+
+.scoreboard-declaration-input-wrapper input:disabled {
+    background: #f1f3f5;
+
+    cursor: not-allowed;
 
     opacity: 0.65;
 }
 
 
-/* =========================================================
-   SELECT BUTTON
-========================================================= */
+/* Remove number spinners */
 
-.select-athlete-btn {
-    min-width: 105px;
+.scoreboard-declaration-input-wrapper
+input::-webkit-outer-spin-button,
+.scoreboard-declaration-input-wrapper
+input::-webkit-inner-spin-button {
+    margin: 0;
 
-    padding: 8px 12px;
+    -webkit-appearance: none;
+}
 
-    border: none;
 
-    border-radius: 7px;
 
-    background: #2563eb;
 
+
+/* =====================================
+   KG
+===================================== */
+
+.scoreboard-declaration-input-wrapper span {
+    position: absolute;
+
+    top: 50%;
+    right: 6px;
+
+    transform: translateY(-50%);
+
+    color: #687386;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    pointer-events: none;
+}
+
+
+/* =====================================
+   SAVE
+===================================== */
+
+.scoreboard-declaration-editor button {
+    height: 34px;
+
+    box-sizing: border-box;
+
+    padding: 0 10px;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: #122f52;
     color: #ffffff;
 
-    font-size: 12px;
+    font-family: inherit;
 
-    font-weight: 900;
+    font-size: 11px;
+    font-weight: 800;
 
     cursor: pointer;
 }
 
 
-.select-athlete-btn:hover {
-    background: #1d4ed8;
+.scoreboard-declaration-editor button:hover:not(:disabled) {
+    background: #0d243f;
 }
 
 
-.select-athlete-btn:disabled {
-    background: #94a3b8;
-
-    color: #ffffff;
+.scoreboard-declaration-editor button:disabled {
+    opacity: 0.5;
 
     cursor: not-allowed;
 }
 
 
-.official-selected-row .select-athlete-btn {
-    background: #a16207;
+/* =====================================
+   NO DECLARATION
+===================================== */
 
-    color: #ffffff;
+.scoreboard-declaration-disabled {
+    color: #98a2b3;
+
+    font-size: 13px;
 }
 
 
-/* =========================================================
-   EMPTY
-========================================================= */
+/* =====================================
+   EMPTY SCOREBOARD
+===================================== */
 
-.no-athletes-cell {
-    padding: 30px !important;
+.no-scoreboard-data {
+    height: 70px;
 
-    color: #64748b !important;
+    box-sizing: border-box;
+
+    color: #667085 !important;
+
+    font-size: 14px !important;
 
     text-align: center !important;
-
-    font-weight: 700;
 }
 
 
-/* =========================================================
+/* =====================================
    RESPONSIVE
-========================================================= */
+===================================== */
 
-@media (max-width: 1000px) {
+@media (max-width: 900px) {
 
-    .official-list-header {
-        flex-direction: column;
-
-        align-items: flex-start;
+    .scoreboard-table {
+        min-width: 1050px;
     }
 
 }

@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import {
+    useCallback,
+    useEffect,
+    useState,
+} from "react";
+
+import {
+    useParams,
+} from "react-router-dom";
 
 import {
     apiRequest,
@@ -9,11 +16,37 @@ import {
 
 import "./LiveScore.css";
 
-import LiveScoreHeader from "./components/LiveScoreHeader";
-import CurrentAthletePanel from "./components/CurrentAthletePanel";
-import AthleteSelectionTable from "./components/AthleteSelectionTable";
-import CompetitionResults from "./components/CompetitionResults";
+import LiveScoreHeader
+    from "./components/LiveScoreHeader";
 
+import OfficialsControlShell
+    from "./components/OfficialsControlShell";
+
+import CompetitionResults
+    from "./components/CompetitionResults";
+
+
+// =====================================
+// LIVE SCORE
+//
+// Backend-authoritative Officials Screen.
+//
+// React:
+// - displays authoritative state
+// - submits official actions
+// - keeps the latest successful lift response
+//   for the JUST COMPLETED display
+//
+// React does NOT:
+// - calculate calling order
+// - select the next athlete
+// - reorder athletes
+//
+// Backend:
+// Competition State
+// → Queue/State Engine
+// → Current / Next / Upcoming
+// =====================================
 
 const LiveScore = () => {
 
@@ -23,28 +56,81 @@ const LiveScore = () => {
     } = useParams();
 
 
-    const SELECT_ATHLETE_URL =
-        "/live-competition/select-official-athlete";
+    // =====================================
+    // AUTHORITATIVE STATE
+    // =====================================
+
+    const [
+        loading,
+        setLoading,
+    ] = useState(true);
 
 
-    const [loading, setLoading] =
-        useState(true);
-
-    const [liveCompetition, setLiveCompetition] =
-        useState(null);
-
-
-    const [declaredWeight, setDeclaredWeight] =
-        useState("");
+    const [
+        liveCompetition,
+        setLiveCompetition,
+    ] = useState(null);
 
 
-    const [processingLift, setProcessingLift] =
-        useState(false);
+    const [
+        queueState,
+        setQueueState,
+    ] = useState(null);
 
 
-    const [savingDeclaration, setSavingDeclaration] =
-        useState(false);
+    // =====================================
+    // JUST COMPLETED
+    //
+    // This is populated from the successful
+    // processLift() response.
+    //
+    // It is NOT inferred from the queue.
+    // =====================================
 
+    const [
+        justCompleted,
+        setJustCompleted,
+    ] = useState(null);
+
+
+    // =====================================
+    // NEXT ATTEMPT ALLOCATION
+    //
+    // UI state for the athlete who just
+    // completed an attempt.
+    // =====================================
+
+    const [
+        nextAttemptDeclaredWeight,
+        setNextAttemptDeclaredWeight,
+    ] = useState("");
+
+
+    const [
+        savingNextAttemptAllocation,
+        setSavingNextAttemptAllocation,
+    ] = useState(false);
+
+
+    // =====================================
+    // CURRENT ATHLETE DECLARATION UI
+    // =====================================
+
+    const [
+        declaredWeight,
+        setDeclaredWeight,
+    ] = useState("");
+
+
+    const [
+        savingDeclaration,
+        setSavingDeclaration,
+    ] = useState(false);
+
+
+    // =====================================
+    // PENDING DECLARATION ACTION
+    // =====================================
 
     const [
         savingDeclarationEntryId,
@@ -52,94 +138,673 @@ const LiveScore = () => {
     ] = useState(null);
 
 
-    const [selectingAthlete, setSelectingAthlete] =
-        useState(false);
+    // =====================================
+    // LIFT PROCESSING
+    // =====================================
+
+    const [
+        processingLift,
+        setProcessingLift,
+    ] = useState(false);
 
 
-    const [startingCompetition, setStartingCompetition] =
-        useState(false);
+    // =====================================
+    // COMPETITION START
+    // =====================================
+
+    const [
+        startingCompetition,
+        setStartingCompetition,
+    ] = useState(false);
 
 
-    const [liftMessage, setLiftMessage] =
-        useState("");
+    // =====================================
+    // STATUS
+    // =====================================
+
+    const [
+        liftMessage,
+        setLiftMessage,
+    ] = useState("");
 
 
-    const [liftError, setLiftError] =
-        useState("");
+    const [
+        liftError,
+        setLiftError,
+    ] = useState("");
 
 
-    const {
-        currentAthlete = null,
-        athletes = [],
-        competitionResults = [],
-        status = "READY",
-        currentPhase = "SNATCH",
-        totalAthletes = 0,
-    } = liveCompetition || {};
+    // =====================================
+    // DERIVED AUTHORITATIVE STATE
+    // =====================================
 
+    const rawCurrentAthlete =
+        queueState?.current ??
+        null;
+
+
+    const currentAthlete =
+        rawCurrentAthlete
+            ? {
+                ...rawCurrentAthlete,
+
+                currentAttempt:
+                    rawCurrentAthlete.currentAttempt ??
+                    {
+                        phase:
+                            rawCurrentAthlete.phase ??
+                            null,
+
+                        attemptNo:
+                            rawCurrentAthlete.attemptNo ??
+                            null,
+
+                        declaredWeight:
+                            rawCurrentAthlete.declaredWeight ??
+                            null,
+
+                        result:
+                            rawCurrentAthlete.result ??
+                            "PENDING",
+
+                        completed:
+                            rawCurrentAthlete.completed ??
+                            false,
+
+                        applicableWeight:
+                            rawCurrentAthlete.applicableWeight ??
+                            null,
+                    },
+            }
+            : null;
+
+
+    // =====================================
+    // NEXT
+    //
+    // Backend authoritative.
+    // =====================================
+
+    const nextAthlete =
+        queueState?.next ??
+        null;
+
+
+    // =====================================
+    // UPCOMING
+    //
+    // Backend authoritative.
+    // =====================================
+
+    const upcomingAthletes =
+        Array.isArray(
+            queueState?.upcoming
+        )
+            ? queueState.upcoming
+            : [];
+
+
+    // =====================================
+    // NORMAL AUTOMATIC QUEUE
+    //
+    // IMPORTANT:
+    //
+    // This is only a compatibility adapter.
+    // It does not calculate queue order.
+    // =====================================
+
+    const rawQueue =
+        Array.isArray(
+            queueState?.queue
+        )
+            ? queueState.queue
+            : [];
+
+
+    const queue =
+        rawQueue.map(
+            (athlete) => ({
+
+                ...athlete,
+
+                currentAttempt:
+                    athlete.currentAttempt ??
+                        (
+                            athlete.attemptNo != null ||
+                            athlete.phase != null ||
+                            athlete.declaredWeight != null
+                        )
+                        ? {
+
+                            phase:
+                                athlete.phase ??
+                                null,
+
+                            attemptNo:
+                                athlete.attemptNo ??
+                                null,
+
+                            declaredWeight:
+                                athlete.declaredWeight ??
+                                null,
+
+                            result:
+                                athlete.result ??
+                                "PENDING",
+
+                            completed:
+                                athlete.completed ??
+                                false,
+
+                            applicableWeight:
+                                athlete.applicableWeight ??
+                                null,
+
+                        }
+                        : null,
+
+            })
+        );
+
+
+    // =====================================
+    // DECLARATION-PENDING ATHLETES
+    //
+    // Backend supplied only.
+    // =====================================
+
+    const declarationPendingCandidates =
+        Array.isArray(
+            queueState
+                ?.declarationPendingCandidates
+        )
+            ? queueState
+                .declarationPendingCandidates
+            : [];
+
+
+    const declarationPending =
+        Boolean(
+            queueState?.declarationPending ||
+            declarationPendingCandidates.length > 0
+        );
+
+
+    // =====================================
+    // CURRENT PHASE
+    // =====================================
+
+    const currentPhase =
+        queueState?.currentPhase ??
+        liveCompetition?.currentPhase ??
+        "SNATCH";
+
+
+    // =====================================
+    // STATUS
+    // =====================================
+
+    const status =
+        queueState?.status ??
+        liveCompetition?.status ??
+        "READY";
+
+
+    // =====================================
+    // AUTHORITATIVE VERSION
+    // =====================================
+
+    const stateVersion =
+        queueState?.stateVersion ??
+        liveCompetition?.stateVersion ??
+        null;
+
+
+    // =====================================
+    // TOTAL ATHLETES
+    // =====================================
+
+    const totalAthletes =
+        liveCompetition?.totalAthletes ??
+        liveCompetition?.athletes?.length ??
+        queueState?.totalAthletes ??
+        queueState?.queueCount ??
+        queue.length;
+
+
+    // =====================================
+    // RESULTS
+    // =====================================
+
+    const competitionResults =
+        liveCompetition?.competitionResults ??
+        liveCompetition?.results ??
+        [];
+
+
+    // =====================================
+    // CURRENT ATTEMPT
+    // =====================================
 
     const currentAttempt =
-        currentAthlete?.currentAttempt ?? null;
+        currentAthlete?.currentAttempt ??
+        null;
 
 
-    const canSelectAnotherAthlete = true;
+    // =====================================
+    // LOAD LIVE COMPETITION
+    // =====================================
+
+    const loadLiveCompetition =
+        useCallback(
+            async () => {
+
+                const response =
+                    await apiRequest(
+
+                        `/live-competition/` +
+                        `${competitionId}/` +
+                        `${gender}`,
+
+                        "GET"
+
+                    );
 
 
-    const loadLiveCompetition = async () => {
+                return response.data;
 
-        try {
+            },
 
-            const response =
-                await apiRequest(
-                    `/live-competition/${competitionId}/${gender}`,
-                    "GET"
-                );
-
-
-            setLiveCompetition(
-                response.data
-            );
+            [
+                competitionId,
+                gender,
+            ]
+        );
 
 
-            return response.data;
+    // =====================================
+    // LOAD QUEUE
+    // =====================================
 
-        } catch (error) {
+    const loadQueueState =
+        useCallback(
+            async () => {
 
-            console.error(
-                "Failed to load live competition:",
-                error
-            );
+                const response =
+                    await apiRequest(
+
+                        `/live-competition/` +
+                        `${competitionId}/` +
+                        `${gender}/queue`,
+
+                        "GET"
+
+                    );
 
 
-            console.log(
-                "Backend Response:",
-                error.response?.data
-            );
+                return response.data;
+
+            },
+
+            [
+                competitionId,
+                gender,
+            ]
+        );
 
 
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to load live competition."
-            );
+    // =====================================
+    // LOAD AUTHORITATIVE STATE
+    //
+    // IMPORTANT:
+    //
+    // Does NOT calculate anything.
+    //
+    // It only consumes backend state.
+    // =====================================
 
-        } finally {
+    const loadAuthoritativeState =
+        useCallback(
+            async ({
+                showLoading = false,
+            } = {}) => {
 
-            setLoading(false);
+                if (showLoading) {
 
-        }
+                    setLoading(true);
 
-    };
+                }
 
+
+                try {
+
+                    const [
+                        liveResponse,
+                        queueResponse,
+                    ] =
+                        await Promise.all([
+
+                            loadLiveCompetition(),
+
+                            loadQueueState(),
+
+                        ]);
+
+
+                    setLiveCompetition(
+                        liveResponse
+                    );
+
+
+                    setQueueState(
+                        queueResponse
+                    );
+
+
+                    return {
+
+                        live:
+                            liveResponse,
+
+                        queue:
+                            queueResponse,
+
+                    };
+
+                } finally {
+
+                    if (showLoading) {
+
+                        setLoading(false);
+
+                    }
+
+                }
+
+            },
+
+            [
+                loadLiveCompetition,
+                loadQueueState,
+            ]
+        );
+
+
+    // =====================================
+    // INITIAL LOAD
+    // =====================================
 
     useEffect(() => {
 
-        loadLiveCompetition();
+        let cancelled = false;
 
-    }, [competitionId, gender]);
 
+        const load =
+            async () => {
+
+                try {
+
+                    setLoading(true);
+
+                    setLiftError("");
+
+
+                    const state =
+                        await loadAuthoritativeState();
+
+
+                    if (cancelled) {
+
+                        return;
+
+                    }
+
+
+                    setLiveCompetition(
+                        state.live
+                    );
+
+
+                    setQueueState(
+                        state.queue
+                    );
+
+
+                    /*
+                     * If the GET response eventually
+                     * exposes an authoritative
+                     * justCompleted snapshot,
+                     * consume it.
+                     *
+                     * Current backend response does
+                     * not expose it, so this remains
+                     * null on initial page load.
+                     */
+                    const backendJustCompleted =
+                        state.queue
+                            ?.justCompleted ??
+                        state.live
+                            ?.justCompleted ??
+                        null;
+
+
+                    if (
+                        backendJustCompleted
+                    ) {
+
+                        setJustCompleted(
+                            backendJustCompleted
+                        );
+
+                    }
+
+                } catch (error) {
+
+                    if (cancelled) {
+
+                        return;
+
+                    }
+
+
+                    console.error(
+                        "Failed to load live competition:",
+                        error
+                    );
+
+
+                    setLiftError(
+                        error.response
+                            ?.data
+                            ?.message ||
+                        error.message ||
+                        "Failed to load live competition."
+                    );
+
+                } finally {
+
+                    if (!cancelled) {
+
+                        setLoading(false);
+
+                    }
+
+                }
+
+            };
+
+
+        load();
+
+
+        return () => {
+
+            cancelled = true;
+
+        };
+
+    }, [
+        loadAuthoritativeState,
+    ]);
+
+
+    // =====================================
+    // POLLING
+    //
+    // Polling refreshes authoritative
+    // competition state.
+    //
+    // It does NOT erase the latest local
+    // successful processLift() result because
+    // the current GET contract does not expose
+    // justCompleted.
+    // =====================================
+
+    useEffect(() => {
+
+        if (
+            loading ||
+            !competitionId ||
+            !gender
+        ) {
+
+            return undefined;
+
+        }
+
+
+        const interval =
+            setInterval(
+                async () => {
+
+                    if (
+    startingCompetition ||
+    processingLift ||
+    savingDeclaration ||
+    savingDeclarationEntryId ||
+    savingNextAttemptAllocation
+) {
+    return;
+}
+
+
+                    try {
+
+                        const state =
+                            await loadAuthoritativeState();
+
+
+                        /*
+                         * If a future backend snapshot
+                         * exposes justCompleted, use it.
+                         *
+                         * Otherwise preserve the latest
+                         * successful lift result already
+                         * stored locally.
+                         */
+                        const backendJustCompleted =
+                            state.queue
+                                ?.justCompleted ??
+                            state.live
+                                ?.justCompleted ??
+                            null;
+
+
+                        if (
+                            backendJustCompleted
+                        ) {
+
+                            setJustCompleted(
+                                backendJustCompleted
+                            );
+
+                        }
+
+                    } catch (error) {
+
+                        console.error(
+                            "Live competition polling failed:",
+                            error
+                        );
+
+                    }
+
+                },
+
+                3000
+
+            );
+
+
+        return () => {
+
+            clearInterval(
+                interval
+            );
+
+        };
+
+    }, [
+        competitionId,
+        gender,
+        loading,
+        startingCompetition,
+        processingLift,
+        savingDeclaration,
+        savingDeclarationEntryId,
+        savingNextAttemptAllocation,
+        loadAuthoritativeState,
+    ]);
+
+
+    // =====================================
+    // REFRESH AUTHORITATIVE STATE
+    // =====================================
+
+    const refreshAuthoritativeState =
+        useCallback(
+            async () => {
+
+                try {
+
+                    return await loadAuthoritativeState();
+
+                } catch (error) {
+
+                    console.error(
+                        "Failed to refresh authoritative state:",
+                        error
+                    );
+
+
+                    setLiftError(
+                        error.response
+                            ?.data
+                            ?.message ||
+                        error.message ||
+                        "Failed to refresh live competition state."
+                    );
+
+
+                    return null;
+
+                }
+
+            },
+
+            [
+                loadAuthoritativeState,
+            ]
+        );
+
+
+    // =====================================
+    // CURRENT ATHLETE DECLARATION DISPLAY
+    //
+    // IMPORTANT:
+    //
+    // Do not reset input on every poll.
+    // =====================================
 
     useEffect(() => {
 
@@ -152,28 +817,19 @@ const LiveScore = () => {
         }
 
 
-        const attempt =
-            currentAthlete.currentAttempt;
-
-
-        if (!attempt) {
-
-            setDeclaredWeight("");
-
-            return;
-
-        }
+        const authoritativeDeclaredWeight =
+            currentAthlete.declaredWeight;
 
 
         if (
-            attempt.declaredWeight != null &&
+            authoritativeDeclaredWeight != null &&
             Number(
-                attempt.declaredWeight
+                authoritativeDeclaredWeight
             ) > 0
         ) {
 
             setDeclaredWeight(
-                attempt.declaredWeight
+                authoritativeDeclaredWeight
             );
 
             return;
@@ -181,18 +837,19 @@ const LiveScore = () => {
         }
 
 
+        const applicableWeight =
+            currentAthlete.applicableWeight;
+
+
         if (
-            attempt.attemptNo === 1
+            applicableWeight != null &&
+            Number(
+                applicableWeight
+            ) > 0
         ) {
 
-            const openingWeight =
-                attempt.phase === "SNATCH"
-                    ? currentAthlete.openingSnatch
-                    : currentAthlete.openingCleanJerk;
-
-
             setDeclaredWeight(
-                openingWeight ?? ""
+                applicableWeight
             );
 
             return;
@@ -202,440 +859,891 @@ const LiveScore = () => {
 
         setDeclaredWeight("");
 
-    }, [currentAthlete]);
+    }, [
+        currentAthlete?.entryId,
+        currentAthlete?.attemptNo,
+        currentAthlete?.declaredWeight,
+        currentAthlete?.applicableWeight,
+    ]);
 
+
+    // =====================================
+    // NEXT ATTEMPT ALLOCATION INPUT
+    //
+    // Initialize from the backend-provided
+    // next attempt. Do not synchronize on
+    // every render, otherwise polling can
+    // overwrite an official's typing.
+    // =====================================
+
+    useEffect(() => {
+
+        if (!justCompleted) {
+
+            setNextAttemptDeclaredWeight("");
+
+            return;
+
+        }
+
+
+        const weight =
+            justCompleted
+                ?.completedAthleteNextAttemptWeight;
+
+
+        if (
+            weight != null &&
+            Number(weight) > 0
+        ) {
+
+            setNextAttemptDeclaredWeight(
+                String(weight)
+            );
+
+            return;
+
+        }
+
+
+        setNextAttemptDeclaredWeight("");
+
+    }, [
+        justCompleted?.entryId,
+        justCompleted
+            ?.completedAthleteNextAttempt
+            ?.phase,
+        justCompleted
+            ?.completedAthleteNextAttempt
+            ?.attemptNo,
+        justCompleted
+            ?.completedAthleteNextAttemptWeight,
+    ]);
+
+
+    // =====================================
+    // START COMPETITION
+    // =====================================
 
     const handleStartCompetition =
         async () => {
 
-        if (startingCompetition) {
+            if (
+                startingCompetition
+            ) {
 
-            return;
+                return;
 
-        }
-
-
-        try {
-
-            setStartingCompetition(true);
-
-            setLiftError("");
-            setLiftMessage("");
+            }
 
 
-            await apiRequest(
-                `/live-competition/start/${competitionId}/${gender}`,
-                "POST",
-                {
-                    sessionName: "",
-                    selectedWeightCategories: [],
-                }
-            );
+            const selectedWeightCategories =
+                Array.isArray(
+                    liveCompetition
+                        ?.selectedWeightCategories
+                )
+                    ? liveCompetition
+                        .selectedWeightCategories
+
+                    : Array.isArray(
+                        queueState
+                            ?.selectedWeightCategories
+                    )
+                        ? queueState
+                            .selectedWeightCategories
+
+                        : [];
 
 
-            setLiftMessage(
-                "Live competition started. Official must select the athlete."
-            );
+            if (
+                selectedWeightCategories.length === 0
+            ) {
+
+                setLiftError(
+                    "No weight categories are configured for this live competition."
+                );
+
+                return;
+
+            }
 
 
-            await loadLiveCompetition();
+            try {
 
-        } catch (error) {
+                setStartingCompetition(
+                    true
+                );
 
-            console.error(
-                "Failed to start competition:",
-                error
-            );
+                setLiftError("");
 
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to start competition."
-            );
-
-        } finally {
-
-            setStartingCompetition(false);
-
-        }
-
-    };
+                setLiftMessage("");
 
 
-    const handleSelectAthlete =
-        async (athlete) => {
-
-        if (
-            !athlete ||
-            selectingAthlete
-        ) {
-
-            return;
-
-        }
-
-
-        try {
-
-            setSelectingAthlete(true);
-
-            setLiftError("");
-            setLiftMessage("");
-
-
-            const response =
                 await apiRequest(
-                    SELECT_ATHLETE_URL,
+
+                    `/live-competition/start/` +
+                    `${competitionId}/` +
+                    `${gender}`,
+
                     "POST",
+
                     {
-                        competitionId,
+                        sessionName:
+                            liveCompetition
+                                ?.sessionName ??
+                            "",
 
-                        gender,
+                        selectedWeightCategories,
 
-                        entryId:
-                            athlete.entryId,
                     }
+
                 );
 
 
-            console.log(
-                "SELECT ATHLETE RESPONSE:",
-                response.data
-            );
+                /*
+                 * A newly started competition has
+                 * no completed lift yet.
+                 */
+                setJustCompleted(
+                    null
+                );
 
 
-            setLiftMessage(
-                `${athlete.name} selected.`
-            );
+                const state =
+                    await refreshAuthoritativeState();
 
 
-            await loadLiveCompetition();
+                if (state) {
 
-        } catch (error) {
+                    setLiftMessage(
+                        "Live competition started. The backend is determining the calling order automatically."
+                    );
 
-            console.error(
-                "Failed to select athlete:",
-                error
-            );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to start competition:",
+                    error
+                );
 
 
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to select athlete."
-            );
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to start competition."
+                );
 
-        } finally {
+            } finally {
 
-            setSelectingAthlete(false);
+                setStartingCompetition(
+                    false
+                );
 
-        }
+            }
 
-    };
+        };
 
+
+    // =====================================
+    // SAVE CURRENT ATHLETE DECLARATION
+    // =====================================
 
     const handleSaveDeclaration =
         async () => {
 
-        if (
-            !currentAthlete ||
-            savingDeclaration
-        ) {
+            if (
+                !currentAthlete ||
+                savingDeclaration
+            ) {
 
-            return;
+                return;
 
-        }
-
-
-        const weight =
-            Number(
-                declaredWeight
-            );
+            }
 
 
-        if (
-            Number.isNaN(weight) ||
-            weight <= 0
-        ) {
-
-            setLiftError(
-                "Please enter a valid declared weight."
-            );
-
-            return;
-
-        }
+            const weight =
+                Number(
+                    declaredWeight
+                );
 
 
-        try {
+            if (
+                Number.isNaN(weight) ||
+                weight <= 0
+            ) {
 
-            setSavingDeclaration(true);
+                setLiftError(
+                    "Please enter a valid declared weight."
+                );
 
-            setLiftError("");
-            setLiftMessage("");
+                return;
 
-
-            await saveDeclaredWeight({
-
-                entryId:
-                    currentAthlete.entryId,
-
-                declaredWeight:
-                    weight,
-
-            });
+            }
 
 
-            setLiveCompetition(
-                (previous) => {
-
-                    if (!previous) {
-
-                        return previous;
-
-                    }
+            const expectedStateVersion =
+                Number(
+                    stateVersion
+                );
 
 
-                    const updateAttempt =
-                        (athlete) => {
+            if (
+                !Number.isInteger(
+                    expectedStateVersion
+                ) ||
+                expectedStateVersion < 0
+            ) {
 
-                        if (
-                            !athlete ||
-                            athlete.entryId
-                                ?.toString() !==
-                            currentAthlete.entryId
-                                ?.toString()
-                        ) {
+                setLiftError(
+                    "Live competition state version is unavailable. Refresh the Officials Screen."
+                );
 
-                            return athlete;
+                return;
 
-                        }
-
-
-                        return {
-
-                            ...athlete,
-
-                            currentAttempt: {
-
-                                ...athlete.currentAttempt,
-
-                                declaredWeight:
-                                    weight,
-
-                                declaredAt:
-                                    new Date().toISOString(),
-
-                            },
-
-                        };
-
-                    };
+            }
 
 
-                    return {
+            try {
 
-                        ...previous,
+                setSavingDeclaration(
+                    true
+                );
 
-                        currentAthlete:
-                            updateAttempt(
-                                previous.currentAthlete
-                            ),
+                setLiftError("");
 
-                        athletes:
-                            previous.athletes?.map(
-                                updateAttempt
-                            ),
+                setLiftMessage("");
 
-                        competitionResults:
-                            previous
-                                .competitionResults
-                                ?.map(
-                                    updateAttempt
-                                ),
 
-                    };
+                await saveDeclaredWeight({
+
+                    entryId:
+                        currentAthlete.entryId,
+
+                    competitionId,
+
+                    gender,
+
+                    declaredWeight:
+                        weight,
+
+                    expectedStateVersion,
+
+                });
+
+
+                await refreshAuthoritativeState();
+
+
+                setLiftMessage(
+                    "Declaration saved. Calling order recalculated by backend."
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to save declaration:",
+                    error
+                );
+
+
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to save declaration."
+                );
+
+
+                if (
+                    error.response?.status === 409
+                ) {
+
+                    await refreshAuthoritativeState();
 
                 }
-            );
+
+            } finally {
+
+                setSavingDeclaration(
+                    false
+                );
+
+            }
+
+        };
 
 
-            setLiftMessage(
-                "Declaration saved successfully."
-            );
+    // =====================================
+    // SAVE PENDING DECLARATION
+    // =====================================
 
-        } catch (error) {
+    const handleSavePendingDeclaration =
+        async ({
+            entryId,
+            weight,
+        }) => {
 
-            console.error(
-                "Failed to save declaration:",
-                error
-            );
+            if (
+                !entryId ||
+                savingDeclarationEntryId
+            ) {
+
+                return;
+
+            }
 
 
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to save declaration."
-            );
+            const athlete =
+                declarationPendingCandidates.find(
+                    (candidate) =>
+                        String(
+                            candidate.entryId
+                        ) ===
+                        String(
+                            entryId
+                        )
+                );
 
-        } finally {
 
-            setSavingDeclaration(false);
+            if (!athlete) {
 
-        }
+                setLiftError(
+                    "Athlete is no longer awaiting declaration. Refresh the Officials Screen."
+                );
 
-    };
+                return;
 
+            }
+
+
+            if (
+                athlete.phase &&
+                athlete.phase !== currentPhase
+            ) {
+
+                setLiftError(
+                    "This athlete's declaration does not belong to the current competition phase."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                athlete.completed
+            ) {
+
+                setLiftError(
+                    "This athlete has already completed the competition."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                athlete.result &&
+                athlete.result !== "PENDING"
+            ) {
+
+                setLiftError(
+                    "This attempt has already been completed."
+                );
+
+                return;
+
+            }
+
+
+            const numericWeight =
+                Number(
+                    weight
+                );
+
+
+            if (
+                Number.isNaN(
+                    numericWeight
+                ) ||
+                numericWeight <= 0
+            ) {
+
+                setLiftError(
+                    "Please enter a valid declared weight."
+                );
+
+                return;
+
+            }
+
+
+            const expectedStateVersion =
+                Number(
+                    stateVersion
+                );
+
+
+            if (
+                !Number.isInteger(
+                    expectedStateVersion
+                ) ||
+                expectedStateVersion < 0
+            ) {
+
+                setLiftError(
+                    "Live competition state version is unavailable. Refresh the Officials Screen."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                setSavingDeclarationEntryId(
+                    entryId
+                );
+
+                setLiftError("");
+
+                setLiftMessage("");
+
+
+                await saveDeclaredWeight({
+
+                    entryId,
+
+                    competitionId,
+
+                    gender,
+
+                    declaredWeight:
+                        numericWeight,
+
+                    expectedStateVersion,
+
+                });
+
+
+                await refreshAuthoritativeState();
+
+
+                setLiftMessage(
+                    "Declaration saved. Calling order recalculated by backend."
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to save pending declaration:",
+                    error
+                );
+
+
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to save declaration."
+                );
+
+
+                if (
+                    error.response?.status === 409
+                ) {
+
+                    await refreshAuthoritativeState();
+
+                }
+
+            } finally {
+
+                setSavingDeclarationEntryId(
+                    null
+                );
+
+            }
+
+        };
+
+
+    // =====================================
+    // EDIT DECLARATION FOR NORMAL QUEUE
+    // =====================================
 
     const handleEditDeclaration =
         async ({
             entryId,
-            declaredWeight: newDeclaredWeight,
+            declaredWeight:
+            newDeclaredWeight,
         }) => {
 
-        if (
-            !entryId ||
-            savingDeclarationEntryId
-        ) {
+            if (
+                !entryId ||
+                savingDeclarationEntryId
+            ) {
 
-            return;
+                return;
 
-        }
-
-
-        const athlete =
-            athletes.find(
-                (item) =>
-                    item.entryId
-                        ?.toString() ===
-                    entryId
-                        ?.toString()
-            );
+            }
 
 
-        if (!athlete) {
-
-            setLiftError(
-                "Athlete not found."
-            );
-
-            return;
-
-        }
-
-
-        const attempt =
-            athlete.currentAttempt;
+            const queuedAthlete =
+                queue.find(
+                    (item) =>
+                        String(
+                            item.entryId
+                        ) ===
+                        String(
+                            entryId
+                        )
+                );
 
 
-        if (!attempt) {
+            if (!queuedAthlete) {
 
-            setLiftError(
-                "This athlete does not have a pending attempt."
-            );
-
-            return;
-
-        }
-
-
-        if (
-            attempt.completed ||
-            athlete.status === "COMPLETED"
-        ) {
-
-            setLiftError(
-                "This athlete has completed the competition."
-            );
-
-            return;
-
-        }
+                const pendingAthlete =
+                    declarationPendingCandidates.find(
+                        (item) =>
+                            String(
+                                item.entryId
+                            ) ===
+                            String(
+                                entryId
+                            )
+                    );
 
 
-        if (
-            attempt.phase !== currentPhase
-        ) {
+                if (
+                    pendingAthlete
+                ) {
 
-            setLiftError(
-                `${attempt.phase === "SNATCH"
-                    ? "Snatch"
-                    : "Clean & Jerk"
-                } declaration cannot be changed while the competition is in the ${
-                    currentPhase === "SNATCH"
+                    await handleSavePendingDeclaration({
+
+                        entryId,
+
+                        weight:
+                            newDeclaredWeight,
+
+                    });
+
+                    return;
+
+                }
+
+
+                setLiftError(
+                    "Athlete not found in the authoritative competition state."
+                );
+
+                return;
+
+            }
+
+
+            const attempt =
+                queuedAthlete;
+
+
+            if (
+                attempt.completed ||
+                attempt.status === "COMPLETED"
+            ) {
+
+                setLiftError(
+                    "This athlete has completed the competition."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                attempt.phase !== currentPhase
+            ) {
+
+                setLiftError(
+                    `${attempt.phase === "SNATCH"
                         ? "Snatch"
                         : "Clean & Jerk"
-                } phase.`
-            );
+                    } declaration cannot be changed while the competition is in the ${currentPhase === "SNATCH"
+                        ? "Snatch"
+                        : "Clean & Jerk"
+                    } phase.`
+                );
 
-            return;
+                return;
 
-        }
-
-
-        if (
-            attempt.result &&
-            attempt.result !== "PENDING"
-        ) {
-
-            setLiftError(
-                "This attempt has already been completed."
-            );
-
-            return;
-
-        }
+            }
 
 
-        const weight =
-            Number(
-                newDeclaredWeight
-            );
+            if (
+                attempt.result &&
+                attempt.result !== "PENDING"
+            ) {
+
+                setLiftError(
+                    "This attempt has already been completed."
+                );
+
+                return;
+
+            }
 
 
-        if (
-            Number.isNaN(weight) ||
-            weight <= 0
-        ) {
-
-            setLiftError(
-                "Please enter a valid declared weight."
-            );
-
-            return;
-
-        }
+            const weight =
+                Number(
+                    newDeclaredWeight
+                );
 
 
-        try {
+            if (
+                Number.isNaN(weight) ||
+                weight <= 0
+            ) {
 
-            setSavingDeclarationEntryId(
-                entryId
-            );
+                setLiftError(
+                    "Please enter a valid declared weight."
+                );
 
-            setLiftError("");
-            setLiftMessage("");
+                return;
 
-
-            await saveDeclaredWeight({
-
-                entryId,
-
-                declaredWeight:
-                    weight,
-
-            });
+            }
 
 
-            setLiveCompetition(
-                (previous) => {
+            const expectedStateVersion =
+                Number(
+                    stateVersion
+                );
+
+
+            if (
+                !Number.isInteger(
+                    expectedStateVersion
+                ) ||
+                expectedStateVersion < 0
+            ) {
+
+                setLiftError(
+                    "Live competition state version is unavailable. Refresh the Officials Screen."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                setSavingDeclarationEntryId(
+                    entryId
+                );
+
+                setLiftError("");
+
+                setLiftMessage("");
+
+
+                await saveDeclaredWeight({
+
+                    entryId,
+
+                    competitionId,
+
+                    gender,
+
+                    declaredWeight:
+                        weight,
+
+                    expectedStateVersion,
+
+                });
+
+
+                await refreshAuthoritativeState();
+
+
+                setLiftMessage(
+                    `${queuedAthlete.name}'s declaration updated to ${weight} kg.`
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to update athlete declaration:",
+                    error
+                );
+
+
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to update declaration."
+                );
+
+
+                if (
+                    error.response?.status === 409
+                ) {
+
+                    await refreshAuthoritativeState();
+
+                }
+
+            } finally {
+
+                setSavingDeclarationEntryId(
+                    null
+                );
+
+            }
+
+        };
+
+
+    // =====================================
+    // SAVE NEXT ATTEMPT ALLOCATION
+    //
+    // Saves the next attempt declaration
+    // for the athlete who just completed.
+    // Queue/calling order remains backend
+    // authoritative.
+    // =====================================
+
+    const handleSaveNextAttemptAllocation =
+        async () => {
+
+            if (
+                !justCompleted ||
+                savingNextAttemptAllocation
+            ) {
+
+                return;
+
+            }
+
+
+            const entryId =
+                justCompleted
+                    ?.athlete
+                    ?.entryId ??
+                justCompleted
+                    ?.entryId ??
+                null;
+
+
+            const nextAttempt =
+                justCompleted
+                    ?.completedAthleteNextAttempt ??
+                justCompleted
+                    ?.nextAttempt ??
+                null;
+
+
+            if (!entryId) {
+
+                setLiftError(
+                    "Unable to identify the completed athlete."
+                );
+
+                return;
+
+            }
+
+
+            if (!nextAttempt) {
+
+                setLiftError(
+                    "This athlete has no remaining attempt."
+                );
+
+                return;
+
+            }
+
+
+            const weight =
+                Number(
+                    nextAttemptDeclaredWeight
+                );
+
+
+            if (
+                !Number.isFinite(weight) ||
+                weight <= 0
+            ) {
+
+                setLiftError(
+                    "Please enter a valid next-attempt weight."
+                );
+
+                return;
+
+            }
+
+
+            const expectedStateVersion =
+                Number(
+                    stateVersion
+                );
+
+
+            if (
+                !Number.isInteger(
+                    expectedStateVersion
+                ) ||
+                expectedStateVersion < 0
+            ) {
+
+                setLiftError(
+                    "Live competition state version is unavailable. Refresh the Officials Screen."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                setSavingNextAttemptAllocation(
+                    true
+                );
+
+                setLiftError("");
+                setLiftMessage("");
+
+
+                await saveDeclaredWeight({
+
+                    entryId,
+
+                    competitionId,
+
+                    gender,
+
+                    declaredWeight: weight,
+
+                    expectedStateVersion,
+
+                });
+
+
+                // Keep the allocation panel immediately
+                // consistent with the value just saved.
+                setJustCompleted((previous) => {
 
                     if (!previous) {
 
@@ -644,103 +1752,121 @@ const LiveScore = () => {
                     }
 
 
-                    const updateAthlete =
-                        (athleteItem) => {
-
-                        if (
-                            !athleteItem ||
-                            athleteItem.entryId
-                                ?.toString() !==
-                            entryId
-                                ?.toString()
-                        ) {
-
-                            return athleteItem;
-
-                        }
-
-
-                        const updatedAttempt = {
-
-                            ...athleteItem.currentAttempt,
-
-                            declaredWeight:
-                                weight,
-
-                            declaredAt:
-                                new Date().toISOString(),
-
-                        };
-
-
-                        return {
-
-                            ...athleteItem,
-
-                            currentAttempt:
-                                updatedAttempt,
-
-                        };
-
-                    };
+                    const updatedAttempt =
+                        previous.completedAthleteNextAttempt
+                            ? {
+                                ...previous.completedAthleteNextAttempt,
+                                declaredWeight: weight,
+                                applicableWeight: weight,
+                            }
+                            : previous.nextAttempt
+                                ? {
+                                    ...previous.nextAttempt,
+                                    declaredWeight: weight,
+                                    applicableWeight: weight,
+                                }
+                                : null;
 
 
                     return {
 
                         ...previous,
 
-                        currentAthlete:
-                            previous.currentAthlete,
+                        completedAthleteNextAttempt:
+                            updatedAttempt,
 
-                        athletes:
-                            previous.athletes?.map(
-                                updateAthlete
-                            ),
+                        completedAthleteNextAttemptWeight:
+                            weight,
 
-                        competitionResults:
-                            previous
-                                .competitionResults
-                                ?.map(
-                                    updateAthlete
-                                ),
+                        nextAttempt:
+                            updatedAttempt,
+
+                        nextAttemptWeight:
+                            weight,
+
+                        nextAttemptState:
+                            previous.nextAttemptState
+                                ? {
+                                    ...previous.nextAttemptState,
+                                    attempt: updatedAttempt,
+                                    weight,
+                                }
+                                : previous.nextAttemptState,
 
                     };
 
+                });
+
+
+                // Backend remains authoritative.
+                await refreshAuthoritativeState();
+
+
+                setLiftMessage(
+                    `${justCompleted?.athlete?.name ??
+                    "Athlete"
+                    }'s next attempt allocation saved: ${weight} kg.`
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to save next attempt allocation:",
+                    error
+                );
+
+
+                setLiftError(
+                    error.response
+                        ?.data
+                        ?.message ||
+                    error.message ||
+                    "Failed to save next attempt allocation."
+                );
+
+
+                if (
+                    error.response?.status === 409
+                ) {
+
+                    await refreshAuthoritativeState();
+
                 }
-            );
+
+            } finally {
+
+                setSavingNextAttemptAllocation(
+                    false
+                );
+
+            }
+
+        };
 
 
-            setLiftMessage(
-                `${athlete.name}'s declaration updated to ${weight} kg.`
-            );
+   // =====================================
+// PROCESS LIFT
+//
+// Responsibility:
+//
+// 1. Submit the currently displayed lift.
+// 2. Preserve the athlete/attempt that
+//    actually performed the lift.
+// 3. Consume the backend-authoritative
+//    justCompleted snapshot.
+// 4. Preserve the completed athlete's
+//    next-attempt allocation separately
+//    from the newly assigned current athlete.
+// 5. Refresh authoritative competition state.
+//
+// IMPORTANT:
+//
+// React does NOT calculate calling order.
+// The backend remains authoritative.
+// =====================================
 
-        } catch (error) {
-
-            console.error(
-                "Failed to update athlete declaration:",
-                error
-            );
-
-
-            setLiftError(
-                error.response
-                    ?.data
-                    ?.message ||
-                error.message ||
-                "Failed to update declaration."
-            );
-
-        } finally {
-
-            setSavingDeclarationEntryId(null);
-
-        }
-
-    };
-
-
-    const handleProcessLift =
-        async (result) => {
+const handleProcessLift =
+    async (result) => {
 
         if (
             !currentAthlete ||
@@ -752,19 +1878,95 @@ const LiveScore = () => {
         }
 
 
+        const expectedStateVersion =
+            Number(
+                stateVersion
+            );
+
+
+        if (
+            !Number.isInteger(
+                expectedStateVersion
+            ) ||
+            expectedStateVersion < 0
+        ) {
+
+            setLiftError(
+                "Live competition state version is unavailable. Refresh the Officials Screen before processing the lift."
+            );
+
+            return;
+
+        }
+
+
+        // =====================================
+        // PRESERVE SUBMITTED ATHLETE
+        // =====================================
+
+        const submittedAthlete =
+            currentAthlete;
+
+
+        // =====================================
+        // PRESERVE EXACT ATTEMPT
+        // THAT WAS ON PLATFORM
+        // =====================================
+
+        const submittedAttempt =
+            currentAthlete.currentAttempt
+                ? {
+                    ...currentAthlete.currentAttempt,
+                }
+                : {
+
+                    phase:
+                        currentAthlete.phase ??
+                        currentPhase,
+
+                    attemptNo:
+                        currentAthlete.attemptNo ??
+                        null,
+
+                    declaredWeight:
+                        currentAthlete.declaredWeight ??
+                        currentAthlete.applicableWeight ??
+                        null,
+
+                    applicableWeight:
+                        currentAthlete.applicableWeight ??
+                        null,
+
+                    result:
+                        currentAthlete.result ??
+                        "PENDING",
+
+                    completed:
+                        false,
+
+                };
+
+
         try {
 
-            setProcessingLift(true);
+            setProcessingLift(
+                true
+            );
 
             setLiftMessage("");
+
             setLiftError("");
 
 
-            const response =
+            // =====================================
+            // PROCESS LIFT
+            // =====================================
+
+            const liftResponse =
                 await processLift({
 
                     entryId:
-                        currentAthlete.entryId,
+                        submittedAthlete.entryId,
 
                     competitionId,
 
@@ -772,192 +1974,199 @@ const LiveScore = () => {
 
                     result,
 
+                    expectedStateVersion,
+
                 });
 
 
-            const data =
-                response?.data;
+            // =====================================
+            // BACKEND JUST-COMPLETED SNAPSHOT
+            // =====================================
 
-
-            if (
-                !data ||
-                !data.athlete
-            ) {
-
-                throw new Error(
-                    "Live scoring response is incomplete."
-                );
-
-            }
-
-
-            const updatedEntry =
-                data.athlete;
-
-
-            const nextAttempt =
-                data.nextAttempt ??
+            const backendJustCompleted =
+                liftResponse
+                    ?.justCompleted ??
                 null;
 
 
-            const updatedCurrentAthlete = {
+            // =====================================
+            // COMPLETED ATHLETE
+            //
+            // The athlete who was actually
+            // on the platform must remain the
+            // athlete shown in this panel.
+            // =====================================
 
-                ...currentAthlete,
-
-                snatchAttempts:
-                    updatedEntry.snatchAttempts ??
-                    currentAthlete.snatchAttempts,
-
-                cleanJerkAttempts:
-                    updatedEntry.cleanJerkAttempts ??
-                    currentAthlete.cleanJerkAttempts,
-
-                bestSnatch:
-                    updatedEntry.results
-                        ?.bestSnatch ??
-                    currentAthlete.bestSnatch,
-
-                bestCleanJerk:
-                    updatedEntry.results
-                        ?.bestCleanJerk ??
-                    currentAthlete.bestCleanJerk,
-
-                total:
-                    updatedEntry.results
-                        ?.total ??
-                    currentAthlete.total,
-
-                place:
-                    updatedEntry.results
-                        ?.rank ??
-                    currentAthlete.place,
-
-                currentAttempt:
-                    nextAttempt,
-
-            };
+            const completedAthlete =
+                backendJustCompleted
+                    ?.athlete ??
+                submittedAthlete;
 
 
-            const updatedAthletes =
-                athletes.map(
-                    (athlete) => {
+            // =====================================
+            // COMPLETED ATTEMPT
+            // =====================================
 
-                    if (
-                        athlete.entryId
-                            ?.toString() ===
-                        currentAthlete.entryId
-                            ?.toString()
-                    ) {
+            const completedAttempt =
+                backendJustCompleted
+                    ?.completedAttempt ??
+                {
 
-                        return {
+                    ...submittedAttempt,
 
-                            ...athlete,
+                    result,
 
-                            ...updatedCurrentAthlete,
+                    completed:
+                        true,
 
-                        };
-
-                    }
+                };
 
 
-                    return athlete;
+            // =====================================
+            // COMPLETED ATHLETE'S
+            // NEXT ATTEMPT STATE
+            //
+            // IMPORTANT:
+            //
+            // This is NOT the same thing as
+            // the new current athlete's attempt.
+            // =====================================
 
-                }
-            );
-
-
-            const updatedCompetitionResults =
-                competitionResults.map(
-                    (athlete) => {
-
-                    if (
-                        athlete.entryId
-                            ?.toString() ===
-                        currentAthlete.entryId
-                            ?.toString()
-                    ) {
-
-                        return {
-
-                            ...athlete,
-
-                            ...updatedCurrentAthlete,
-
-                        };
-
-                    }
+            const nextAttemptState =
+                backendJustCompleted
+                    ?.nextAttemptState ??
+                liftResponse
+                    ?.nextAttemptState ??
+                null;
 
 
-                    return athlete;
+            // =====================================
+            // COMPLETED ATHLETE'S
+            // NEXT ATTEMPT
+            // =====================================
 
-                }
-            );
-
-
-            let updatedCanSelect =
-                false;
-
-
-            if (
-                data.manualSelectionRequired
-            ) {
-
-                updatedCanSelect =
-                    true;
-
-            } else if (
-                nextAttempt &&
-                nextAttempt.declaredWeight != null &&
-                Number(
-                    nextAttempt.declaredWeight
-                ) > 0
-            ) {
-
-                updatedCanSelect =
-                    true;
-
-            }
+            const completedAthleteNextAttempt =
+                backendJustCompleted
+                    ?.nextAttempt ??
+                nextAttemptState
+                    ?.attempt ??
+                null;
 
 
-            setLiveCompetition(
-                (previous) => ({
+            // =====================================
+            // COMPLETED ATHLETE'S
+            // NEXT ATTEMPT WEIGHT
+            // =====================================
 
-                    ...previous,
+            const completedAthleteNextAttemptWeight =
+                nextAttemptState
+                    ?.weight ??
+                completedAthleteNextAttempt
+                    ?.declaredWeight ??
+                null;
 
-                    currentAthlete:
-                        updatedCurrentAthlete,
 
-                    athletes:
-                        updatedAthletes,
+            // =====================================
+            // NEW CURRENT ATHLETE'S ATTEMPT
+            //
+            // This belongs to automatic
+            // advancement, NOT allocation.
+            // =====================================
 
-                    competitionResults:
-                        updatedCompetitionResults,
+            const backendNextAttempt =
+                liftResponse
+                    ?.nextAttempt ??
+                null;
 
-                    canSelectAnotherAthlete:
-                        updatedCanSelect,
 
-                    currentPhase:
-                        data.session
-                            ?.currentPhase ??
-                        previous.currentPhase,
+            // =====================================
+            // SAVE LOCAL JUST-COMPLETED SNAPSHOT
+            // =====================================
 
-                    status:
-                        data.session
-                            ?.status ??
-                        previous.status,
+            setJustCompleted({
 
-                })
-            );
+                athlete:
+                    completedAthlete,
 
+                completedAttempt:
+                    completedAttempt,
+
+                nextAttempt:
+                    completedAthleteNextAttempt,
+
+                nextAttemptWeight:
+                    completedAthleteNextAttemptWeight,
+
+                completedAthleteNextAttempt:
+                    completedAthleteNextAttempt,
+
+                completedAthleteNextAttemptWeight:
+                    completedAthleteNextAttemptWeight,
+
+                // Newly assigned current athlete's
+                // attempt, if supplied by backend.
+                currentAthleteNextAttempt:
+                    backendNextAttempt,
+
+                nextAttemptState:
+                    nextAttemptState,
+
+                // Preserve raw backend snapshot.
+                backendJustCompleted:
+                    backendJustCompleted,
+
+                previousCurrentEntryId:
+                    liftResponse
+                        ?.previousCurrentEntryId ??
+                    submittedAthlete.entryId,
+
+                currentEntryId:
+                    liftResponse
+                        ?.currentEntryId ??
+                    null,
+
+                performedAt:
+                    liftResponse
+                        ?.performedAt ??
+                    null,
+
+                performedSequence:
+                    liftResponse
+                        ?.performedSequence ??
+                    null,
+
+                stateVersion:
+                    liftResponse
+                        ?.stateVersion ??
+                    null,
+
+            });
+
+
+            // =====================================
+            // REFRESH AUTHORITATIVE STATE
+            // =====================================
+
+            await refreshAuthoritativeState();
+
+
+            // =====================================
+            // CLEAR CURRENT DECLARATION INPUT
+            // =====================================
 
             setDeclaredWeight("");
 
+
+            // =====================================
+            // STATUS MESSAGE
+            // =====================================
 
             setLiftMessage(
                 result === "GOOD"
                     ? "Good Lift saved successfully."
                     : "No Lift saved successfully."
             );
+
 
         } catch (error) {
 
@@ -975,22 +2184,47 @@ const LiveScore = () => {
                 "Failed to save lift."
             );
 
+
+            // =====================================
+            // STALE STATE
+            // =====================================
+
+            if (
+                error.response?.status === 409
+            ) {
+
+                await refreshAuthoritativeState();
+
+            }
+
         } finally {
 
-            setProcessingLift(false);
+            setProcessingLift(
+                false
+            );
 
         }
 
     };
 
 
-    if (loading) {
+    // =====================================
+    // LOADING
+    // =====================================
+
+    if (
+        loading
+    ) {
 
         return (
 
-            <div className="live-score-page">
+            <div
+                className="live-score-page"
+            >
 
-                <div className="live-score-loading">
+                <div
+                    className="live-score-loading"
+                >
 
                     <h2>
                         Loading Live Competition...
@@ -1005,19 +2239,31 @@ const LiveScore = () => {
     }
 
 
-    const showStatus =
-        liftMessage ||
-        liftError ||
-        processingLift ||
-        savingDeclaration ||
-        selectingAthlete ||
-        startingCompetition ||
-        savingDeclarationEntryId;
+    // =====================================
+    // STATUS DISPLAY
+    // =====================================
 
+    const showStatus =
+        Boolean(
+            liftMessage ||
+            liftError ||
+            processingLift ||
+            savingDeclaration ||
+            startingCompetition ||
+            savingDeclarationEntryId ||
+            savingNextAttemptAllocation
+        );
+
+
+    // =====================================
+    // RENDER
+    // =====================================
 
     return (
 
-        <div className="live-score-page">
+        <div
+            className="live-score-page"
+        >
 
             <LiveScoreHeader
 
@@ -1040,6 +2286,10 @@ const LiveScore = () => {
             />
 
 
+            {/* =================================
+                STATUS
+            ================================= */}
+
             {showStatus && (
 
                 <div
@@ -1055,38 +2305,37 @@ const LiveScore = () => {
 
 
                     {!startingCompetition &&
-                        selectingAthlete &&
-                        "Selecting athlete..."}
-
-
-                    {!startingCompetition &&
-                        !selectingAthlete &&
                         savingDeclaration &&
                         "Saving declaration..."}
 
 
                     {!startingCompetition &&
-                        !selectingAthlete &&
                         !savingDeclaration &&
                         savingDeclarationEntryId &&
-                        "Updating athlete declaration..."}
+                        "Saving athlete declaration..."}
 
 
                     {!startingCompetition &&
-                        !selectingAthlete &&
                         !savingDeclaration &&
-                        !processingLift &&
                         !savingDeclarationEntryId &&
-                        liftMessage &&
-                        `✓ ${liftMessage}`}
+                        savingNextAttemptAllocation &&
+                        "Saving next attempt allocation..."}
 
 
                     {!startingCompetition &&
-                        !selectingAthlete &&
                         !savingDeclaration &&
                         !savingDeclarationEntryId &&
                         processingLift &&
                         "Saving lift result..."}
+
+
+                    {!startingCompetition &&
+                        !savingDeclaration &&
+                        !savingDeclarationEntryId &&
+                        !savingNextAttemptAllocation &&
+                        !processingLift &&
+                        liftMessage &&
+                        `✓ ${liftMessage}`}
 
 
                     {liftError &&
@@ -1097,37 +2346,47 @@ const LiveScore = () => {
             )}
 
 
+            {/* =================================
+                START COMPETITION
+            ================================= */}
+
             {!currentAthlete &&
                 status === "READY" && (
 
-                <div className="live-score-start">
-
-                    <button
-                        type="button"
-
-                        onClick={
-                            handleStartCompetition
-                        }
-
-                        disabled={
-                            startingCompetition
-                        }
+                    <div
+                        className="live-score-start"
                     >
 
-                        {
-                            startingCompetition
-                                ? "Starting..."
-                                : "Start Competition"
-                        }
+                        <button
+                            type="button"
 
-                    </button>
+                            onClick={
+                                handleStartCompetition
+                            }
 
-                </div>
+                            disabled={
+                                startingCompetition
+                            }
+                        >
 
-            )}
+                            {
+                                startingCompetition
+                                    ? "Starting..."
+                                    : "Start Competition"
+                            }
+
+                        </button>
+
+                    </div>
+
+                )}
 
 
-            <CurrentAthletePanel
+            {/* =================================
+                OFFICIALS CONTROL
+            ================================= */}
+
+            <OfficialsControlShell
 
                 currentAthlete={
                     currentAthlete
@@ -1161,33 +2420,140 @@ const LiveScore = () => {
                     processingLift
                 }
 
+                justCompleted={
+                    justCompleted
+                }
+
+                nextAttemptDeclaredWeight={
+                    nextAttemptDeclaredWeight
+                }
+
+                setNextAttemptDeclaredWeight={
+                    setNextAttemptDeclaredWeight
+                }
+
+                onSaveNextAttemptAllocation={
+                    handleSaveNextAttemptAllocation
+                }
+
+                savingNextAttemptAllocation={
+                    savingNextAttemptAllocation
+                }
+
+                nextAthlete={
+                    nextAthlete
+                }
+
+                upcomingAthletes={
+                    upcomingAthletes
+                }
+
             />
 
 
-            <AthleteSelectionTable
+            {/* =================================
+                DECLARATION PENDING
+            ================================= */}
 
-                athletes={
-                    athletes
+            {declarationPending &&
+                declarationPendingCandidates.length > 0 && (
+
+                    <section
+                        className="declaration-pending-section"
+                    >
+
+                        <div
+                            className="declaration-pending-header"
+                        >
+
+                            <div>
+
+                                <h2>
+                                    Declaration Required
+                                </h2>
+
+                                <p>
+                                    These athletes cannot enter the automatic calling queue until their current attempt has a valid declared weight.
+                                </p>
+
+                            </div>
+
+
+                            <strong>
+
+                                {
+                                    declarationPendingCandidates.length
+                                }
+
+                                {" "}
+
+                                pending
+
+                            </strong>
+
+                        </div>
+
+
+                        <div
+                            className="declaration-pending-list"
+                        >
+
+                            {
+                                declarationPendingCandidates.map(
+                                    (athlete) => (
+
+                                        <PendingDeclarationRow
+
+                                            key={
+                                                athlete.entryId
+                                            }
+
+                                            athlete={
+                                                athlete
+                                            }
+
+                                            currentPhase={
+                                                currentPhase
+                                            }
+
+                                            saving={
+                                                savingDeclarationEntryId ===
+                                                athlete.entryId
+                                            }
+
+                                            onSave={
+                                                handleSavePendingDeclaration
+                                            }
+
+                                        />
+
+                                    )
+                                )
+                            }
+
+                        </div>
+
+                    </section>
+
+                )}
+
+
+            {/* =================================
+                RESULTS
+            ================================= */}
+
+            <CompetitionResults
+
+                competitionResults={
+                    competitionResults
                 }
 
                 currentAthlete={
                     currentAthlete
                 }
 
-                currentPhase={
-                    currentPhase
-                }
-
-                canSelectAnotherAthlete={
-                    canSelectAnotherAthlete
-                }
-
-                selectingAthlete={
-                    selectingAthlete
-                }
-
-                onSelectAthlete={
-                    handleSelectAthlete
+                queue={
+                    queue
                 }
 
                 onEditDeclaration={
@@ -1200,20 +2566,224 @@ const LiveScore = () => {
 
             />
 
-
-            <CompetitionResults
-
-                competitionResults={
-                    competitionResults
-                }
-
-                currentAthlete={
-                    currentAthlete
-                }
-
-            />
-
         </div>
+
+    );
+
+};
+
+
+// =====================================
+// PENDING DECLARATION ROW
+//
+// UI only.
+// =====================================
+
+const PendingDeclarationRow = ({
+    athlete,
+    currentPhase,
+    saving,
+    onSave,
+}) => {
+
+    const [
+        weight,
+        setWeight,
+    ] = useState(
+        athlete?.declaredWeight ??
+        ""
+    );
+
+
+    // =====================================
+    // SYNC BACKEND VALUE
+    // =====================================
+
+    useEffect(() => {
+
+        if (
+            athlete?.declaredWeight != null &&
+            Number(
+                athlete.declaredWeight
+            ) > 0
+        ) {
+
+            setWeight(
+                athlete.declaredWeight
+            );
+
+            return;
+
+        }
+
+
+        setWeight("");
+
+    }, [
+        athlete?.entryId,
+        athlete?.declaredWeight,
+        athlete?.attemptNo,
+    ]);
+
+
+    // =====================================
+    // SUBMIT
+    // =====================================
+
+    const handleSubmit =
+        async (event) => {
+
+            event.preventDefault();
+
+
+            await onSave({
+
+                entryId:
+                    athlete.entryId,
+
+                weight,
+
+            });
+
+        };
+
+
+    return (
+
+        <form
+            className="declaration-pending-row"
+            onSubmit={
+                handleSubmit
+            }
+        >
+
+            <div
+                className="declaration-pending-athlete"
+            >
+
+                <strong>
+
+                    {
+                        athlete.name ??
+                        "Unknown athlete"
+                    }
+
+                </strong>
+
+
+                <span>
+
+                    Lot{" "}
+
+                    {
+                        athlete.lotNumber ??
+                        "—"
+                    }
+
+                </span>
+
+            </div>
+
+
+            <div
+                className="declaration-pending-attempt"
+            >
+
+                <span>
+
+                    {
+                        athlete.phase ===
+                            "SNATCH"
+                            ? "Snatch"
+                            : athlete.phase ===
+                                "CLEAN_JERK" ||
+                                athlete.phase ===
+                                "CLEAN & JERK"
+                                ? "Clean & Jerk"
+                                : currentPhase
+                    }
+
+                </span>
+
+
+                <span>
+
+                    Attempt{" "}
+
+                    {
+                        athlete.attemptNo ??
+                        "—"
+                    }
+
+                </span>
+
+            </div>
+
+
+            <div
+                className="declaration-pending-input"
+            >
+
+                <label>
+                    Declared weight
+                </label>
+
+
+                <input
+
+                    type="number"
+
+                    min="1"
+
+                    step="1"
+
+                    value={
+                        weight
+                    }
+
+                    onChange={
+                        (event) =>
+                            setWeight(
+                                event.target.value
+                            )
+                    }
+
+                    disabled={
+                        saving
+                    }
+
+                    required
+
+                />
+
+
+                <span>
+                    kg
+                </span>
+
+            </div>
+
+
+            <button
+
+                type="submit"
+
+                disabled={
+                    saving ||
+                    !weight
+                }
+
+            >
+
+                {
+                    saving
+                        ? "Saving..."
+                        : "Save Declaration"
+                }
+
+            </button>
+
+        </form>
 
     );
 

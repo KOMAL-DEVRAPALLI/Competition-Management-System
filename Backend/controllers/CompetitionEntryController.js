@@ -1,349 +1,692 @@
-import createCompetitionEntry from "../services/competitionEntry/createCompetitionEntry.js";
-import getCompetitionEntry from "../services/competitionEntry/getCompetitionEntry.js";
-import updateWeighIn from "../services/competitionEntry/updateWeighIn.js";
-import updateOpeningLifts from "../services/competitionEntry/updateOpeniningLifts.js";
-import updateSnatchAttempts from "../services/competitionEntry/updateSnatchAttempt.js";
-import updateCleanJerkAttempts from "../services/competitionEntry/updateCleanJerkAttempt.js";
-import getCompetitionEntries from "../services/competitionEntry/getCompetitionEntries.js";
-import getCompetitionEntryById from "../services/competitionEntry/getCompetitionEntryByIdController.js";
-import prepareCompetition from "../services/competitionEntry/prepareCompetition.js";
-import getEligibleWeightCategories from "../services/competitionEntry/getEligibleWeightCategories.js";
-import startLiveCompetition from "../services/liveCompetition/startLiveCompetition.js";
-export const getEligibleWeightCategoriesController = async (
-    req,
-    res
-) => {
+import createCompetitionEntry
+    from "../services/competitionEntry/createCompetitionEntry.js";
 
-    try {
+import getCompetitionEntry
+    from "../services/competitionEntry/getCompetitionEntry.js";
 
-        const result =
-            await getEligibleWeightCategories(
-                req.params.id,
-                req.body.bodyWeight
+import updateWeighIn
+    from "../services/competitionEntry/updateWeighIn.js";
+
+import updateOpeningLifts
+    from "../services/competitionEntry/updateOpeniningLifts.js";
+
+import updateSnatchAttempts
+    from "../services/competitionEntry/updateSnatchAttempt.js";
+
+import updateCleanJerkAttempts
+    from "../services/competitionEntry/updateCleanJerkAttempt.js";
+
+import getCompetitionEntries
+    from "../services/competitionEntry/getCompetitionEntries.js";
+
+import getCompetitionEntryById
+    from "../services/competitionEntry/getCompetitionEntryByIdController.js";
+
+import prepareCompetition
+    from "../services/competitionEntry/prepareCompetition.js";
+
+import getEligibleWeightCategories
+    from "../services/competitionEntry/getEligibleWeightCategories.js";
+
+import startLiveCompetition
+    from "../services/liveCompetition/startLiveCompetition.js";
+
+
+export const getEligibleWeightCategoriesController =
+    async (req, res) => {
+
+        try {
+
+            // =====================================
+            // COMPETITION ENTRY ID
+            //
+            // Route:
+            // POST
+            // /api/competition-entry/:id/eligible-categories
+            //
+            // :id = CompetitionEntry._id
+            // =====================================
+
+            const entryId =
+                req.params.id;
+
+
+            // =====================================
+            // BODY WEIGHT
+            // =====================================
+
+            const {
+                bodyWeight,
+            } = req.body;
+
+
+            // =====================================
+            // VALIDATE ENTRY ID
+            // =====================================
+
+            if (!entryId) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Competition entry ID is required.",
+
+                });
+
+            }
+
+
+            // =====================================
+            // VALIDATE BODY WEIGHT
+            // =====================================
+
+            const numericBodyWeight =
+                Number(bodyWeight);
+
+
+            if (
+                !Number.isFinite(
+                    numericBodyWeight
+                ) ||
+                numericBodyWeight <= 0
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Valid body weight is required.",
+
+                });
+
+            }
+
+
+            // =====================================
+            // DEBUG
+            // =====================================
+
+            console.log(
+                "Eligible weight category request:",
+                {
+                    entryId,
+                    bodyWeight:
+                        numericBodyWeight,
+                }
             );
 
-        return res.status(200).json({
-            success: true,
-            data: result,
-        });
 
-    } catch (error) {
+            // =====================================
+            // CALCULATE
+            // =====================================
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+            const result =
+                await getEligibleWeightCategories(
+                    entryId,
+                    numericBodyWeight
+                );
 
-    }
 
-};
-export const startLiveCompetitionController = async (
-    req,
-    res
-) => {
+            // =====================================
+            // RESPONSE
+            // =====================================
 
-    try {
+            return res.status(200).json({
 
-        const { competitionId, gender } = req.params;
+                success: true,
 
-        const {
-            sessionName = "",
-            selectedWeightCategories = [],
-        } = req.body;
-
-        const result =
-            await startLiveCompetition({
-
-                competitionId,
-
-                gender,
-
-                sessionName,
-
-                selectedWeightCategories,
+                data:
+                    result,
 
             });
 
-        return res.status(200).json({
 
-            success: true,
+        }
+        catch (error) {
 
-            message:
-                "Live competition started successfully.",
+            console.error(
+                "Get eligible weight categories error:",
+                error
+            );
 
-            data: result,
 
-        });
+            return res.status(400).json({
 
-    } catch (error) {
+                success: false,
 
-        return res.status(400).json({
+                message:
+                    error.message,
 
-            success: false,
+            });
 
-            message: error.message,
+        }
 
-        });
+    };
+// =====================================
+// START LIVE COMPETITION
+// =====================================
 
-    }
+export const startLiveCompetitionController =
+    async (
+        req,
+        res
+    ) => {
 
-};
-export const prepareCompetitionController = async (req, res) => {
-    try {
+        try {
 
-        const result = await prepareCompetition(
-            req.params.competitionId
-        );
-
-        return res.status(200).json({
-            success: true,
-            message: "Competition prepared successfully.",
-            data: result,
-        });
-
-    } catch (error) {
-
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
-
-    }
-
-};
-export const createCompetitionEntryController = async (
-    req,
-    res
-) => {
-    try {
-
-        const competitionEntry =
-            await createCompetitionEntry(req.body);
-
-        return res.status(201).json({
-            success: true,
-            message: "Competition entry created successfully.",
-            data: competitionEntry,
-        });
-
-    } catch (error) {
-
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
-
-    }
-};
-export const getCompetitionEntryController = async (
-    req,
-    res
-) => {
-    
-    try {
-        
-        const { competitionId, athleteId } = req.params;
-
-        const competitionEntry =
-            await getCompetitionEntry(
+            const {
                 competitionId,
-                athleteId
-            );
+                gender,
+            } = req.params;
 
-        return res.status(200).json({
-            success: true,
-            data: competitionEntry,
-        });
 
-    } catch (error) {
+            const {
+                sessionName = "",
+                selectedWeightCategories = [],
+            } = req.body;
 
-        return res.status(404).json({
-            success: false,
-            message: error.message,
-        });
 
-    }
-};
+            const result =
+                await startLiveCompetition({
 
-export const updateWeighInController = async (
-    req,
-    res
-) => {
+                    competitionId,
 
-    try {
+                    gender,
 
-        const competitionEntry =
-            await updateWeighIn(
-                req.params.id,
-                req.body,
-                null
-            );
+                    sessionName,
 
-        return res.status(200).json({
-            success: true,
-            message: "Weigh-in updated successfully.",
-            data: competitionEntry,
-        });
+                    selectedWeightCategories,
 
-    } catch (error) {
+                });
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
 
-    }
+            return res.status(200).json({
 
-};
+                success: true,
 
-export const updateOpeningLiftsController = async (
-    req,
-    res
-) => {
+                message:
+                    "Live competition started successfully.",
 
-    try {
+                data:
+                    result,
 
-        const {
-            competitionId,
-            athleteId,
-            snatch,
-            cleanJerk,
-        } = req.body;
+            });
 
-        const result =
-            await updateOpeningLifts({
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// PREPARE COMPETITION
+// =====================================
+
+export const prepareCompetitionController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const result =
+                await prepareCompetition(
+                    req.params.competitionId
+                );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Competition prepared successfully.",
+
+                data:
+                    result,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// CREATE COMPETITION ENTRY
+// =====================================
+
+export const createCompetitionEntryController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const competitionEntry =
+                await createCompetitionEntry(
+                    req.body
+                );
+
+
+            return res.status(201).json({
+
+                success: true,
+
+                message:
+                    "Competition entry created successfully.",
+
+                data:
+                    competitionEntry,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// GET COMPETITION ENTRY
+//
+// GET
+// /competition-entry/:competitionId/:athleteId
+// =====================================
+
+export const getCompetitionEntryController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const {
+                competitionId,
+                athleteId,
+            } = req.params;
+
+
+            const competitionEntry =
+                await getCompetitionEntry(
+                    competitionId,
+                    athleteId
+                );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                data:
+                    competitionEntry,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// UPDATE WEIGH-IN
+// =====================================
+
+export const updateWeighInController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const competitionEntry =
+                await updateWeighIn(
+                    req.params.id,
+                    req.body,
+                    null
+                );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Weigh-in updated successfully.",
+
+                data:
+                    competitionEntry,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// UPDATE OPENING LIFTS
+// =====================================
+
+export const updateOpeningLiftsController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const {
                 competitionId,
                 athleteId,
                 snatch,
                 cleanJerk,
+            } = req.body;
+
+
+            const result =
+                await updateOpeningLifts({
+
+                    competitionId,
+
+                    athleteId,
+
+                    snatch,
+
+                    cleanJerk,
+
+                });
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Opening lifts updated successfully.",
+
+                data:
+                    result,
+
             });
 
-        return res.status(200).json({
-            success: true,
-            message: "Opening lifts updated successfully.",
-            data: result,
-        });
 
-    } catch (error) {
+        } catch (error) {
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+            return res.status(400).json({
 
-    }
+                success: false,
 
-};
+                message:
+                    error.message,
 
-export const updateSnatchAttemptsController = async (
-    req,
-    res
-) => {
+            });
 
-    try {
+        }
 
-        const competitionEntry =
-            await updateSnatchAttempts(
-                req.params.id,
-                req.body
-            );
+    };
 
-        return res.status(200).json({
-            success: true,
-            message: "Snatch attempts updated successfully.",
-            data: competitionEntry,
-        });
 
-    } catch (error) {
+// =====================================
+// UPDATE SNATCH ATTEMPTS
+// =====================================
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+export const updateSnatchAttemptsController =
+    async (
+        req,
+        res
+    ) => {
 
-    }
+        try {
 
-};
+            const competitionEntry =
+                await updateSnatchAttempts(
+                    req.params.id,
+                    req.body
+                );
 
-export const updateCleanJerkAttemptsController = async (
-    req,
-    res
-) => {
 
-    try {
+            return res.status(200).json({
 
-        const competitionEntry =
-            await updateCleanJerkAttempts(
-                req.params.id,
-                req.body
-            );
+                success: true,
 
-        return res.status(200).json({
-            success: true,
-            message: "Clean & Jerk attempts updated successfully.",
-            data: competitionEntry,
-        });
+                message:
+                    "Snatch attempts updated successfully.",
 
-    } catch (error) {
+                data:
+                    competitionEntry,
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+            });
 
-    }
 
-};
-export const getCompetitionEntriesController = async (
-    req,
-    res
-) => {
+        } catch (error) {
 
-    try {
+            return res.status(400).json({
 
-        const { competitionId, gender } = req.params;
-        
-const competitionEntries =
-    await getCompetitionEntries(
-        competitionId,
-        gender
-    );
+                success: false,
 
-        return res.status(200).json({
-            success: true,
-            count: competitionEntries.length,
-            data: competitionEntries,
-        });
+                message:
+                    error.message,
 
-    } catch (error) {
+            });
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+        }
 
-    }
+    };
 
-};
 
-export const getCompetitionEntryByIdController = async (req, res) => {
+// =====================================
+// UPDATE CLEAN & JERK ATTEMPTS
+// =====================================
 
-    try {
+export const updateCleanJerkAttemptsController =
+    async (
+        req,
+        res
+    ) => {
 
-        const competitionEntry = await getCompetitionEntryById(req.params.id);
+        try {
 
-        return res.status(200).json({
-            success: true,
-            data: competitionEntry,
-        });
+            const competitionEntry =
+                await updateCleanJerkAttempts(
+                    req.params.id,
+                    req.body
+                );
 
-    } catch (error) {
 
-        return res.status(404).json({
-            success: false,
-            message: error.message,
-        });
+            return res.status(200).json({
 
-    }
+                success: true,
 
-};
+                message:
+                    "Clean & Jerk attempts updated successfully.",
+
+                data:
+                    competitionEntry,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// GET COMPETITION ENTRIES
+//
+// GET
+// /competition-entry/competition/:competitionId
+// =====================================
+
+export const getCompetitionEntriesController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const {
+                competitionId,
+                gender,
+            } = req.params;
+
+
+            const competitionEntries =
+                await getCompetitionEntries(
+                    competitionId,
+                    gender
+                );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                count:
+                    competitionEntries.length,
+
+                data:
+                    competitionEntries,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// GET COMPETITION ENTRY BY ID
+//
+// GET
+// /competition-entry/entry/:id
+// =====================================
+
+export const getCompetitionEntryByIdController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const competitionEntry =
+                await getCompetitionEntryById(
+                    req.params.id
+                );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                data:
+                    competitionEntry,
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    error.message,
+
+            });
+``
+        }
+
+    };

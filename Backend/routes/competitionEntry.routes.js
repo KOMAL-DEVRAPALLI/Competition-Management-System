@@ -1,5 +1,8 @@
 import express from "express";
 
+import authMiddleware from "../middleware/authMiddleware.js";
+import requireAdmin from "../middleware/requireAdmin.js";
+
 import {
     createCompetitionEntryController,
     getCompetitionEntryController,
@@ -13,40 +16,109 @@ import {
     prepareCompetitionController,
     startLiveCompetitionController
 } from "../controllers/CompetitionEntryController.js";
-import weighInValidator from "../validators/weighInValidator.js"
+
 const router = express.Router();
 
-router.post("/", createCompetitionEntryController);
+router.use(
+    authMiddleware,
+    requireAdmin
+);
 
-// Get one CompetitionEntry by its _id
+router.post(
+    "/",
+    createCompetitionEntryController
+);
+
+// =====================================
+// GET ONE COMPETITION ENTRY BY ID
+// =====================================
+
 router.get(
     "/entry/:id",
     getCompetitionEntryByIdController
 );
+
+// =====================================
+// START LIVE COMPETITION
+// =====================================
+
 router.post(
     "/live/start/:competitionId/:gender",
     startLiveCompetitionController
 );
-// Get all entries for a competition
+
+// =====================================
+// GET ALL ENTRIES FOR COMPETITION
+// =====================================
+
 router.get(
     "/competition/:competitionId",
     getCompetitionEntriesController
 );
 
-// Get one entry by competitionId + athleteId
+// =====================================
+// GET ENTRY BY COMPETITION + ATHLETE
+// =====================================
+
 router.get(
     "/:competitionId/:athleteId",
     getCompetitionEntryController
 );
+
+// =====================================
+// CALCULATE ELIGIBLE WEIGHT CATEGORIES
+//
+// POST
+// /api/competition-entry/:id/eligible-categories
+//
+// :id = CompetitionEntry._id
+// =====================================
+
 router.post(
     "/:id/eligible-categories",
     getEligibleWeightCategoriesController
 );
-router.patch("/:id/weighin", updateWeighInController);
 
-router.patch("/opening", updateOpeningLiftsController);
-router.patch("/:id/snatch", updateSnatchAttemptsController);
-router.patch("/:id/cleanjerk", updateCleanJerkAttemptsController);
+// =====================================
+// WEIGH-IN
+// =====================================
+
+router.patch(
+    "/:id/weighin",
+    updateWeighInController
+);
+
+// =====================================
+// OPENING LIFTS
+// =====================================
+
+router.patch(
+    "/opening",
+    updateOpeningLiftsController
+);
+
+// =====================================
+// SNATCH ATTEMPTS
+// =====================================
+
+router.patch(
+    "/:id/snatch",
+    updateSnatchAttemptsController
+);
+
+// =====================================
+// CLEAN & JERK ATTEMPTS
+// =====================================
+
+router.patch(
+    "/:id/cleanjerk",
+    updateCleanJerkAttemptsController
+);
+
+// =====================================
+// PREPARE COMPETITION
+// =====================================
+
 router.post(
     "/prepare/:competitionId",
     prepareCompetitionController

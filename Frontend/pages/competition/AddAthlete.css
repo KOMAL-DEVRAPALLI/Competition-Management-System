@@ -1,0 +1,618 @@
+/* =====================================
+   PAGE
+===================================== */
+
+.add-athlete-page {
+
+    min-height: 100vh;
+
+    background: #f4f7fb;
+
+    padding: 50px 20px;
+
+}
+
+
+/* =====================================
+   HEADER
+===================================== */
+
+.add-athlete-header {
+
+    max-width: 750px;
+
+    margin: 0 auto 30px;
+
+}
+
+.add-athlete-header h1 {
+
+    margin: 0 0 8px;
+
+    font-size: 36px;
+
+}
+
+.add-athlete-header p {
+
+    margin: 0;
+
+    color: #64748b;
+
+}
+
+
+/* =====================================
+   FORM
+===================================== */
+
+.add-athlete-form {
+
+    max-width: 750px;
+
+    margin: 0 auto;
+
+    background: white;
+
+    padding: 32px;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 8px 30px rgba(15, 23, 42, 0.08);
+
+}
+
+
+/* =====================================
+   FORM GROUP
+===================================== */
+
+.form-group {
+
+    margin-bottom: 22px;
+
+}
+
+.form-group label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-weight: 600;
+
+    color: #1e293b;
+
+}
+
+
+/* =====================================
+   INPUTS
+===================================== */
+
+.form-group input,
+.form-group select {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 13px 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 8px;
+
+    font-size: 16px;
+
+    outline: none;
+
+    background: #fff;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+
+}
+
+.form-group input:focus,
+.form-group select:focus {
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.10);
+
+}
+
+
+/* =====================================
+   EXISTING ATHLETE SEARCH
+===================================== */
+
+.existing-athlete-search {
+
+    position: relative;
+
+    margin-bottom: 24px;
+
+}
+
+
+/* Search input if JSX uses this class */
+
+.existing-athlete-search input {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 13px 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 8px;
+
+    font-size: 16px;
+
+    outline: none;
+
+}
+
+.existing-athlete-search input:focus {
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.10);
+
+}
+
+
+/* =====================================
+   ATHLETE SEARCH RESULTS
+===================================== */
+
+.athlete-search-results {
+
+    margin-top: 8px;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 8px 20px rgba(15, 23, 42, 0.08);
+
+}
+
+
+/* Individual result */
+
+.athlete-search-result {
+
+    width: 100%;
+
+    padding: 13px 15px;
+
+    border: none;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    background: #fff;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease;
+
+}
+
+.athlete-search-result:last-child {
+
+    border-bottom: none;
+
+}
+
+.athlete-search-result:hover {
+
+    background: #f8fafc;
+
+}
+
+
+/* =====================================
+   SEARCH RESULT INFORMATION
+===================================== */
+
+.athlete-result-name {
+
+    display: block;
+
+    margin-bottom: 4px;
+
+    font-weight: 600;
+
+    color: #0f172a;
+
+}
+
+.athlete-result-details {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    font-size: 13px;
+
+    color: #64748b;
+
+}
+
+
+/* =====================================
+   SELECTED ATHLETE
+===================================== */
+
+.selected-athlete {
+
+    margin-bottom: 24px;
+
+    padding: 16px;
+
+    border: 1px solid #bfdbfe;
+
+    border-radius: 10px;
+
+    background: #eff6ff;
+
+}
+
+.selected-athlete-title {
+
+    margin-bottom: 6px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #2563eb;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.03em;
+
+}
+
+.selected-athlete-name {
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+    color: #0f172a;
+
+}
+
+.selected-athlete-details {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 6px;
+
+    font-size: 14px;
+
+    color: #475569;
+
+}
+
+
+/* =====================================
+   CHANGE / CLEAR ATHLETE
+===================================== */
+
+.change-athlete-btn {
+
+    margin-top: 12px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #93c5fd;
+
+    border-radius: 7px;
+
+    background: white;
+
+    color: #2563eb;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+}
+
+.change-athlete-btn:hover {
+
+    background: #dbeafe;
+
+}
+
+
+/* =====================================
+   NEW ATHLETE SECTION
+===================================== */
+
+.new-athlete-section {
+
+    margin-top: 28px;
+
+    padding-top: 26px;
+
+    border-top: 1px solid #e2e8f0;
+
+}
+
+.new-athlete-section h2 {
+
+    margin: 0 0 6px;
+
+    font-size: 20px;
+
+    color: #0f172a;
+
+}
+
+.new-athlete-section p {
+
+    margin: 0 0 22px;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+}
+
+
+/* =====================================
+   AGE CATEGORY
+===================================== */
+
+.age-category-group {
+
+    margin-bottom: 22px;
+
+}
+
+.age-category-options {
+
+    display: flex;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+}
+
+.age-category-option {
+
+    position: relative;
+
+}
+
+.age-category-option input {
+
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+}
+
+.age-category-option label {
+
+    display: block;
+
+    min-width: 110px;
+
+    padding: 12px 18px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 8px;
+
+    background: white;
+
+    color: #334155;
+
+    text-align: center;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
+
+}
+
+.age-category-option label:hover {
+
+    border-color: #93c5fd;
+
+    background: #f8fafc;
+
+}
+
+.age-category-option input:checked + label {
+
+    border-color: #2563eb;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+}
+
+
+/* =====================================
+   ERROR
+===================================== */
+
+.add-athlete-error {
+
+    margin-bottom: 20px;
+
+    padding: 12px 15px;
+
+    border-radius: 8px;
+
+    background: #fef2f2;
+
+    color: #b91c1c;
+
+    border: 1px solid #fecaca;
+
+}
+
+
+/* =====================================
+   ACTIONS
+===================================== */
+
+.form-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    margin-top: 30px;
+
+}
+
+.cancel-btn,
+.submit-btn {
+
+    border: none;
+
+    padding: 12px 22px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+}
+
+.cancel-btn {
+
+    background: #e5e7eb;
+
+    color: #374151;
+
+}
+
+.cancel-btn:hover:not(:disabled) {
+
+    background: #d1d5db;
+
+}
+
+.submit-btn {
+
+    background: #2563eb;
+
+    color: white;
+
+}
+
+.submit-btn:hover:not(:disabled) {
+
+    background: #1d4ed8;
+
+}
+
+.cancel-btn:disabled,
+.submit-btn:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 600px) {
+
+    .add-athlete-page {
+
+        padding: 30px 14px;
+
+    }
+
+    .add-athlete-header h1 {
+
+        font-size: 28px;
+
+    }
+
+    .add-athlete-form {
+
+        padding: 22px;
+
+    }
+
+    .form-actions {
+
+        flex-direction: column-reverse;
+
+    }
+
+    .cancel-btn,
+    .submit-btn {
+
+        width: 100%;
+
+    }
+
+    .age-category-options {
+
+        flex-direction: column;
+
+    }
+
+    .age-category-option label {
+
+        width: 100%;
+
+        box-sizing: border-box;
+
+    }
+
+}

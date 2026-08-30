@@ -7,6 +7,7 @@ const selectOfficialAthlete = async ({
     competitionId,
     gender,
     entryId,
+    expectedStateVersion,
 }) => {
 
     // =====================================
@@ -40,6 +41,24 @@ const selectOfficialAthlete = async ({
     }
 
 
+    // =====================================
+    // VALIDATE EXPECTED STATE VERSION
+    // =====================================
+
+    if (
+        !Number.isInteger(
+            expectedStateVersion
+        ) ||
+        expectedStateVersion < 0
+    ) {
+
+        throw new Error(
+            "expectedStateVersion must be a non-negative integer."
+        );
+
+    }
+
+
     const normalizedGender =
         gender.toLowerCase();
 
@@ -60,6 +79,51 @@ const selectOfficialAthlete = async ({
         throw new Error(
             "Live competition session not found."
         );
+
+    }
+
+
+    // =====================================
+    // VALIDATE AUTHORITATIVE STATE VERSION
+    // =====================================
+
+    if (
+        !Number.isInteger(
+            session.stateVersion
+        ) ||
+        session.stateVersion < 0
+    ) {
+
+        throw new Error(
+            "Live competition stateVersion is invalid. Recovery required."
+        );
+
+    }
+
+
+    if (
+        expectedStateVersion !==
+        session.stateVersion
+    ) {
+
+        const error =
+            new Error(
+                "Live competition state has changed. Refresh before selecting another athlete."
+            );
+
+        error.code =
+            "STALE_STATE";
+
+        error.statusCode =
+            409;
+
+        error.expectedStateVersion =
+            expectedStateVersion;
+
+        error.currentStateVersion =
+            session.stateVersion;
+
+        throw error;
 
     }
 
@@ -107,47 +171,6 @@ const selectOfficialAthlete = async ({
 
 
     // =====================================
-    // IMPORTANT:
-    //
-    // CURRENT ATHLETE DOES NOT BLOCK
-    // MANUAL ATHLETE SELECTION.
-    //
-    // The current athlete may have:
-    //
-    // - undeclared attempt
-    // - declared attempt
-    // - pending Snatch attempt
-    // - pending Clean & Jerk attempt
-    //
-    // The official may still select
-    // another athlete.
-    //
-    // We DO NOT:
-    //
-    // - delete the current attempt
-    // - reset the declaration
-    // - mark the attempt completed
-    // - give GOOD / NO_LIFT
-    // - modify CompetitionEntry
-    //
-    // We only change:
-    //
-    // session.currentEntryId
-    //
-    // This means:
-    //
-    // A = C&J 1 = 40 kg = PENDING
-    //
-    // Official selects E
-    //
-    // A remains:
-    //
-    // C&J 1 = 40 kg = PENDING
-    //
-    // =====================================
-
-
-    // =====================================
     // VERIFY SELECTED ATHLETE GENDER
     // =====================================
 
@@ -181,11 +204,6 @@ const selectOfficialAthlete = async ({
 
     // =====================================
     // GET SELECTED ATHLETE'S NEXT ATTEMPT
-    //
-    // The official chooses the athlete.
-    //
-    // The system determines the athlete's
-    // next pending attempt.
     // =====================================
 
     const currentAttempt =
@@ -211,28 +229,6 @@ const selectOfficialAthlete = async ({
 
     // =====================================
     // VERIFY SELECTED ATHLETE'S PHASE
-    //
-    // IMPORTANT:
-    //
-    // This check applies to the ATHLETE
-    // BEING SELECTED.
-    //
-    // It does NOT apply to the athlete
-    // currently leaving the platform.
-    //
-    // Example:
-    //
-    // Live phase = SNATCH
-    //
-    // Current athlete A:
-    // C&J 1
-    //
-    // Selected athlete E:
-    // SNATCH 2
-    //
-    // E can be selected.
-    //
-    // A's C&J remains untouched.
     // =====================================
 
     if (
@@ -250,10 +246,7 @@ const selectOfficialAthlete = async ({
     // =====================================
     // MANUAL ATHLETE SELECTION
     //
-    // THIS IS THE ONLY PLATFORM STATE
-    // THAT CHANGES.
-    //
-    // NO AUTOMATIC SELECTION.
+    // Existing behavior preserved.
     // =====================================
 
     session.currentEntryId =
@@ -262,6 +255,19 @@ const selectOfficialAthlete = async ({
 
     session.status =
         "RUNNING";
+
+
+    // =====================================
+    // AUTHORITATIVE STATE VERSION
+    //
+    // Athlete selection is a state-changing
+    // transition, therefore the version
+    // advances only after all validation
+    // above has succeeded.
+    // =====================================
+
+    session.stateVersion =
+        session.stateVersion + 1;
 
 
     await session.save();
@@ -275,23 +281,19 @@ const selectOfficialAthlete = async ({
         "===================================="
     );
 
-
     console.log(
         "OFFICIAL ATHLETE SELECTED"
     );
-
 
     console.log(
         "Competition:",
         competitionId.toString()
     );
 
-
     console.log(
         "Gender:",
         normalizedGender
     );
-
 
     console.log(
         "Entry:",
@@ -299,7 +301,6 @@ const selectOfficialAthlete = async ({
             ._id
             .toString()
     );
-
 
     console.log(
         "Athlete:",
@@ -309,31 +310,31 @@ const selectOfficialAthlete = async ({
             ?.fullName
     );
 
-
     console.log(
         "Phase:",
         currentAttempt.phase
     );
-
 
     console.log(
         "Attempt:",
         currentAttempt.attemptNo
     );
 
-
     console.log(
         "Declared Weight:",
         currentAttempt.declaredWeight
     );
 
+    console.log(
+        "State Version:",
+        session.stateVersion
+    );
 
     console.log(
         "Current Entry:",
         session.currentEntryId
             ?.toString()
     );
-
 
     console.log(
         "===================================="
@@ -347,6 +348,9 @@ const selectOfficialAthlete = async ({
     return {
 
         session,
+
+        stateVersion:
+            session.stateVersion,
 
         athlete: {
 

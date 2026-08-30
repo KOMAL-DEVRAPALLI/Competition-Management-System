@@ -1,31 +1,47 @@
 import { generateWorkingSheetService } from "../services/pdf/workingSheet/workingSheetService.js";
 import buildWorkingSheetData from "../services/pdf/workingSheet/buildWorkingSheetData.js";
-export const generateWorkingSheetController = async (req, res) => {
+
+
+export const generateWorkingSheetController = async (
+    req,
+    res
+) => {
 
     try {
 
-        const { competitionId ,gender} = req.params;
-
-        const pdf = await generateWorkingSheetService(
+        const {
             competitionId,
-            gender
-        );
+            gender,
+            ageCategory
+        } = req.params;
+
+
+        const pdf =
+            await generateWorkingSheetService(
+                competitionId,
+                gender,
+                ageCategory
+            );
+
 
         res.setHeader(
             "Content-Type",
             "application/pdf"
         );
 
+
         res.setHeader(
             "Content-Disposition",
             "inline; filename=WorkingSheet.pdf"
         );
+
 
         return res.send(pdf);
 
     } catch (error) {
 
         console.error(error);
+
 
         return res.status(500).json({
 
@@ -38,6 +54,8 @@ export const generateWorkingSheetController = async (req, res) => {
     }
 
 };
+
+
 export const getWorkingSheetDataController = async (
     req,
     res
@@ -45,7 +63,11 @@ export const getWorkingSheetDataController = async (
 
     try {
 
-        const { competitionId, gender } = req.params;
+        const {
+            competitionId,
+            gender
+        } = req.params;
+
 
         const workingSheetData =
             await buildWorkingSheetData(
@@ -53,21 +75,32 @@ export const getWorkingSheetDataController = async (
                 gender
             );
 
-        const athletes = workingSheetData.flatMap(
-    (group) => group.athletes
-);
 
-return res.status(200).json({
-    success: true,
-    count: athletes.length,
-    data: athletes,
-});
+        const athletes =
+            workingSheetData.flatMap(
+                (group) =>
+                    group.athletes
+            );
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            count: athletes.length,
+
+            data: athletes,
+
+        });
 
     } catch (error) {
 
         return res.status(500).json({
+
             success: false,
+
             message: error.message,
+
         });
 
     }

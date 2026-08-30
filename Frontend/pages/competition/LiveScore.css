@@ -8,10 +8,9 @@
 
     box-sizing: border-box;
 
-    padding: 24px;
+    padding: 14px 18px 24px;
 
     background: #081a33;
-
     color: #ffffff;
 
     font-family:
@@ -29,9 +28,12 @@
     min-height: 100vh;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
+
+    box-sizing: border-box;
+
+    padding: 20px;
 
     text-align: center;
 }
@@ -42,7 +44,7 @@
 
     color: #ffffff;
 
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
 }
 
@@ -56,14 +58,16 @@
 
     box-sizing: border-box;
 
-    margin-bottom: 20px;
+    margin: 0 0 10px;
 
-    padding: 14px 18px;
+    padding: 9px 14px;
 
-    border-radius: 10px;
+    border-radius: 7px;
 
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 700;
+
+    line-height: 1.3;
 }
 
 
@@ -93,27 +97,27 @@
     width: 100%;
 
     display: flex;
-
+    align-items: center;
     justify-content: center;
 
-    margin-bottom: 24px;
+    box-sizing: border-box;
+
+    margin-bottom: 14px;
 }
 
 
 .live-score-start button {
-    min-width: 240px;
+    min-width: 210px;
 
-    padding: 15px 24px;
+    padding: 11px 20px;
 
     border: none;
-
-    border-radius: 10px;
+    border-radius: 7px;
 
     background: #2563eb;
-
     color: #ffffff;
 
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 800;
 
     cursor: pointer;
@@ -124,7 +128,7 @@
 }
 
 
-.live-score-start button:hover {
+.live-score-start button:hover:not(:disabled) {
     background: #1d4ed8;
 
     transform: translateY(-1px);
@@ -141,31 +145,81 @@
 
 
 /* =========================================================
-   RESPONSIVE
+   DESKTOP DENSITY
 ========================================================= */
 
-@media (min-width: 1600px) {
+@media (min-width: 1400px) {
 
     .live-score-page {
-        padding: 30px;
+        padding: 12px 18px 22px;
     }
 
 }
 
+
+/* =========================================================
+   LARGE LAPTOP / DESKTOP
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .live-score-page {
+        padding: 12px 14px 20px;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
 
 @media (max-width: 1000px) {
 
     .live-score-page {
-        padding: 16px;
+        padding: 12px;
+    }
+
+    .lift-status {
+        margin-bottom: 9px;
+
+        padding: 8px 12px;
+
+        font-size: 12px;
     }
 
 }
 
 
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media (max-width: 650px) {
 
     .live-score-page {
-        padding: 10px;
+        padding: 8px;
+    }
+
+    .lift-status {
+        margin-bottom: 8px;
+
+        padding: 8px 10px;
+
+        font-size: 11px;
+    }
+
+    .live-score-start {
+        margin-bottom: 10px;
+    }
+
+    .live-score-start button {
+        width: 100%;
+        min-width: 0;
+
+        padding: 10px 16px;
+
+        font-size: 13px;
     }
 
 }

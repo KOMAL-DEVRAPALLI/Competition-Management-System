@@ -5,19 +5,14 @@ import "./AthleteSelectionTable.css";
 
 const AthleteSelectionTable = ({
     athletes = [],
+
     currentAthlete = null,
 
+    nextAthlete = null,
+
+    upcomingAthletes = [],
+
     currentPhase = "SNATCH",
-
-    canSelectAnotherAthlete = false,
-
-    selectingAthlete = false,
-
-    onSelectAthlete,
-
-    // =====================================
-    // DECLARATION EDITING
-    // =====================================
 
     onEditDeclaration,
 
@@ -26,6 +21,11 @@ const AthleteSelectionTable = ({
 
     // =====================================
     // LOCAL EDIT STATE
+    //
+    // This is UI-only state.
+    //
+    // It does NOT represent competition
+    // authority.
     // =====================================
 
     const [editingEntryId, setEditingEntryId] =
@@ -36,186 +36,138 @@ const AthleteSelectionTable = ({
 
 
     // =====================================
-    // CURRENT ATHLETE ATTEMPT
+    // NORMALIZE ENTRY ID
     // =====================================
 
-    const currentAttempt =
-        currentAthlete?.currentAttempt ?? null;
+    const sameEntry = (
+        first,
+        second
+    ) => {
+
+        if (
+            !first ||
+            !second
+        ) {
+
+            return false;
+
+        }
 
 
-    // =====================================
-    // ATHLETE COUNTS
-    // =====================================
+        return (
+            first.entryId?.toString() ===
+            second.entryId?.toString()
+        );
 
-    const totalAthletes =
-        athletes.length;
-
-
-    const completedAthletes =
-        athletes.filter(
-            (athlete) =>
-                athlete.status ===
-                    "COMPLETED" ||
-                athlete.currentAttempt
-                    ?.completed
-        ).length;
-
-
-    const availableAthletes =
-        athletes.filter(
-            (athlete) => {
-
-                if (
-                    athlete.status ===
-                    "COMPLETED"
-                ) {
-
-                    return false;
-
-                }
-
-
-                if (
-                    athlete.currentAttempt
-                        ?.completed
-                ) {
-
-                    return false;
-
-                }
-
-
-                if (
-                    athlete.currentAttempt
-                        ?.phase !==
-                    currentPhase
-                ) {
-
-                    return false;
-
-                }
-
-
-                return true;
-
-            }
-        ).length;
+    };
 
 
     // =====================================
-    // HANDLE SELECTION
+    // QUEUE STATUS
     //
     // IMPORTANT:
     //
-    // Selection and declaration editing are
-    // completely separate actions.
+    // This function does NOT determine
+    // calling order.
+    //
+    // It only determines how the backend
+    // supplied state should be displayed.
     // =====================================
 
-    const handleSelect =
+    const getQueueStatus =
         (athlete) => {
 
         if (
-            selectingAthlete
+            sameEntry(
+                athlete,
+                currentAthlete
+            )
         ) {
 
-            return;
+            return "CURRENT";
 
         }
 
 
         if (
-            !athlete
+            sameEntry(
+                athlete,
+                nextAthlete
+            )
         ) {
 
-            return;
+            return "NEXT";
 
         }
 
-
-        // =================================
-        // CURRENT ATHLETE
-        // =================================
 
         if (
-            currentAthlete &&
-            athlete.entryId?.toString() ===
-            currentAthlete.entryId?.toString()
+            athlete?.completed ||
+            athlete?.status === "COMPLETED"
         ) {
 
-            return;
+            return "COMPLETED";
 
         }
 
 
-        // =================================
-        // CURRENT ATHLETE DECLARATION
-        //
-        // This restriction applies ONLY
-        // to selecting another athlete.
-        //
-        // It does NOT prevent editing
-        // another athlete's declaration.
-        // =================================
+        return "UPCOMING";
+
+    };
+
+
+    // =====================================
+    // STATUS LABEL
+    // =====================================
+
+    const getStatusLabel =
+        (status) => {
+
+        switch (status) {
+
+            case "CURRENT":
+                return "CURRENT";
+
+            case "NEXT":
+                return "NEXT";
+
+            case "COMPLETED":
+                return "COMPLETED";
+
+            default:
+                return "UPCOMING";
+
+        }
+
+    };
+
+
+    // =====================================
+    // PHASE LABEL
+    // =====================================
+
+    const getPhaseLabel =
+        (phase) => {
 
         if (
-            currentAthlete &&
-            !canSelectAnotherAthlete
+            phase === "CLEAN_JERK"
         ) {
 
-            return;
+            return "CLEAN & JERK";
 
         }
 
-
-        // =================================
-        // VALID ATTEMPT
-        // =================================
 
         if (
-            !athlete.currentAttempt ||
-            athlete.currentAttempt.completed
+            phase === "SNATCH"
         ) {
 
-            return;
+            return "SNATCH";
 
         }
 
 
-        // =================================
-        // VERIFY PHASE
-        // =================================
-
-        if (
-            athlete.currentAttempt.phase !==
-            currentPhase
-        ) {
-
-            return;
-
-        }
-
-
-        // =================================
-        // SELECT
-        // =================================
-
-        if (
-            typeof onSelectAthlete !==
-            "function"
-        ) {
-
-            console.error(
-                "AthleteSelectionTable: onSelectAthlete is not a function."
-            );
-
-            return;
-
-        }
-
-
-        onSelectAthlete(
-            athlete
-        );
+        return phase ?? "-";
 
     };
 
@@ -223,16 +175,11 @@ const AthleteSelectionTable = ({
     // =====================================
     // CAN EDIT DECLARATION?
     //
-    // This is intentionally independent
-    // from canSelectAnotherAthlete.
+    // This is an Officials action, but it
+    // does NOT select an athlete.
     //
-    // Therefore:
-    //
-    // A = current athlete
-    // E = future athlete
-    //
-    // Even if A still needs declaration,
-    // E's declaration can be edited.
+    // The backend remains authoritative and
+    // validates the actual declaration change.
     // =====================================
 
     const canEditDeclaration =
@@ -250,14 +197,15 @@ const AthleteSelectionTable = ({
         // ---------------------------------
         // Current athlete
         //
-        // Current athlete uses the main
-        // CurrentAthletePanel.
+        // Current athlete declaration is
+        // controlled by CurrentAthletePanel.
         // ---------------------------------
 
         if (
-            currentAthlete &&
-            athlete.entryId?.toString() ===
-            currentAthlete.entryId?.toString()
+            sameEntry(
+                athlete,
+                currentAthlete
+            )
         ) {
 
             return false;
@@ -270,8 +218,8 @@ const AthleteSelectionTable = ({
         // ---------------------------------
 
         if (
-            athlete.status ===
-            "COMPLETED"
+            athlete.completed ||
+            athlete.status === "COMPLETED"
         ) {
 
             return false;
@@ -280,12 +228,14 @@ const AthleteSelectionTable = ({
 
 
         // ---------------------------------
-        // Completed current attempt
+        // Must have an active attempt
         // ---------------------------------
 
         if (
-            athlete.currentAttempt
-                ?.completed
+            !athlete.phase ||
+            !Number.isInteger(
+                athlete.attemptNo
+            )
         ) {
 
             return false;
@@ -294,31 +244,12 @@ const AthleteSelectionTable = ({
 
 
         // ---------------------------------
-        // No attempt
+        // Declaration editing is limited
+        // to the active competition phase.
         // ---------------------------------
 
         if (
-            !athlete.currentAttempt
-        ) {
-
-            return false;
-
-        }
-
-
-        // ---------------------------------
-        // WRONG PHASE
-        //
-        // Example:
-        //
-        // Competition = SNATCH
-        // Athlete's current attempt = C&J
-        //
-        // Do not allow editing.
-        // ---------------------------------
-
-        if (
-            athlete.currentAttempt.phase !==
+            athlete.phase !==
             currentPhase
         ) {
 
@@ -328,13 +259,12 @@ const AthleteSelectionTable = ({
 
 
         // ---------------------------------
-        // Attempt already completed
+        // Attempt must still be pending.
         // ---------------------------------
 
         if (
-            athlete.currentAttempt.result &&
-            athlete.currentAttempt.result !==
-                "PENDING"
+            athlete.result &&
+            athlete.result !== "PENDING"
         ) {
 
             return false;
@@ -348,11 +278,20 @@ const AthleteSelectionTable = ({
 
 
     // =====================================
-    // START EDITING DECLARATION
+    // START EDIT
     // =====================================
 
     const handleStartEdit =
         (athlete) => {
+
+        if (
+            savingDeclarationEntryId
+        ) {
+
+            return;
+
+        }
+
 
         if (
             !canEditDeclaration(
@@ -365,37 +304,16 @@ const AthleteSelectionTable = ({
         }
 
 
-        // ---------------------------------
-        // Prevent another edit while one
-        // is already being saved.
-        // ---------------------------------
-
-        if (
-            savingDeclarationEntryId
-        ) {
-
-            return;
-
-        }
-
-
-        // ---------------------------------
-        // Existing declaration
-        // ---------------------------------
-
-        const existingWeight =
-            athlete.currentAttempt
-                ?.declaredWeight;
-
-
         setEditingEntryId(
             athlete.entryId
         );
 
 
         setEditingWeight(
-            existingWeight != null
-                ? String(existingWeight)
+            athlete.declaredWeight != null
+                ? String(
+                    athlete.declaredWeight
+                )
                 : ""
         );
 
@@ -430,7 +348,7 @@ const AthleteSelectionTable = ({
 
 
     // =====================================
-    // SAVE EDITED DECLARATION
+    // SAVE EDIT
     // =====================================
 
     const handleSaveEdit =
@@ -438,6 +356,15 @@ const AthleteSelectionTable = ({
 
         if (
             !athlete
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            savingDeclarationEntryId
         ) {
 
             return;
@@ -456,23 +383,6 @@ const AthleteSelectionTable = ({
         }
 
 
-        // ---------------------------------
-        // Prevent duplicate save
-        // ---------------------------------
-
-        if (
-            savingDeclarationEntryId
-        ) {
-
-            return;
-
-        }
-
-
-        // ---------------------------------
-        // Validate weight
-        // ---------------------------------
-
         const weight =
             Number(
                 editingWeight
@@ -480,7 +390,7 @@ const AthleteSelectionTable = ({
 
 
         if (
-            Number.isNaN(weight) ||
+            !Number.isFinite(weight) ||
             weight <= 0
         ) {
 
@@ -488,12 +398,6 @@ const AthleteSelectionTable = ({
 
         }
 
-
-        // ---------------------------------
-        // Parent performs API request.
-        //
-        // This component does NOT call API.
-        // ---------------------------------
 
         if (
             typeof onEditDeclaration !==
@@ -523,8 +427,8 @@ const AthleteSelectionTable = ({
 
 
             // ---------------------------------
-            // Close editor only after the
-            // parent operation resolves.
+            // Parent has successfully completed
+            // the authoritative API operation.
             // ---------------------------------
 
             setEditingEntryId(
@@ -537,8 +441,16 @@ const AthleteSelectionTable = ({
 
         } catch (error) {
 
+            // ---------------------------------
+            // Parent already owns the API
+            // error handling.
+            //
+            // Keep editor open so the official
+            // can see/retry the operation.
+            // ---------------------------------
+
             console.error(
-                "Failed to edit declaration:",
+                "Failed to update declaration:",
                 error
             );
 
@@ -548,231 +460,89 @@ const AthleteSelectionTable = ({
 
 
     // =====================================
-    // ROW STATUS
+    // DISPLAY QUEUE
+    //
+    // The backend already provides:
+    //
+    // current
+    // next
+    // upcoming
+    //
+    // We do NOT sort this array.
+    //
+    // The order supplied by the backend is
+    // authoritative.
     // =====================================
 
-    const getRowStatus =
-        (athlete) => {
+    const displayQueue = [
 
-        const isCurrent =
-            currentAthlete &&
-            athlete.entryId?.toString() ===
-            currentAthlete.entryId?.toString();
+        ...(currentAthlete
+            ? [currentAthlete]
+            : []),
 
+        ...(nextAthlete
+            ? [nextAthlete]
+            : []),
 
-        // ---------------------------------
-        // CURRENT ATHLETE
-        // ---------------------------------
+        ...(
+            Array.isArray(
+                upcomingAthletes
+            )
+                ? upcomingAthletes
+                : []
+        ),
 
-        if (
-            isCurrent
-        ) {
-
-            return "CURRENT";
-
-        }
-
-
-        // ---------------------------------
-        // COMPLETED
-        // ---------------------------------
-
-        if (
-            athlete.status ===
-                "COMPLETED" ||
-            athlete.currentAttempt
-                ?.completed
-        ) {
-
-            return "COMPLETED";
-
-        }
-
-
-        // ---------------------------------
-        // WRONG PHASE
-        // ---------------------------------
-
-        if (
-            !athlete.currentAttempt ||
-            athlete.currentAttempt.phase !==
-            currentPhase
-        ) {
-
-            return "WRONG_PHASE";
-
-        }
-
-
-        // ---------------------------------
-        // CURRENT ATHLETE STILL NEEDS
-        // NEXT DECLARATION
-        //
-        // This affects SELECT only.
-        //
-        // It does NOT affect EDIT.
-        // ---------------------------------
-
-        if (
-            currentAthlete &&
-            !canSelectAnotherAthlete
-        ) {
-
-            return "WAITING_DECLARATION";
-
-        }
-
-
-        // ---------------------------------
-        // AVAILABLE
-        // ---------------------------------
-
-        return "AVAILABLE";
-
-    };
+    ];
 
 
     // =====================================
-    // BUTTON TEXT
+    // FALLBACK
+    //
+    // `athletes` is retained only as a
+    // compatibility fallback.
+    //
+    // It is NOT reordered here.
     // =====================================
 
-    const getButtonText =
-        (rowStatus) => {
-
-        if (
-            rowStatus ===
-            "CURRENT"
-        ) {
-
-            return "SELECTED";
-
-        }
-
-
-        if (
-            rowStatus ===
-            "COMPLETED"
-        ) {
-
-            return "COMPLETED";
-
-        }
-
-
-        if (
-            rowStatus ===
-            "WRONG_PHASE"
-        ) {
-
-            return "NOT ELIGIBLE";
-
-        }
-
-
-        if (
-            rowStatus ===
-            "WAITING_DECLARATION"
-        ) {
-
-            return "WAIT";
-
-        }
-
-
-        if (
-            selectingAthlete
-        ) {
-
-            return "SELECTING...";
-
-        }
-
-
-        return "SELECT";
-
-    };
+    const rows =
+        displayQueue.length > 0
+            ? displayQueue
+            : athletes;
 
 
     // =====================================
-    // SELECTION BUTTON DISABLED
+    // COUNTS
     // =====================================
 
-    const isButtonDisabled =
-        (rowStatus) => {
-
-        // ---------------------------------
-        // CURRENT ATHLETE
-        // ---------------------------------
-
-        if (
-            rowStatus ===
-            "CURRENT"
-        ) {
-
-            return true;
-
-        }
+    const totalAthletes =
+        rows.length;
 
 
-        // ---------------------------------
-        // COMPLETED
-        // ---------------------------------
-
-        if (
-            rowStatus ===
-            "COMPLETED"
-        ) {
-
-            return true;
-
-        }
+    const completedAthletes =
+        rows.filter(
+            (athlete) =>
+                athlete?.completed ||
+                athlete?.status ===
+                    "COMPLETED"
+        ).length;
 
 
-        // ---------------------------------
-        // WRONG PHASE
-        // ---------------------------------
+    const waitingAthletes =
+        rows.filter(
+            (athlete) => {
 
-        if (
-            rowStatus ===
-            "WRONG_PHASE"
-        ) {
+                const status =
+                    getQueueStatus(
+                        athlete
+                    );
 
-            return true;
+                return (
+                    status ===
+                    "UPCOMING"
+                );
 
-        }
-
-
-        // ---------------------------------
-        // CURRENT ATHLETE DECLARATION
-        // NOT SAVED
-        // ---------------------------------
-
-        if (
-            rowStatus ===
-            "WAITING_DECLARATION"
-        ) {
-
-            return true;
-
-        }
-
-
-        // ---------------------------------
-        // SELECTION IN PROGRESS
-        // ---------------------------------
-
-        if (
-            selectingAthlete
-        ) {
-
-            return true;
-
-        }
-
-
-        return false;
-
-    };
+            }
+        ).length;
 
 
     // =====================================
@@ -793,53 +563,25 @@ const AthleteSelectionTable = ({
                 <div>
 
                     <h2>
-                        Official Athlete Selection
+                        Automatic Calling Queue
                     </h2>
 
-
-                    <p>
-                        Select the athlete manually.
-                        The system will not decide who
-                        lifts next.
-                    </p>
-
-
-                    <p>
-
-                        {currentAthlete
-
-                            ? canSelectAnotherAthlete
-
-                                ? "Current athlete's declaration is saved. You can now select any eligible athlete."
-
-                                : "Declare the current athlete's next attempt before selecting another athlete."
-
-                            : "Select any eligible athlete for the current phase."
-
-                        }
-
-                    </p>
-
-
-                    {/* =================================
-                        DECLARATION EDIT INFORMATION
-                    ================================= */}
-
-                    <p>
-                        Officials can edit a future
-                        athlete's pending declaration
-                        without selecting that athlete
-                        or giving a lift decision.
-                    </p>
 
                 </div>
 
 
                 <strong>
-                    {totalAthletes} athletes
+                    {totalAthletes} in queue
                 </strong>
 
             </div>
+
+
+            {/* =================================
+                AUTOMATIC QUEUE NOTICE
+            ================================= */}
+
+
 
 
             {/* =================================
@@ -855,6 +597,10 @@ const AthleteSelectionTable = ({
                         <tr>
 
                             <th>
+                                Status
+                            </th>
+
+                            <th>
                                 Lot
                             </th>
 
@@ -867,11 +613,19 @@ const AthleteSelectionTable = ({
                             </th>
 
                             <th>
+                                Phase
+                            </th>
+
+                            <th>
                                 Attempt
                             </th>
 
                             <th>
-                                Weight
+                                Applicable
+                            </th>
+
+                            <th>
+                                Declared
                             </th>
 
                             <th>
@@ -885,16 +639,18 @@ const AthleteSelectionTable = ({
 
                     <tbody>
 
-                        {athletes.length === 0 ? (
+                        {rows.length === 0 ? (
 
                             <tr>
 
                                 <td
-                                    colSpan="6"
+                                    colSpan="9"
                                     className="no-athletes-cell"
                                 >
 
-                                    No athletes available.
+                                    No athletes are currently
+                                    present in the authoritative
+                                    queue.
 
                                 </td>
 
@@ -902,23 +658,23 @@ const AthleteSelectionTable = ({
 
                         ) : (
 
-                            athletes.map(
+                            rows.map(
                                 (athlete) => {
 
-                                    const rowStatus =
-                                        getRowStatus(
+                                    const status =
+                                        getQueueStatus(
                                             athlete
                                         );
 
 
-                                    const attempt =
-                                        athlete.currentAttempt;
+                                    const attemptNo =
+                                        athlete.attemptNo ??
+                                        null;
 
 
-                                    const buttonDisabled =
-                                        isButtonDisabled(
-                                            rowStatus
-                                        );
+                                    const phase =
+                                        athlete.phase ??
+                                        null;
 
 
                                     const isEditing =
@@ -944,6 +700,7 @@ const AthleteSelectionTable = ({
                                     return (
 
                                         <tr
+
                                             key={
                                                 athlete.entryId
                                             }
@@ -952,25 +709,90 @@ const AthleteSelectionTable = ({
                                                 official-athlete-row
 
                                                 ${
-                                                    rowStatus ===
+                                                    status ===
                                                     "CURRENT"
-                                                        ? "official-selected-row"
+                                                        ? "official-current-row"
                                                         : ""
                                                 }
 
                                                 ${
-                                                    rowStatus ===
+                                                    status ===
+                                                    "NEXT"
+                                                        ? "official-next-row"
+                                                        : ""
+                                                }
+
+                                                ${
+                                                    status ===
                                                     "COMPLETED"
                                                         ? "official-completed-row"
+                                                        : ""
+                                                }
+
+                                                ${
+                                                    status ===
+                                                    "UPCOMING"
+                                                        ? "official-upcoming-row"
                                                         : ""
                                                 }
                                             `}
                                         >
 
 
-                                            {/* =========================
+                                            {/* =====================
+                                                STATUS
+                                            ===================== */}
+
+                                            <td>
+
+                                                <span
+                                                    className={`
+                                                        queue-status-badge
+
+                                                        ${
+                                                            status ===
+                                                            "CURRENT"
+                                                                ? "queue-status-current"
+                                                                : ""
+                                                        }
+
+                                                        ${
+                                                            status ===
+                                                            "NEXT"
+                                                                ? "queue-status-next"
+                                                                : ""
+                                                        }
+
+                                                        ${
+                                                            status ===
+                                                            "COMPLETED"
+                                                                ? "queue-status-completed"
+                                                                : ""
+                                                        }
+
+                                                        ${
+                                                            status ===
+                                                            "UPCOMING"
+                                                                ? "queue-status-upcoming"
+                                                                : ""
+                                                        }
+                                                    `}
+                                                >
+
+                                                    {
+                                                        getStatusLabel(
+                                                            status
+                                                        )
+                                                    }
+
+                                                </span>
+
+                                            </td>
+
+
+                                            {/* =====================
                                                 LOT
-                                            ========================= */}
+                                            ===================== */}
 
                                             <td>
 
@@ -982,16 +804,17 @@ const AthleteSelectionTable = ({
                                             </td>
 
 
-                                            {/* =========================
+                                            {/* =====================
                                                 NAME
-                                            ========================= */}
+                                            ===================== */}
 
                                             <td>
 
                                                 <strong>
 
                                                     {
-                                                        athlete.name
+                                                        athlete.name ??
+                                                        "-"
                                                     }
 
                                                 </strong>
@@ -999,9 +822,9 @@ const AthleteSelectionTable = ({
                                             </td>
 
 
-                                            {/* =========================
+                                            {/* =====================
                                                 CATEGORY
-                                            ========================= */}
+                                            ===================== */}
 
                                             <td>
 
@@ -1014,34 +837,60 @@ const AthleteSelectionTable = ({
                                             </td>
 
 
-                                            {/* =========================
-                                                ATTEMPT
-                                            ========================= */}
+                                            {/* =====================
+                                                PHASE
+                                            ===================== */}
 
                                             <td>
 
-                                                {attempt
-
-                                                    ? `${attempt.phase === "SNATCH"
-                                                        ? "SNATCH"
-                                                        : "CLEAN & JERK"} ${attempt.attemptNo}`
-
-                                                    : "-"
-
+                                                {
+                                                    getPhaseLabel(
+                                                        phase
+                                                    )
                                                 }
 
                                             </td>
 
 
-                                            {/* =========================
+                                            {/* =====================
+                                                ATTEMPT
+                                            ===================== */}
+
+                                            <td>
+
+                                                {
+                                                    attemptNo ??
+                                                    "-"
+                                                }
+
+                                            </td>
+
+
+                                            {/* =====================
+                                                APPLICABLE WEIGHT
+                                            ===================== */}
+
+                                            <td>
+
+                                                {
+                                                    athlete.applicableWeight != null
+                                                        ? `${athlete.applicableWeight} kg`
+                                                        : "-"
+                                                }
+
+                                            </td>
+
+
+                                            {/* =====================
                                                 DECLARED WEIGHT
-                                            ========================= */}
+                                            ===================== */}
 
                                             <td>
 
                                                 {isEditing ? (
 
                                                     <input
+
                                                         type="number"
 
                                                         min="1"
@@ -1091,16 +940,14 @@ const AthleteSelectionTable = ({
                                                         }
 
                                                         autoFocus
+
                                                     />
 
                                                 ) : (
 
-                                                    attempt?.declaredWeight != null &&
-                                                    Number(
-                                                        attempt.declaredWeight
-                                                    ) > 0
+                                                    athlete.declaredWeight != null
 
-                                                        ? `${attempt.declaredWeight} kg`
+                                                        ? `${athlete.declaredWeight} kg`
 
                                                         : "-"
 
@@ -1109,68 +956,27 @@ const AthleteSelectionTable = ({
                                             </td>
 
 
-                                            {/* =========================
+                                            {/* =====================
                                                 ACTION
-                                            ========================= */}
+                                            ===================== */}
 
                                             <td>
 
-                                                <div
-                                                    style={{
-                                                        display: "flex",
-                                                        gap: "8px",
-                                                        alignItems: "center",
-                                                        flexWrap: "wrap",
-                                                    }}
-                                                >
-
-
-                                                    {/* =====================
-                                                        SELECT
-                                                    ===================== */}
-
-                                                    <button
-                                                        type="button"
-
-                                                        className="select-athlete-btn"
-
-                                                        disabled={
-                                                            buttonDisabled ||
-                                                            isEditing ||
-                                                            !!savingDeclarationEntryId
-                                                        }
-
-                                                        onClick={() =>
-                                                            handleSelect(
-                                                                athlete
-                                                            )
-                                                        }
-                                                    >
-
-                                                        {
-                                                            getButtonText(
-                                                                rowStatus
-                                                            )
-                                                        }
-
-                                                    </button>
-
-
-                                                    {/* =====================
-                                                        EDIT DECLARATION
-                                                    ===================== */}
+                                                <div>
 
                                                     {editable &&
                                                         !isEditing && (
 
                                                         <button
+
                                                             type="button"
 
                                                             className="edit-declaration-btn"
 
                                                             disabled={
-                                                                !!savingDeclarationEntryId ||
-                                                                selectingAthlete
+                                                                Boolean(
+                                                                    savingDeclarationEntryId
+                                                                )
                                                             }
 
                                                             onClick={() =>
@@ -1187,15 +993,12 @@ const AthleteSelectionTable = ({
                                                     )}
 
 
-                                                    {/* =====================
-                                                        SAVE / CANCEL
-                                                    ===================== */}
-
                                                     {isEditing && (
 
                                                         <>
 
                                                             <button
+
                                                                 type="button"
 
                                                                 className="save-declaration-btn"
@@ -1212,15 +1015,17 @@ const AthleteSelectionTable = ({
                                                                 }
                                                             >
 
-                                                                {isSaving
-                                                                    ? "SAVING..."
-                                                                    : "SAVE"
+                                                                {
+                                                                    isSaving
+                                                                        ? "SAVING..."
+                                                                        : "SAVE"
                                                                 }
 
                                                             </button>
 
 
                                                             <button
+
                                                                 type="button"
 
                                                                 className="cancel-declaration-btn"
@@ -1239,6 +1044,28 @@ const AthleteSelectionTable = ({
                                                             </button>
 
                                                         </>
+
+                                                    )}
+
+
+                                                    {!editable &&
+                                                        !isEditing && (
+
+                                                        <span
+                                                            className="queue-action-status"
+                                                        >
+
+                                                            {
+                                                                status ===
+                                                                "CURRENT"
+                                                                    ? "ON PLATFORM"
+                                                                    : status ===
+                                                                    "COMPLETED"
+                                                                        ? "COMPLETED"
+                                                                        : "AUTOMATIC"
+                                                            }
+
+                                                        </span>
 
                                                     )}
 
@@ -1269,7 +1096,7 @@ const AthleteSelectionTable = ({
             <div className="official-list-footer">
 
                 <span>
-                    Available: {availableAthletes}
+                    Waiting: {waitingAthletes}
                 </span>
 
 
@@ -1283,7 +1110,6 @@ const AthleteSelectionTable = ({
                 </span>
 
             </div>
-
 
         </section>
 

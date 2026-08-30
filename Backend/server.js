@@ -1,5 +1,6 @@
 
-
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/authRoutes.js";
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -10,8 +11,14 @@ import CompetitionEntryRoutes from "./routes/competitionEntry.routes.js";
 import workingSheetRoutes from "./routes/workingSheetRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js"
 import athleteWeighInRoutes from "./routes/athleteWeighInRoutes.js"
+import adminAthleteRoutes
+    from "./routes/adminAthleteRoutes.js";
 import liveCompetitionRoutes from "./routes/liveCompetitionRoutes.js";
 import competitionRoutes from "./routes/competitionRoutes.js";
+import officialAthleteRoutes
+    from "./routes/officialAthleteRoutes.js";
+import competitionConfigRoutes
+    from "./routes/competitionConfigRoutes.js";
 dns.setDefaultResultOrder("ipv4first");
 dotenv.config();
 
@@ -27,17 +34,30 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use(cookieParser());
+
 app.use("/api", publicRoutes);
+
+app.use("/api/auth", authRoutes);
+
 app.use("/api/competition-entry", CompetitionEntryRoutes);
 app.use("/api/working-sheet", workingSheetRoutes);
 app.use("/api/live-competition", liveCompetitionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/athlete-weighin", athleteWeighInRoutes);
+app.use("/api/competition", competitionRoutes);
 app.use(
-    "/api/competition",
-    competitionRoutes
+    "/api/official-athletes",
+    officialAthleteRoutes
 );
-
+app.use(
+    "/api/admin",
+    adminAthleteRoutes
+);
+app.use(
+    "/api/competition-config",
+    competitionConfigRoutes
+);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

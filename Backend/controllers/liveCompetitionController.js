@@ -1,9 +1,21 @@
-import processLift from "../services/liveCompetition/processLift.js";
-import saveDeclaration from "../services/liveCompetition/saveDeclaration.js";
-import startLiveCompetition from "../services/liveCompetition/startLiveCompetition.js";
-import updateQueueDeclaration from "../services/liveCompetition/updateQueueDeclaration.js";
-import getLiveCompetition from "../services/liveCompetition/getLiveCompetition.js";
-import selectOfficialAthlete from "../services/liveCompetition/selectOfficialAthlete.js";
+import processLift
+    from "../services/liveCompetition/processLift.js";
+
+import saveDeclaration
+    from "../services/liveCompetition/saveDeclaration.js";
+
+import startLiveCompetition
+    from "../services/liveCompetition/startLiveCompetition.js";
+
+import getLiveCompetition
+    from "../services/liveCompetition/getLiveCompetition.js";
+
+import selectOfficialAthlete
+    from "../services/liveCompetition/selectOfficialAthlete.js";
+
+import getQueueState
+    from "../services/liveCompetition/getQueueState.js";
+
 
 // =====================================
 // GET LIVE COMPETITION
@@ -21,11 +33,26 @@ export const getLiveCompetitionController = async (
             gender,
         } = req.params;
 
+
+        console.log("===== GET LIVE COMPETITION =====");
+
+        console.log(
+            "competitionId:",
+            competitionId
+        );
+
+        console.log(
+            "gender:",
+            gender
+        );
+
+
         const result =
             await getLiveCompetition(
                 competitionId,
                 gender
             );
+
 
         return res.status(200).json({
 
@@ -37,12 +64,33 @@ export const getLiveCompetitionController = async (
 
     } catch (error) {
 
-        return res.status(400).json({
+        console.error(
+            "===== GET LIVE COMPETITION ERROR ====="
+        );
+
+        console.error(
+            "Message:",
+            error?.message
+        );
+
+        console.error(
+            "Stack:",
+            error?.stack
+        );
+
+
+        return res.status(
+            error?.statusCode || 400
+        ).json({
 
             success: false,
 
+            code:
+                error?.code || null,
+
             message:
-                error.message,
+                error?.message ||
+                "Failed to load live competition.",
 
         });
 
@@ -63,15 +111,73 @@ export const startLiveCompetitionController =
 
         try {
 
-            const {
-                competitionId,
-                gender,
-            } = req.params;
+            console.log(
+                "===== START LIVE COMPETITION REQUEST ====="
+            );
+
+
+            const competitionId =
+                req.params?.competitionId ??
+                req.body?.competitionId;
+
+
+            const gender =
+                req.params?.gender ??
+                req.body?.gender;
+
+
+            console.log(
+                "Resolved competitionId:",
+                competitionId
+            );
+
+            console.log(
+                "Resolved gender:",
+                gender
+            );
+
+
+            // =====================================
+            // VALIDATION
+            // =====================================
+
+            if (!competitionId) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Competition ID is required.",
+
+                });
+
+            }
+
+
+            if (!gender) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Gender is required.",
+
+                });
+
+            }
+
 
             const {
                 sessionName = "",
                 selectedWeightCategories = [],
-            } = req.body;
+            } = req.body ?? {};
+
+
+            // =====================================
+            // START SERVICE
+            // =====================================
 
             const result =
                 await startLiveCompetition({
@@ -86,6 +192,7 @@ export const startLiveCompetitionController =
 
                 });
 
+
             return res.status(200).json({
 
                 success: true,
@@ -93,18 +200,40 @@ export const startLiveCompetitionController =
                 message:
                     "Live competition started successfully.",
 
-                data: result,
+                data:
+                    result,
 
             });
 
         } catch (error) {
 
-            return res.status(400).json({
+            console.error(
+                "===== START LIVE COMPETITION ERROR ====="
+            );
+
+            console.error(
+                "Message:",
+                error?.message
+            );
+
+            console.error(
+                "Stack:",
+                error?.stack
+            );
+
+
+            return res.status(
+                error?.statusCode || 400
+            ).json({
 
                 success: false,
 
+                code:
+                    error?.code || null,
+
                 message:
-                    error.message,
+                    error?.message ||
+                    "Failed to start live competition.",
 
             });
 
@@ -116,57 +245,319 @@ export const startLiveCompetitionController =
 // =====================================
 // SELECT OFFICIAL ATHLETE
 //
-// Official manually chooses the athlete
-// who goes to the platform.
+// LEGACY / COMPATIBILITY ENDPOINT
 //
-// NO automatic selection.
+// Automatic queue is the target behavior.
+// This endpoint is retained so unrelated
+// existing functionality does not break.
 // =====================================
-export const selectOfficialAthleteController = async (
-    req,
-    res
-) => {
-    try {
 
-        const {
-            competitionId,
-            gender,
-            entryId,
-        } = req.body;
+export const selectOfficialAthleteController =
+    async (
+        req,
+        res
+    ) => {
 
-        const result =
-            await selectOfficialAthlete({
+        try {
+
+            const {
                 competitionId,
                 gender,
                 entryId,
+                expectedStateVersion,
+            } = req.body;
+
+
+            const result =
+                await selectOfficialAthlete({
+
+                    competitionId,
+
+                    gender,
+
+                    entryId,
+
+                    expectedStateVersion,
+
+                });
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Athlete selected successfully.",
+
+                data:
+                    result,
+
             });
 
-        return res.status(200).json({
-            success: true,
-            message: "Athlete selected successfully.",
-            data: result,
-        });
+        } catch (error) {
 
-    } catch (error) {
+            if (
+                error?.code === "STALE_STATE" ||
+                error?.statusCode === 409
+            ) {
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+                return res.status(409).json({
 
-    }
-};
+                    success: false,
+
+                    code:
+                        "STALE_STATE",
+
+                    message:
+                        error.message,
+
+                    expectedStateVersion:
+                        error.expectedStateVersion,
+
+                    currentStateVersion:
+                        error.currentStateVersion,
+
+                });
+
+            }
+
+
+            return res.status(
+                error?.statusCode || 400
+            ).json({
+
+                success: false,
+
+                code:
+                    error?.code || null,
+
+                message:
+                    error?.message,
+
+            });
+
+        }
+
+    };
+
 
 // =====================================
 // PROCESS LIFT
 //
-// GOOD / NO LIFT
-//
-// After this the platform is cleared.
-// The next athlete is NOT selected
-// automatically.
+// GOOD LIFT / NO LIFT
 // =====================================
 
-export const processLiftController = async (
+export const processLiftController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const {
+                entryId,
+                competitionId,
+                gender,
+                result,
+                expectedStateVersion,
+            } = req.body;
+
+
+            // =====================================
+            // STATE VERSION VALIDATION
+            // =====================================
+
+            if (
+                !Number.isInteger(
+                    expectedStateVersion
+                ) ||
+                expectedStateVersion < 0
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "expectedStateVersion must be a non-negative integer.",
+
+                });
+
+            }
+
+
+            const data =
+                await processLift({
+
+                    entryId,
+
+                    competitionId,
+
+                    gender,
+
+                    result,
+
+                    expectedStateVersion,
+
+                });
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Lift processed successfully.",
+
+                data,
+
+            });
+
+        } catch (error) {
+
+            if (
+                error?.code === "STALE_STATE" ||
+                error?.statusCode === 409
+            ) {
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    code:
+                        "STALE_STATE",
+
+                    message:
+                        error.message,
+
+                    expectedStateVersion:
+                        error.expectedStateVersion,
+
+                    currentStateVersion:
+                        error.currentStateVersion,
+
+                });
+
+            }
+
+
+            return res.status(
+                error?.statusCode || 400
+            ).json({
+
+                success: false,
+
+                code:
+                    error?.code || null,
+
+                message:
+                    error?.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// SAVE DECLARED WEIGHT
+// =====================================
+
+export const saveDeclaredWeightController =
+    async (
+        req,
+        res
+    ) => {
+
+        try {
+
+            const result =
+                await saveDeclaration(
+                    req.body
+                );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Declared weight updated successfully.",
+
+                data:
+                    result,
+
+            });
+
+        } catch (error) {
+
+            if (
+                error?.code === "STALE_STATE" ||
+                error?.statusCode === 409
+            ) {
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    code:
+                        "STALE_STATE",
+
+                    message:
+                        error.message,
+
+                    expectedStateVersion:
+                        error.expectedStateVersion,
+
+                    currentStateVersion:
+                        error.currentStateVersion,
+
+                });
+
+            }
+
+
+            return res.status(
+                error?.statusCode || 400
+            ).json({
+
+                success: false,
+
+                code:
+                    error?.code || null,
+
+                message:
+                    error?.message,
+
+            });
+
+        }
+
+    };
+
+
+// =====================================
+// GET AUTHORITATIVE QUEUE STATE
+//
+// Feature 3.4
+//
+// READ ONLY.
+//
+// Returns:
+//
+// - current
+// - next
+// - upcoming
+// - queue
+// - phase
+// - stateVersion
+//
+// This controller MUST NOT select or
+// move an athlete.
+// =====================================
+export const getQueueStateController = async (
     req,
     res
 ) => {
@@ -174,41 +565,101 @@ export const processLiftController = async (
     try {
 
         const {
-            entryId,
             competitionId,
             gender,
-            result,
-        } = req.body;
+        } = req.params;
 
-        const data =
-            await processLift({
+        console.log("===== QUEUE CONTROLLER =====");
 
-                entryId,
+        console.log(
+            "req.params:",
+            req.params
+        );
 
+        console.log(
+            "Resolved competitionId:",
+            competitionId
+        );
+
+        console.log(
+            "Resolved gender:",
+            gender
+        );
+
+        // IMPORTANT:
+        // getQueueState expects an object.
+        const result =
+            await getQueueState({
                 competitionId,
-
                 gender,
-
-                result,
-
             });
+
+        console.log(
+            "===== QUEUE RESULT ====="
+        );
+
+        console.log({
+
+            competitionId:
+                result?.competitionId,
+
+            gender:
+                result?.gender,
+
+            currentPhase:
+                result?.currentPhase,
+
+            current:
+                result?.current?.name ?? null,
+
+            next:
+                result?.next?.name ?? null,
+
+            upcoming:
+                result?.upcoming?.length ?? 0,
+
+            queueCount:
+                result?.queueCount ?? 0,
+
+        });
 
         return res.status(200).json({
 
             success: true,
 
-            message:
-                "Lift processed successfully.",
-
-            data,
+            data: result,
 
         });
 
     } catch (error) {
 
-        return res.status(400).json({
+        console.error(
+            "===== QUEUE CONTROLLER ERROR ====="
+        );
+
+        console.error(
+            "Message:",
+            error.message
+        );
+
+        console.error(
+            "Code:",
+            error.code
+        );
+
+        console.error(
+            "Stack:",
+            error.stack
+        );
+
+        return res.status(
+            error.statusCode || 400
+        ).json({
 
             success: false,
+
+            code:
+                error.code ?? null,
 
             message:
                 error.message,
@@ -218,102 +669,3 @@ export const processLiftController = async (
     }
 
 };
-
-
-// =====================================
-// SAVE DECLARED WEIGHT
-//
-// Declaration ONLY.
-// It does not select an athlete.
-// It does not move anyone to platform.
-// =====================================
-
-export const saveDeclaredWeightController =
-    async (
-        req,
-        res
-    ) => {
-
-        console.log(
-            "PATCH /declared-weight",
-            req.body
-        );
-
-        try {
-
-            const result =
-                await saveDeclaration(
-                    req.body
-                );
-
-            return res.status(200).json({
-
-                success: true,
-
-                message:
-                    "Declared weight updated successfully.",
-
-                data: result,
-
-            });
-
-        } catch (error) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    error.message,
-
-            });
-
-        }
-
-    };
-
-
-// =====================================
-// UPDATE QUEUE DECLARATION
-//
-// Kept for compatibility.
-// =====================================
-
-export const updateQueueDeclarationController =
-    async (
-        req,
-        res
-    ) => {
-
-        try {
-
-            const result =
-                await updateQueueDeclaration(
-                    req.body
-                );
-
-            return res.status(200).json({
-
-                success: true,
-
-                message:
-                    "Queue declaration updated successfully.",
-
-                data: result,
-
-            });
-
-        } catch (error) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    error.message,
-
-            });
-
-        }
-
-    };

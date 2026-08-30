@@ -1,5 +1,6 @@
 import "./CompetitionPanel.css";
 
+
 const CurrentAthletePanel = ({
     currentAthlete,
     currentPhase,
@@ -14,42 +15,77 @@ const CurrentAthletePanel = ({
     processingLift,
 }) => {
 
+    // =====================================
+    // AUTHORITATIVE CURRENT ATTEMPT
+    //
+    // Live attempt state is exposed by the
+    // backend through:
+    //
+    // currentAthlete.currentAttempt
+    //
+    // Do NOT read phase, attempt number or
+    // declared weight directly from
+    // currentAthlete.
+    // =====================================
+
     const currentAttempt =
         currentAthlete?.currentAttempt ?? null;
 
 
-    const declarationLocked =
-        currentPhase === "SNATCH" &&
-        currentAttempt?.phase === "CLEAN_JERK";
+    const attemptPhase =
+        currentAttempt?.phase ?? null;
+
+
+    const attemptNo =
+        currentAttempt?.attemptNo ?? null;
 
 
     const currentWeight =
-        currentAttempt?.declaredWeight;
+        currentAttempt?.declaredWeight ?? null;
 
 
-    return (
-
-        <section className="live-score-current">
-
-            <div className="live-score-current-header">
-
-                <h2>
-                    Current Athlete
-                </h2>
+    const applicableWeight =
+        currentAttempt?.applicableWeight ?? null;
 
 
-                {currentAthlete && (
+    // =====================================
+    // DECLARATION LOCK
+    //
+    // The declaration control is available
+    // only when the athlete's current attempt
+    // belongs to the active competition phase.
+    // =====================================
+
+    const declarationLocked =
+        Boolean(
+            currentPhase &&
+            attemptPhase &&
+            currentPhase !== attemptPhase
+        );
+
+
+    // =====================================
+    // PLATFORM EMPTY
+    // =====================================
+
+    if (!currentAthlete) {
+
+        return (
+
+            <section className="live-score-current">
+
+                <div className="live-score-current-header">
+
+                    <h2>
+                        Current Athlete
+                    </h2>
 
                     <span>
-                        ON PLATFORM
+                        AUTOMATIC QUEUE
                     </span>
 
-                )}
+                </div>
 
-            </div>
-
-
-            {!currentAthlete ? (
 
                 <div className="live-score-empty">
 
@@ -59,230 +95,430 @@ const CurrentAthletePanel = ({
 
 
                     <p>
-                        Official must manually
-                        select the next athlete.
+                        The next athlete is determined
+                        automatically by the competition
+                        queue.
                     </p>
 
                 </div>
 
-            ) : (
+            </section>
 
-                <div className="current-athlete-panel">
+        );
 
-                    <div className="current-athlete-main">
+    }
+
+
+    // =====================================
+    // SAVE DECLARATION
+    // =====================================
+
+    const handleSaveDeclaration = () => {
+
+        if (
+            typeof onSaveDeclaration !==
+            "function"
+        ) {
+
+            return;
+
+        }
+
+
+        onSaveDeclaration();
+
+    };
+
+
+    // =====================================
+    // PROCESS LIFT
+    // =====================================
+
+    const handleProcessLift =
+        (result) => {
+
+        if (
+            processingLift
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            typeof onProcessLift !==
+            "function"
+        ) {
+
+            return;
+
+        }
+
+
+        onProcessLift(
+            result
+        );
+
+    };
+
+
+    return (
+
+        <section className="live-score-current">
+
+
+            {/* =================================
+                HEADER
+            ================================= */}
+
+            <div className="live-score-current-header">
+
+                <div>
+
+                    <h2>
+                        Current Athlete
+                    </h2>
+
+                </div>
+
+
+                <span>
+                    ON PLATFORM
+                </span>
+
+            </div>
+
+
+            {/* =================================
+                CURRENT ATHLETE
+            ================================= */}
+
+            <div className="current-athlete-panel">
+
+
+                {/* =================================
+                    MAIN ATHLETE INFORMATION
+                ================================= */}
+
+                <div className="current-athlete-main">
+
+                    <div>
+
+                        <div className="current-athlete-label">
+                            ATHLETE
+                        </div>
+
+
+                        <h1>
+                            {
+                                currentAthlete.name ??
+                                "-"
+                            }
+                        </h1>
+
+                    </div>
+
+
+                    {/* =================================
+                        META INFORMATION
+                    ================================= */}
+
+                    <div className="current-athlete-meta">
+
+
+                        {/* LOT */}
 
                         <div>
 
-                            <div className="current-athlete-label">
-                                ATHLETE
-                            </div>
+                            <strong>
+                                Lot
+                            </strong>
 
 
-                            <h1>
+                            <span>
                                 {
-                                    currentAthlete.name
+                                    currentAthlete
+                                        .lotNumber ??
+                                    "-"
                                 }
-                            </h1>
+                            </span>
 
                         </div>
 
 
-                        <div className="current-athlete-meta">
+                        {/* ATTEMPT */}
 
-                            <div>
+                        <div>
 
-                                <strong>
-                                    Lot
-                                </strong>
-
-
-                                <span>
-                                    {
-                                        currentAthlete
-                                            .lotNumber ??
-                                        "-"
-                                    }
-                                </span>
-
-                            </div>
+                            <strong>
+                                Attempt
+                            </strong>
 
 
-                            <div>
-
-                                <strong>
-                                    Attempt
-                                </strong>
-
-
-                                <span>
-
-                                    {
-                                        currentAttempt?.phase
-                                    }{" "}
-
-                                    {
-                                        currentAttempt
-                                            ?.attemptNo
-                                    }
-
-                                </span>
-
-                            </div>
-
-
-                            <div>
-
-                                <strong>
-                                    Weight
-                                </strong>
-
-
-                                <span>
-
-                                    {
-                                        currentWeight ??
-                                        "-"
-                                    } kg
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="current-athlete-declaration">
-
-                        <label htmlFor="declared-weight">
-
-                            Declared Weight (kg)
-
-                        </label>
-
-
-                        <div className="declaration-control">
-
-                            <input
-                                id="declared-weight"
-                                type="number"
-                                min="1"
-                                step="1"
-
-                                value={
-                                    declaredWeight ?? ""
-                                }
-
-                                disabled={
-                                    declarationLocked ||
-                                    savingDeclaration ||
-                                    processingLift
-                                }
-
-                                onChange={(event) => {
-
-                                    setDeclaredWeight(
-                                        event.target.value
-                                    );
-
-                                }}
-
-                            />
-
-
-                            <button
-                                type="button"
-
-                                onClick={
-                                    onSaveDeclaration
-                                }
-
-                                disabled={
-                                    declarationLocked ||
-                                    savingDeclaration ||
-                                    processingLift ||
-                                    !declaredWeight
-                                }
-                            >
+                            <span>
 
                                 {
-                                    savingDeclaration
-                                        ? "Saving..."
-                                        : declarationLocked
-                                        ? "C&J Locked"
-                                        : "Save Declaration"
+                                    attemptPhase ===
+                                    "CLEAN_JERK"
+                                        ? "C&J"
+                                        : attemptPhase ??
+                                          "-"
                                 }
 
-                            </button>
+                                {" "}
+
+                                {
+                                    attemptNo ??
+                                    "-"
+                                }
+
+                            </span>
 
                         </div>
 
 
-                        <small>
+                        {/* APPLICABLE WEIGHT */}
 
-                            {
-                                declarationLocked
-                                    ? "Clean & Jerk declaration is locked until the global Snatch phase is completed."
-                                    : "Enter or modify the declared weight before the lift."
-                            }
+                        <div>
 
-                        </small>
-
-                    </div>
+                            <strong>
+                                Applicable
+                            </strong>
 
 
-                    <div className="lift-decision">
+                            <span>
 
-                        <button
-                            type="button"
-                            className="good-btn"
+                                {
+                                    applicableWeight != null
+                                        ? `${applicableWeight} kg`
+                                        : "-"
+                                }
 
-                            disabled={
-                                processingLift
-                            }
+                            </span>
 
-                            onClick={() =>
-                                onProcessLift(
-                                    "GOOD"
-                                )
-                            }
-                        >
-
-                            GOOD LIFT
-
-                        </button>
+                        </div>
 
 
-                        <button
-                            type="button"
-                            className="no-lift-btn"
+                        {/* DECLARED WEIGHT */}
 
-                            disabled={
-                                processingLift
-                            }
+                        <div>
 
-                            onClick={() =>
-                                onProcessLift(
-                                    "NO_LIFT"
-                                )
-                            }
-                        >
+                            <strong>
+                                Declared
+                            </strong>
 
-                            NO LIFT
 
-                        </button>
+                            <span>
+
+                                {
+                                    currentWeight != null
+                                        ? `${currentWeight} kg`
+                                        : "-"
+                                }
+
+                            </span>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            )}
+
+                {/* =================================
+                    DECLARATION
+                ================================= */}
+
+                <div className="current-athlete-declaration">
+
+                    <label htmlFor="declared-weight">
+
+                        Declared Weight (kg)
+
+                    </label>
+
+
+                    <div className="declaration-control">
+
+                        <input
+
+                            id="declared-weight"
+
+                            type="number"
+
+                            min="1"
+
+                            step="1"
+
+                            value={
+
+                                declaredWeight !== null &&
+                                declaredWeight !== undefined &&
+                                declaredWeight !== ""
+                                    ? declaredWeight
+                                    : currentWeight ?? ""
+
+                            }
+
+                            disabled={
+
+                                declarationLocked ||
+                                savingDeclaration ||
+                                processingLift
+
+                            }
+
+                            onChange={(event) => {
+
+                                setDeclaredWeight(
+                                    event.target.value
+                                );
+
+                            }}
+
+                        />
+
+
+                        <button
+
+                            type="button"
+
+                            onClick={
+                                handleSaveDeclaration
+                            }
+
+                            disabled={
+
+                                declarationLocked ||
+                                savingDeclaration ||
+                                processingLift ||
+                                !declaredWeight
+
+                            }
+
+                        >
+
+                            {
+
+                                savingDeclaration
+                                    ? "Saving..."
+                                    : declarationLocked
+                                    ? "Phase Locked"
+                                    : "Save Declaration"
+
+                            }
+
+                        </button>
+
+                    </div>
+
+
+                    <small>
+
+                        {
+
+                            declarationLocked
+
+                                ? `Declaration is locked because the athlete's current attempt is ${attemptPhase ?? "outside the active phase"}.`
+
+                                : `Edit the declared weight for ${attemptPhase === "CLEAN_JERK" ? "Clean & Jerk" : "Snatch"} attempt ${attemptNo ?? "-"}.`
+
+                        }
+
+                    </small>
+
+                </div>
+
+
+                {/* =================================
+                    LIFT DECISION
+                ================================= */}
+
+                <div className="lift-decision">
+
+
+                    {/* GOOD LIFT */}
+
+                    <button
+
+                        type="button"
+
+                        className="good-btn"
+
+                        disabled={
+                            processingLift
+                        }
+
+                        onClick={() =>
+                            handleProcessLift(
+                                "GOOD"
+                            )
+                        }
+
+                    >
+
+                        {
+
+                            processingLift
+                                ? "PROCESSING..."
+                                : "GOOD LIFT"
+
+                        }
+
+                    </button>
+
+
+                    {/* NO LIFT */}
+
+                    <button
+
+                        type="button"
+
+                        className="no-lift-btn"
+
+                        disabled={
+                            processingLift
+                        }
+
+                        onClick={() =>
+                            handleProcessLift(
+                                "NO_LIFT"
+                            )
+                        }
+
+                    >
+
+                        {
+
+                            processingLift
+                                ? "PROCESSING..."
+                                : "NO LIFT"
+
+                        }
+
+                    </button>
+
+                </div>
+
+
+                {/* =================================
+                    AUTOMATIC ADVANCEMENT NOTICE
+                ================================= */}
+
+                <div
+                    className="automatic-advancement-notice"
+                >
+
+                </div>
+
+            </div>
 
         </section>
 
     );
 
 };
+
 
 export default CurrentAthletePanel;

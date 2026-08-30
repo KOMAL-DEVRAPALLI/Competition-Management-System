@@ -1,22 +1,137 @@
 import CompetitionEntry from "../../models/CompetitionEntry.js";
 import updateCompetitionResults from "../calculations/updateCompetitionResults.js";
 
-const updateCleanJerkAttempts = async (entryId, attempts) => {
 
-    const competitionEntry = await CompetitionEntry.findById(entryId);
+// =====================================
+// UPDATE CLEAN & JERK ATTEMPTS
+//
+// Responsibility:
+//
+// 1. Load CompetitionEntry.
+// 2. Update Clean & Jerk attempt history.
+// 3. Persist Clean & Jerk attempt history.
+// 4. Recalculate competition results.
+//
+// IMPORTANT:
+//
+// CompetitionEntry is the authoritative
+// source for competition attempt history.
+//
 
-    if (!competitionEntry) {
-        throw new Error("Competition entry not found.");
+//
+// LiveCompetition is responsible only for
+// live competition/session state.
+//
+// =====================================
+//
+// entryId:
+//     CompetitionEntry._id
+//
+// =====================================
+
+
+const updateCleanJerkAttempts = async (
+    entryId,
+    attempts,
+    session = null
+) => {
+
+    // =====================================
+    // VALIDATE INPUT
+    // =====================================
+
+    if (!entryId) {
+
+        throw new Error(
+            "Competition entry ID is required."
+        );
+
     }
 
-    competitionEntry.cleanJerkAttempts = attempts;
 
-    await competitionEntry.save();
+    if (!Array.isArray(attempts)) {
 
-    await updateCompetitionResults(entryId);
+        throw new Error(
+            "Clean & Jerk attempts must be an array."
+        );
 
-    return await CompetitionEntry.findById(entryId);
+    }
+
+
+    // =====================================
+    // LOAD COMPETITION ENTRY
+    // =====================================
+
+    let query =
+        CompetitionEntry.findById(
+            entryId
+        );
+
+
+    if (session) {
+
+        query =
+            query.session(
+                session
+            );
+
+    }
+
+
+    const competitionEntry =
+        await query;
+
+
+    if (!competitionEntry) {
+
+        throw new Error(
+            "Competition entry not found."
+        );
+
+    }
+
+
+    // =====================================
+    // UPDATE CLEAN & JERK ATTEMPTS
+    // =====================================
+
+    competitionEntry.cleanJerkAttempts =
+        attempts;
+
+
+    // =====================================
+    // SAVE ATTEMPTS
+    // =====================================
+
+    if (session) {
+
+        await competitionEntry.save({
+            session,
+        });
+
+    } else {
+
+        await competitionEntry.save();
+
+    }
+
+
+    // =====================================
+    // RECALCULATE COMPETITION RESULTS
+    // =====================================
+
+    await updateCompetitionResults(
+        competitionEntry
+    );
+
+
+    // =====================================
+    // RETURN UPDATED ENTRY
+    // =====================================
+
+    return competitionEntry;
 
 };
+
 
 export default updateCleanJerkAttempts;

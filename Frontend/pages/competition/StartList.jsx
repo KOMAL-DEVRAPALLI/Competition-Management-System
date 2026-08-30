@@ -6,41 +6,102 @@ import "./StartList.css";
 
 const StartList = () => {
 
-    const { competitionId, gender: sessionGender } = useParams();
+    const {
+        competitionId,
+        gender: sessionGender
+    } = useParams();
 
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const downloadPDF = () => {
 
-        window.open(
-            `${import.meta.env.VITE_API_URL}/working-sheet/${competitionId}/${sessionGender}`,
-            "_blank"
+    // =====================================
+    // DOWNLOAD ALL 4 START LIST PDFs
+    // =====================================
+
+    const downloadPDFs = () => {
+
+        const combinations = [
+            {
+                gender: "male",
+                ageCategory: "U-17",
+            },
+            {
+                gender: "female",
+                ageCategory: "U-17",
+            },
+            {
+                gender: "male",
+                ageCategory: "U-19",
+            },
+            {
+                gender: "female",
+                ageCategory: "U-19",
+            },
+        ];
+
+
+        combinations.forEach(
+            ({
+                gender,
+                ageCategory,
+            }) => {
+
+                const url =
+                    `${import.meta.env.VITE_API_URL}` +
+                    `/working-sheet/` +
+                    `${competitionId}/` +
+                    `${gender}/` +
+                    `${encodeURIComponent(ageCategory)}`;
+
+
+                window.open(
+                    url,
+                    "_blank"
+                );
+
+            }
         );
 
     };
-    const displayEntries = entries;
+
 
     useEffect(() => {
+
         fetchEntries();
+
     }, []);
 
+
     const fetchEntries = async () => {
+
         try {
-            const response = await apiRequest(
-                `/working-sheet/data/${competitionId}/${sessionGender}`,
-                "GET"
+
+            const response =
+                await apiRequest(
+                    `/working-sheet/data/` +
+                    `${competitionId}/` +
+                    `${sessionGender}`,
+                    "GET"
+                );
+
+
+            setEntries(
+                response.data
             );
 
-
-
-            setEntries(response.data);
         } catch (error) {
+
             console.log(error);
+
         } finally {
+
             setLoading(false);
+
         }
+
     };
+
 
     if (loading) {
 
@@ -51,7 +112,8 @@ const StartList = () => {
         );
 
     }
-   
+
+
     return (
 
         <div className="start-list-page">
@@ -61,29 +123,37 @@ const StartList = () => {
                 <div>
 
                     <h1 className="page-title">
+
                         {sessionGender === "female"
                             ? "Women's Start List"
                             : "Men's Start List"}
+
                     </h1>
 
+
                     <p className="page-subtitle">
+
                         Competition ID : {competitionId}
+
                     </p>
 
                 </div>
 
             </div>
-            <div className="start-list-actions">
 
+
+            <div className="start-list-actions">
 
                 <button
                     className="pdf-btn"
-                    onClick={downloadPDF}
+                    onClick={downloadPDFs}
                 >
-                    📄 Download PDF
+                    📄 Download 4 Start List PDFs
                 </button>
-                
+
             </div>
+
+
             <div className="table-wrapper">
 
                 <table className="start-table">
@@ -105,31 +175,54 @@ const StartList = () => {
 
                     </thead>
 
+
                     <tbody>
 
-                        {entries.map((entry) => (
+                        {entries.map(
+                            (entry) => (
 
-                            <tr key={entry.entryId}>
+                                <tr
+                                    key={
+                                        entry.entryId
+                                    }
+                                >
 
-                                <td>{entry.lotNumber}</td>
+                                    <td>
+                                        {entry.lotNumber}
+                                    </td>
 
-                                <td>{entry.name}</td>
+                                    <td>
+                                        {entry.name}
+                                    </td>
 
-                                <td>{entry.gender}</td>
+                                    <td>
+                                        {entry.gender}
+                                    </td>
 
-                                <td>{entry.bodyWeight}</td>
+                                    <td>
+                                        {entry.bodyWeight}
+                                    </td>
 
-                                <td>{entry.displayWeightCategory}</td>
+                                    <td>
+                                        {entry.displayWeightCategory}
+                                    </td>
 
-                                <td>{entry.openingSnatch}</td>
+                                    <td>
+                                        {entry.openingSnatch}
+                                    </td>
 
-                                <td>{entry.openingCleanJerk}</td>
+                                    <td>
+                                        {entry.openingCleanJerk}
+                                    </td>
 
-                                <td>READY</td>
+                                    <td>
+                                        READY
+                                    </td>
 
-                            </tr>
+                                </tr>
 
-                        ))}
+                            )
+                        )}
 
                     </tbody>
 

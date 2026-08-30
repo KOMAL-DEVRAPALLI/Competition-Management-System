@@ -2,109 +2,424 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+
 // =====================================
 // COMMON API REQUEST
+// =====================================
+//
+// Authentication:
+// - Backend stores JWT in HTTP-only cookie.
+// - withCredentials sends that cookie.
+// - Frontend never reads/stores the JWT.
+//
+// Signature:
+// apiRequest(url, method, body)
 // =====================================
 
 export const apiRequest = async (
     url,
-    method,
+    method = "GET",
     body = null
 ) => {
 
     try {
 
-        const response = await axios({
-            url: BASE_URL + url,
-            method,
-            data: body,
-        });
+        const response =
+            await axios({
+
+                url:
+                    BASE_URL + url,
+
+                method,
+
+                data:
+                    body,
+
+                withCredentials:
+                    true,
+
+            });
+
 
         return response.data;
+
 
     } catch (error) {
 
         if (error.response) {
 
-            alert(
-                "Response Error:\n" +
-                JSON.stringify(
-                    error.response.data,
-                    null,
-                    2
-                )
+            console.error(
+                "Response Error:",
+                error.response.data
             );
 
-            console.log(
-                error.response?.data
-            );
 
         } else if (error.request) {
 
-            alert(
+            console.error(
                 "No response received from server."
             );
 
+
         } else {
 
-            alert(
-                "Error: " +
+            console.error(
+                "Request Error:",
                 error.message
             );
 
         }
 
+
         throw error;
+
     }
+
 };
 
 
 // =====================================
-// ELIGIBLE WEIGHT CATEGORIES
+// ADMIN ATHLETES
 // =====================================
 
-export const getEligibleWeightCategories =
-    async (
-        entryId,
-        bodyWeight
-    ) => {
 
-        return await apiRequest(
-            `/competition-entry/${entryId}/eligible-categories`,
-            "POST",
+// -------------------------------------
+// ADD NEW ATHLETE TO COMPETITION
+// -------------------------------------
+
+export const addAthleteToCompetition = async (
+    competitionId,
+    athleteData
+) => {
+
+    return await apiRequest(
+
+        `/admin/competition/${competitionId}/athletes`,
+
+        "POST",
+
+        athleteData
+
+    );
+
+};
+
+
+// -------------------------------------
+// CREATE COMPETITION ENTRY
+// -------------------------------------
+
+export const createCompetitionEntry = async (
+    entryData
+) => {
+
+    return await apiRequest(
+
+        "/competition-entry",
+
+        "POST",
+
+        entryData
+
+    );
+
+};
+
+
+// =====================================
+// REGISTRATION RECEIPT
+// =====================================
+
+export const downloadReceipt = async (
+    registrationNo
+) => {
+
+    const response =
+        await axios({
+
+            url:
+                `${BASE_URL}/download-receipt/${registrationNo}`,
+
+            method:
+                "GET",
+
+            responseType:
+                "blob",
+
+            withCredentials:
+                true,
+
+        });
+
+
+    const blob =
+        new Blob(
+            [response.data],
             {
-                bodyWeight,
+                type:
+                    "application/pdf",
             }
         );
 
-    };
+
+    const url =
+        window.URL.createObjectURL(
+            blob
+        );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+    link.download =
+        `${registrationNo}.pdf`;
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    window.URL.revokeObjectURL(
+        url
+    );
+
+};
+
+
+// =====================================
+// AUTHENTICATION
+// =====================================
+
+
+// -------------------------------------
+// ADMIN LOGIN
+// -------------------------------------
+
+export const loginAdmin = async (
+    email,
+    password
+) => {
+
+    return await apiRequest(
+
+        "/auth/login",
+
+        "POST",
+
+        {
+            email,
+            password,
+        }
+
+    );
+
+};
+
+
+// -------------------------------------
+// GET CURRENT ADMIN
+// -------------------------------------
+
+export const getCurrentAdmin = async () => {
+
+    return await apiRequest(
+
+        "/auth/me",
+
+        "GET"
+
+    );
+
+};
+
+
+// -------------------------------------
+// LOGOUT
+// -------------------------------------
+
+export const logoutAdmin = async () => {
+
+    return await apiRequest(
+
+        "/auth/logout",
+
+        "POST"
+
+    );
+
+};
+
+
+// =====================================
+// COMPETITION
+// =====================================
+
+
+// -------------------------------------
+// CREATE COMPETITION
+// -------------------------------------
+
+export const createCompetition = async (
+    competitionData
+) => {
+
+    return await apiRequest(
+
+        "/competition",
+
+        "POST",
+
+        competitionData
+
+    );
+
+};
+
+
+// -------------------------------------
+// GET COMPETITION BY ID
+// -------------------------------------
+
+export const getCompetitionById = async (
+    competitionId
+) => {
+
+    return await apiRequest(
+
+        `/competition/${competitionId}`,
+
+        "GET"
+
+    );
+
+};
+
+
+// -------------------------------------
+// SET COMPETITION FORMAT
+// -------------------------------------
+
+export const setCompetitionFormat = async (
+    competitionId,
+    competitionFormat
+) => {
+
+    return await apiRequest(
+
+        `/competition/${competitionId}/format`,
+
+        "PATCH",
+
+        {
+            competitionFormat,
+        }
+
+    );
+
+};
+export const getEligibleWeightCategories = async ({
+    competitionEntryId,
+    bodyWeight,
+}) => {
+
+    if (!competitionEntryId) {
+
+        throw new Error(
+            "Competition entry ID is required."
+        );
+
+    }
+
+
+    const numericBodyWeight =
+        Number(bodyWeight);
+
+
+    if (
+        !Number.isFinite(
+            numericBodyWeight
+        ) ||
+        numericBodyWeight <= 0
+    ) {
+
+        throw new Error(
+            "Valid body weight is required."
+        );
+
+    }
+
+
+    return await apiRequest(
+
+        `/competition-entry/${competitionEntryId}/eligible-categories`,
+
+        "POST",
+
+        {
+            bodyWeight:
+                numericBodyWeight,
+        }
+
+    );
+
+};
 
 
 // =====================================
 // WEIGH-IN
 // =====================================
 
+
+// -------------------------------------
+// SAVE WEIGH-IN
+// -------------------------------------
+
 export const saveWeighIn = async (
     saveData
 ) => {
 
     return await apiRequest(
+
         "/athlete-weighin/save",
+
         "PATCH",
+
         saveData
+
     );
 
 };
 
+
+// -------------------------------------
+// PREVIEW WEIGH-IN
+// -------------------------------------
 
 export const previewWeighIn = async (
     previewData
 ) => {
 
     return await apiRequest(
+
         "/athlete-weighin/preview",
+
         "POST",
+
         previewData
+
     );
 
 };
@@ -114,27 +429,44 @@ export const previewWeighIn = async (
 // OPENING LIFTS
 // =====================================
 
+
+// -------------------------------------
+// PREVIEW OPENING LIFTS
+// -------------------------------------
+
 export const previewOpeningLifts = async (
     previewData
 ) => {
 
     return await apiRequest(
+
         "/athlete-opening/preview",
+
         "POST",
+
         previewData
+
     );
 
 };
 
+
+// -------------------------------------
+// SAVE OPENING LIFTS
+// -------------------------------------
 
 export const saveOpeningLifts = async (
     saveData
 ) => {
 
     return await apiRequest(
+
         "/competition-entry/opening",
+
         "PATCH",
+
         saveData
+
     );
 
 };
@@ -144,13 +476,15 @@ export const saveOpeningLifts = async (
 // LIVE COMPETITION
 // =====================================
 
+
 // -------------------------------------
-// Select athlete manually
+// MANUAL OFFICIAL ATHLETE SELECTION
 //
-// Official chooses exactly which athlete
-// goes to the platform.
+// Kept temporarily for existing
+// functionality.
 //
-// NO automatic athlete selection.
+// Do not use for the new automatic
+// queue workflow.
 // -------------------------------------
 
 export const selectOfficialAthlete =
@@ -159,16 +493,20 @@ export const selectOfficialAthlete =
     ) => {
 
         return await apiRequest(
+
             "/live-competition/select-official-athlete",
+
             "POST",
+
             selectionData
+
         );
 
     };
 
 
 // -------------------------------------
-// Process GOOD / NO LIFT
+// PROCESS GOOD / NO LIFT
 // -------------------------------------
 
 export const processLift = async (
@@ -176,16 +514,20 @@ export const processLift = async (
 ) => {
 
     return await apiRequest(
+
         "/live-competition/process-lift",
+
         "POST",
+
         liftData
+
     );
 
 };
 
 
 // -------------------------------------
-// Save declaration for current athlete
+// SAVE DECLARED WEIGHT
 // -------------------------------------
 
 export const saveDeclaredWeight =
@@ -194,91 +536,13 @@ export const saveDeclaredWeight =
     ) => {
 
         return await apiRequest(
+
             "/live-competition/declared-weight",
+
             "PATCH",
+
             weightData
+
         );
 
     };
-
-
-// -------------------------------------
-// Update declaration from queue
-//
-// Kept for compatibility with existing
-// code. The new LiveScore flow should
-// primarily use saveDeclaredWeight()
-// for the manually selected athlete.
-// -------------------------------------
-
-export const updateQueueDeclaration =
-    async (
-        declarationData
-    ) => {
-
-        return await apiRequest(
-            "/live-competition/queue-declaration",
-            "PATCH",
-            declarationData
-        );
-
-    };
-
-
-// =====================================
-// RECEIPT DOWNLOAD
-// =====================================
-
-export const downloadReceipt = async (
-    registrationNo
-) => {
-
-    try {
-
-        const response = await axios({
-            url:
-                `${BASE_URL}/public/download-receipt/${registrationNo}`,
-            method: "GET",
-            responseType: "blob",
-        });
-
-        const fileURL =
-            window.URL.createObjectURL(
-                new Blob(
-                    [response.data],
-                    {
-                        type:
-                            "application/pdf",
-                    }
-                )
-            );
-
-        const link =
-            document.createElement("a");
-
-        link.href = fileURL;
-
-        link.download =
-            `${registrationNo}.pdf`;
-
-        document.body.appendChild(link);
-
-        link.click();
-
-        document.body.removeChild(link);
-
-        window.URL.revokeObjectURL(
-            fileURL
-        );
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Failed to download receipt."
-        );
-
-    }
-
-};

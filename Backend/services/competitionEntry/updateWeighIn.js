@@ -14,11 +14,17 @@ const updateWeighIn = async (entryId, officialData,adminId=null) => {
     const ageCategory =
         competitionEntry.competitionCategory.ageCategory;
 
-   const result =
+ const result =
     await calculateEligibleWeightCategories(
+
+        competitionEntry.competitionId,
+
         gender,
+
         ageCategory,
+
         officialData.bodyWeight
+
     );
 
 

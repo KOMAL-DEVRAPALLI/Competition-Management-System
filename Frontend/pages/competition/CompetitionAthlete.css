@@ -9,6 +9,21 @@
     background:#f1f5f9;
     min-height:100vh;
 }
+.add-athlete-btn {
+    background: #0f766e;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.add-athlete-btn:hover {
+    background: #115e59;
+}
 .pdf-btn{
 
     padding:12px 22px;

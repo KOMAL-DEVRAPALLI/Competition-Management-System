@@ -1,310 +1,733 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
-import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
-import getCurrentAttempt from "./getCurrentAttempt.js";
+
+import buildWorkingSheetData
+    from "../pdf/workingSheet/buildWorkingSheetData.js";
+
+import getCurrentAttempt
+    from "./getCurrentAttempt.js";
+
+import getEligibleQueueCandidates
+    from "./getEligibleQueueCandidates.js";
+
+import recalculateQueue
+    from "./recalculateQueue.js";
+
+import {
+    getAttemptWeight,
+} from "./selectNextAthlete.js";
+
+
+// =====================================
+// MAP QUEUE ATHLETE
+// =====================================
+//
+// IMPORTANT:
+// phase is passed explicitly.
+// Do NOT access `session` from here.
+// =====================================
+
+const mapQueueAthlete = (
+    entry,
+    phase,
+    status
+) => {
+
+    if (!entry) {
+        return null;
+    }
+
+
+    const attempt =
+        getCurrentAttempt(
+            entry.competitionEntry,
+            phase
+        );
+
+
+    return {
+
+        entryId:
+            entry.entryId,
+
+        athleteId:
+            entry.athleteId,
+
+        name:
+            entry.name,
+
+        registrationNo:
+            entry.registrationNo,
+
+        lotNumber:
+            entry.lotNumber,
+
+        bodyWeight:
+            entry.bodyWeight,
+
+        weightCategory:
+            entry.weightCategory,
+
+        displayWeightCategory:
+            entry.displayWeightCategory,
+
+        openingSnatch:
+            entry.openingSnatch,
+
+        openingCleanJerk:
+            entry.openingCleanJerk,
+
+        bestSnatch:
+            entry.bestSnatch,
+
+        bestCleanJerk:
+            entry.bestCleanJerk,
+
+        total:
+            entry.total,
+
+        place:
+            entry.place,
+
+        phase:
+            attempt?.phase ?? null,
+
+        attemptNo:
+            attempt?.attemptNo ?? null,
+
+        declaredWeight:
+            attempt?.declaredWeight ?? null,
+
+        applicableWeight:
+            getAttemptWeight(
+                entry.competitionEntry,
+                attempt
+            ),
+
+        result:
+            attempt?.result ?? null,
+
+        completed:
+            attempt?.completed ?? false,
+
+        currentAttempt:
+            attempt ?? null,
+
+        snatchAttempts:
+            entry
+                .competitionEntry
+                ?.snatchAttempts ?? [],
+
+        cleanJerkAttempts:
+            entry
+                .competitionEntry
+                ?.cleanJerkAttempts ?? [],
+
+        competitionEntry:
+            entry.competitionEntry,
+
+        status,
+
+    };
+
+};
+
+
+// =====================================
+// GET LIVE COMPETITION
+//
+// Feature 3.4
+//
+// READ ONLY.
+//
+// Does NOT:
+// - select athlete
+// - change currentEntryId
+// - modify attempts
+// - modify declarations
+// - increment stateVersion
+// =====================================
 
 const getLiveCompetition = async (
     competitionId,
     gender
 ) => {
 
-    // =====================================
-    // VALIDATE INPUT
-    // =====================================
+    // =================================
+    // VALIDATION
+    // =================================
 
     if (!competitionId) {
+
         throw new Error(
             "Competition ID is required."
         );
+
     }
 
+
     if (!gender) {
+
         throw new Error(
             "Gender is required."
         );
+
     }
 
 
-    // =====================================
-    // NORMALIZE GENDER
-    // =====================================
-
     const normalizedGender =
-        gender.toLowerCase();
+        String(gender)
+            .trim()
+            .toLowerCase();
 
 
-    // =====================================
-    // FIND LIVE SESSION
-    // =====================================
+    // =================================
+    // LOAD LIVE SESSION
+    // =================================
 
     const session =
         await LiveCompetition.findOne({
+
             competitionId,
-            gender: normalizedGender,
+
+            gender:
+                normalizedGender,
+
         });
 
+console.log("===== LIVE SESSION DEBUG =====");
 
+console.log({
+    requestedCompetitionId: String(competitionId),
+    requestedGender: normalizedGender,
+
+    sessionId: session?._id?.toString() ?? null,
+    sessionCompetitionId:
+        session?.competitionId?.toString() ?? null,
+
+    sessionGender: session?.gender ?? null,
+    sessionStatus: session?.status ?? null,
+    sessionIntegrityStatus:
+        session?.integrity?.status ?? null,
+
+    sessionIntegrityReason:
+        session?.integrity?.reason ?? null,
+
+    currentPhase:
+        session?.currentPhase ?? null,
+
+    currentEntryId:
+        session?.currentEntryId?.toString() ?? null,
+
+    stateVersion:
+        session?.stateVersion ?? null,
+});
     if (!session) {
+
         throw new Error(
             "Live competition has not been started."
         );
+
     }
 
 
-    // =====================================
-    // LOAD ALL ATHLETES
-    // =====================================
+    // =================================
+    // RECOVERY SAFETY
+    // =================================
+
+    if (
+        session.status ===
+        "RECOVERY_REQUIRED"
+    ) {
+
+        const error =
+            new Error(
+                "Live competition requires recovery."
+            );
+
+        error.code =
+            "RECOVERY_REQUIRED";
+
+        error.statusCode =
+            409;
+
+        throw error;
+
+    }
+
+
+    if (
+        session.integrity?.status ===
+        "RECOVERY_REQUIRED"
+    ) {
+
+        const error =
+            new Error(
+                "Live competition integrity requires recovery."
+            );
+
+        error.code =
+            "QUEUE_INTEGRITY_ERROR";
+
+        error.statusCode =
+            409;
+
+        throw error;
+
+    }
+
+
+    // =================================
+    // LOAD ACTIVE ATHLETES
+    // =================================
 
     const entries =
         await buildWorkingSheetData(
+
             competitionId,
+
             normalizedGender,
+
             true,
+
             session.selectedWeightCategories
+
         );
 
 
-    if (!entries.length) {
+    if (!Array.isArray(entries)) {
+
         throw new Error(
-            "No athletes found."
+            "Unable to load competition athletes."
         );
+
     }
 
 
-    // =====================================
-    // AUTO-RECONCILE GLOBAL PHASE
-    //
-    // If every athlete in this live
-    // session has completed all 3
-    // Snatch attempts, the competition
-    // must be in CLEAN_JERK.
-    //
-    // This fixes a stale session where
-    // currentPhase is still SNATCH.
-    // =====================================
+    // =================================
+    // EMPTY SESSION
+    // =================================
 
-    if (
-        session.currentPhase ===
-        "SNATCH"
-    ) {
-
-        const allSnatchCompleted =
-            entries.every(
-                (entry) => {
-
-                    const snatchAttempts =
-                        entry.competitionEntry
-                            ?.snatchAttempts ?? [];
-
-                    return (
-                        snatchAttempts.length >= 3 &&
-                        snatchAttempts.every(
-                            (attempt) =>
-                                attempt.result !==
-                                "PENDING"
-                        )
-                    );
-                }
-            );
-
-
-        if (allSnatchCompleted) {
-
-            session.currentPhase =
-                "CLEAN_JERK";
-
-            session.status =
-                "RUNNING";
-
-            await session.save();
-
-        }
-    }
-
-
-    // =====================================
-    // CURRENT ENTRY LOOKUP
-    // =====================================
-
-    const entryMap =
-        new Map(
-            entries.map(
-                (entry) => [
-                    entry.entryId.toString(),
-                    entry,
-                ]
-            )
-        );
-
-
-    const currentEntry =
-        session.currentEntryId
-            ? entryMap.get(
-                session.currentEntryId
-                    .toString()
-            ) ?? null
-            : null;
-
-
-    // =====================================
-    // ATHLETE MAPPER
-    // =====================================
-
-    const mapAthlete = (
-        athlete,
-        currentAttempt,
-        status = "WAITING"
-    ) => {
+    if (entries.length === 0) {
 
         return {
 
-            entryId:
-                athlete.entryId,
+            status:
+                session.status,
 
-            athleteId:
-                athlete.athleteId,
+            sessionName:
+                session.sessionName,
 
-            name:
-                athlete.name,
+            selectedWeightCategories:
+                session.selectedWeightCategories,
 
-            registrationNo:
-                athlete.registrationNo,
+            currentPhase:
+                session.currentPhase,
 
-            lotNumber:
-                athlete.lotNumber,
+            currentAthlete:
+                null,
 
-            bodyWeight:
-                athlete.bodyWeight,
+            canSelectAnotherAthlete:
+                false,
 
-            weightCategory:
-                athlete.weightCategory,
+            nextAthlete:
+                null,
 
-            displayWeightCategory:
-                athlete.displayWeightCategory,
+            upcomingAthletes:
+                [],
 
-            openingSnatch:
-                athlete.openingSnatch,
+            queue:
+                [],
 
-            openingCleanJerk:
-                athlete.openingCleanJerk,
+            queueCount:
+                0,
 
-            bestSnatch:
-                athlete.bestSnatch,
+            athletes:
+                [],
 
-            bestCleanJerk:
-                athlete.bestCleanJerk,
+            competitionResults:
+                [],
 
-            total:
-                athlete.total,
+            declarationQueue:
+                [],
 
-            place:
-                athlete.place,
+            totalAthletes:
+                0,
 
-            currentAttempt,
+            currentEntryId:
+                session.currentEntryId ?? null,
 
-            snatchAttempts:
-                athlete
-                    .competitionEntry
-                    .snatchAttempts,
+            stateVersion:
+                session.stateVersion ?? 0,
 
-            cleanJerkAttempts:
-                athlete
-                    .competitionEntry
-                    .cleanJerkAttempts,
-
-            status,
+            integrity:
+                session.integrity,
 
         };
 
-    };
+    }
 
 
-    // =====================================
-    // BUILD BOTH LISTS IN ONE PASS
-    // =====================================
+    // =================================
+    // BUILD ENTRY MAP
+    // =================================
 
-    const competitionResults = [];
-    const athletes = [];
+    const entryMap =
+        new Map(
+
+            entries.map(
+                (entry) => [
+
+                    String(
+                        entry.entryId
+                    ),
+
+                    entry,
+
+                ]
+            )
+
+        );
 
 
-    // =====================================
-    // CURRENT ATHLETE STATE
-    // =====================================
+    // =================================
+    // CURRENT ATHLETE
+    // =================================
 
-    let canSelectAnotherAthlete = true;
+    let currentAthlete =
+        null;
 
-    let currentAthleteAttempt = null;
 
-
-    // =====================================
-    // PROCESS ATHLETES ONCE
-    // =====================================
-
-    for (
-        const entry of entries
+    if (
+        session.currentEntryId
     ) {
 
-        const attempt =
-            getCurrentAttempt(
-                entry.competitionEntry
+        const currentEntry =
+            entryMap.get(
+
+                String(
+                    session.currentEntryId
+                )
+
             );
 
 
-        // =================================
-        // TV SCOREBOARD STATUS
-        // =================================
+        if (!currentEntry) {
 
-        let scoreboardStatus =
-            "WAITING";
+            const error =
+                new Error(
+                    "Current platform athlete is not present in the active competition scope."
+                );
+
+            error.code =
+                "QUEUE_INTEGRITY_ERROR";
+
+            error.statusCode =
+                409;
+
+            throw error;
+
+        }
+
+
+        currentAthlete =
+            mapQueueAthlete(
+
+                currentEntry,
+
+                session.currentPhase,
+
+                "ON_PLATFORM"
+
+            );
+
+    }
+
+
+    // =================================
+    // GET ELIGIBLE CANDIDATES
+    //
+    // Feature 3.1
+    //
+    // We call this explicitly here so
+    // GET /live-competition also exposes
+    // the authoritative queue.
+    // =================================
+
+    const candidateResult =
+        await getEligibleQueueCandidates({
+
+            competitionId,
+
+            gender:
+                normalizedGender,
+
+            phase:
+                session.currentPhase,
+
+            selectedWeightCategories:
+                session.selectedWeightCategories,
+
+            currentEntryId:
+                session.currentEntryId ?? null,
+
+            allowCurrentEntry:
+                false,
+
+        });
+
+
+    const candidates =
+        Array.isArray(
+            candidateResult?.candidates
+        )
+            ? candidateResult.candidates
+            : [];
+
+
+    // =================================
+    // ORDER QUEUE
+    //
+    // Feature 3.2
+    // =================================
+
+    const orderedCandidates =
+        [...candidates].sort(
+
+            (a, b) => {
+
+                // ---------------------------------
+                // IMPORTANT:
+                //
+                // orderQueue() is authoritative.
+                // ---------------------------------
+
+                return 0;
+
+            }
+
+        );
+
+
+    // =================================
+    // USE CENTRAL ORDERING ENGINE
+    //
+    // Import dynamically avoided.
+    // Instead use recalculateQueue below,
+    // which already owns the ordering.
+    // =================================
+
+    const recalculated =
+        await recalculateQueue({
+
+            competitionId,
+
+            gender:
+                normalizedGender,
+
+            allowCurrentEntry:
+                false,
+
+        });
+
+
+    const queue =
+        Array.isArray(
+            recalculated?.queue
+        )
+            ? recalculated.queue
+            : [];
+
+
+    const nextEntry =
+        recalculated?.nextAthlete ??
+        null;
+
+
+    const upcomingEntries =
+        Array.isArray(
+            recalculated?.upcoming
+        )
+            ? recalculated.upcoming
+            : [];
+
+
+    // =================================
+    // MAP NEXT ATHLETE
+    // =================================
+
+    const nextAthlete =
+        nextEntry
+
+            ? mapQueueAthlete(
+
+                nextEntry,
+
+                session.currentPhase,
+
+                "NEXT"
+
+            )
+
+            : null;
+
+
+    // =================================
+    // MAP UPCOMING
+    // =================================
+
+    const upcomingAthletes =
+        upcomingEntries.map(
+
+            (entry) =>
+                mapQueueAthlete(
+
+                    entry,
+
+                    session.currentPhase,
+
+                    "UPCOMING"
+
+                )
+
+        );
+
+
+    // =================================
+    // MAP FULL QUEUE
+    // =================================
+
+    const mappedQueue =
+        queue.map(
+
+            (entry) =>
+                mapQueueAthlete(
+
+                    entry,
+
+                    session.currentPhase,
+
+                    "QUEUED"
+
+                )
+
+        );
+
+
+    // =================================
+    // BUILD ALL ATHLETE LIST
+    // =================================
+
+    const athletes =
+        entries.map(
+
+            (entry) => {
+
+                const attempt =
+                    getCurrentAttempt(
+
+                        entry.competitionEntry,
+
+                        session.currentPhase
+
+                    );
+
+
+                let status =
+                    "AVAILABLE";
+
+
+                if (
+                    session.currentEntryId &&
+                    String(entry.entryId) ===
+                    String(session.currentEntryId)
+                ) {
+
+                    status =
+                        "ON_PLATFORM";
+
+                }
+                else if (
+                    attempt?.completed
+                ) {
+
+                    status =
+                        "COMPLETED";
+
+                }
+                else if (
+                    attempt &&
+                    attempt.phase !==
+                    session.currentPhase
+                ) {
+
+                    status =
+                        "WRONG_PHASE";
+
+                }
+
+
+                return mapQueueAthlete(
+
+                    entry,
+
+                    session.currentPhase,
+
+                    status
+
+                );
+
+            }
+
+        );
+
+
+    // =================================
+    // COMPETITION RESULTS
+    //
+    // Keep same athlete information
+    // for existing frontend compatibility.
+    // =================================
+
+    const competitionResults =
+        athletes.map(
+
+            (athlete) => ({
+                ...athlete,
+            })
+
+        );
+
+
+    // =================================
+    // CAN SELECT / PLATFORM STATE
+    // =================================
+
+    let canSelectAnotherAthlete =
+        true;
+
+
+    if (
+        currentAthlete
+    ) {
+
+        const attempt =
+            currentAthlete.currentAttempt;
 
 
         if (
-            session.currentEntryId &&
-            entry.entryId
-                .toString() ===
-            session.currentEntryId
-                .toString()
+            !attempt
         ) {
 
-            scoreboardStatus =
-                "ON_PLATFORM";
+            canSelectAnotherAthlete =
+                false;
 
         }
         else if (
             attempt.completed
         ) {
 
-            scoreboardStatus =
-                "COMPLETED";
-
-        }
-
-
-        // =================================
-        // OFFICIAL LIST STATUS
-        // =================================
-
-        let officialStatus =
-            "AVAILABLE";
-
-
-        if (
-            session.currentEntryId &&
-            entry.entryId
-                .toString() ===
-            session.currentEntryId
-                .toString()
-        ) {
-
-            officialStatus =
-                "ON_PLATFORM";
-
-        }
-        else if (
-            attempt.completed
-        ) {
-
-            officialStatus =
-                "COMPLETED";
+            canSelectAnotherAthlete =
+                true;
 
         }
         else if (
@@ -312,146 +735,77 @@ const getLiveCompetition = async (
             session.currentPhase
         ) {
 
-            officialStatus =
-                "WRONG_PHASE";
+            canSelectAnotherAthlete =
+                true;
 
         }
+        else {
+
+            const declaredWeight =
+                attempt.declaredWeight;
 
 
-        // =================================
-        // BUILD SCOREBOARD ENTRY
-        // =================================
-
-        competitionResults.push(
-            mapAthlete(
-                entry,
-                attempt,
-                scoreboardStatus
-            )
-        );
-
-
-        // =================================
-        // BUILD OFFICIAL ENTRY
-        // =================================
-
-        athletes.push(
-            mapAthlete(
-                entry,
-                attempt,
-                officialStatus
-            )
-        );
-
-
-        // =================================
-        // CURRENT ATHLETE
-        // =================================
-
-        if (
-            currentEntry &&
-            entry.entryId
-                .toString() ===
-            currentEntry.entryId
-                .toString()
-        ) {
-
-            currentAthleteAttempt =
-                attempt;
-
-
-            // -----------------------------
-            // CURRENT ATHLETE COMPLETED
-            // -----------------------------
-
-            if (
-                attempt.completed
-            ) {
-
-                canSelectAnotherAthlete =
-                    true;
-
-            }
-
-
-            // -----------------------------
-            // NEXT ATTEMPT IS DIFFERENT
-            // PHASE
-            // -----------------------------
-
-            else if (
-                attempt.phase !==
-                session.currentPhase
-            ) {
-
-                canSelectAnotherAthlete =
-                    true;
-
-            }
-
-
-            // -----------------------------
-            // CURRENT PHASE
-            // -----------------------------
-
-            else {
-
-                const declaredWeight =
-                    attempt.declaredWeight;
-
-
-                // -------------------------
-                // Declaration not saved
-                // -------------------------
-
-                if (
-                    declaredWeight == null ||
-                    Number(declaredWeight) <= 0
-                ) {
-
-                    canSelectAnotherAthlete =
-                        false;
-
-                }
-
-
-                // -------------------------
-                // Declaration saved
-                // -------------------------
-
-                else {
-
-                    canSelectAnotherAthlete =
-                        true;
-
-                }
-
-            }
+            canSelectAnotherAthlete =
+                declaredWeight != null &&
+                Number(declaredWeight) > 0;
 
         }
 
     }
 
 
-    // =====================================
-    // CURRENT ATHLETE
-    // =====================================
+    // =================================
+    // DEBUG
+    // =================================
 
-    const currentAthlete =
-        currentEntry
-            ? mapAthlete(
-                currentEntry,
-                currentAthleteAttempt,
-                "ON_PLATFORM"
-            )
-            : null;
+    console.log(
+        "===== GET LIVE COMPETITION ====="
+    );
+
+    console.log({
+
+        competitionId:
+            String(competitionId),
+
+        gender:
+            normalizedGender,
+
+        currentPhase:
+            session.currentPhase,
+
+        status:
+            session.status,
+
+        currentEntryId:
+            session.currentEntryId
+                ?.toString() ?? null,
+
+        eligibleCandidates:
+            candidates.length,
+
+        queueCount:
+            queue.length,
+
+        next:
+            nextAthlete?.name ?? null,
+
+        upcoming:
+            upcomingAthletes.length,
+
+    });
 
 
-    // =====================================
-    // FINAL RESPONSE
-    // =====================================
+    // =================================
+    // AUTHORITATIVE RESPONSE
+    // =================================
 
     return {
+
+        competitionId:
+            session.competitionId,
+
+        gender:
+            session.gender,
 
         status:
             session.status,
@@ -465,16 +819,35 @@ const getLiveCompetition = async (
         currentPhase:
             session.currentPhase,
 
+        currentEntryId:
+            session.currentEntryId ?? null,
+
+        stateVersion:
+            session.stateVersion ?? 0,
+
+        integrity:
+            session.integrity,
+
         currentAthlete,
 
         canSelectAnotherAthlete,
+
+        nextAthlete,
+
+        upcomingAthletes,
+
+        queue:
+            mappedQueue,
+
+        queueCount:
+            mappedQueue.length,
 
         athletes,
 
         competitionResults,
 
         declarationQueue:
-            athletes,
+            mappedQueue,
 
         totalAthletes:
             athletes.length,
@@ -483,5 +856,81 @@ const getLiveCompetition = async (
 
 };
 
+
+// =====================================
+// QUEUE STATE
+//
+// Used by:
+// GET /:competitionId/:gender/queue
+//
+// Kept in this file so both endpoints
+// use the same authoritative logic.
+// =====================================
+
+const getQueueState = async ({
+    competitionId,
+    gender,
+}) => {
+
+    const result =
+        await getLiveCompetition(
+            competitionId,
+            gender
+        );
+
+
+    return {
+
+        competitionId:
+            result.competitionId,
+
+        gender:
+            result.gender,
+
+        sessionName:
+            result.sessionName,
+
+        selectedWeightCategories:
+            result.selectedWeightCategories,
+
+        currentPhase:
+            result.currentPhase,
+
+        status:
+            result.status,
+
+        stateVersion:
+            result.stateVersion,
+
+        integrity:
+            result.integrity,
+
+        current:
+            result.currentAthlete,
+
+        next:
+            result.nextAthlete,
+
+        upcoming:
+            result.upcomingAthletes,
+
+        queue:
+            result.queue,
+
+        queueCount:
+            result.queueCount,
+
+    };
+
+};
+
+
+// =====================================
+// EXPORTS
+// =====================================
+
+export {
+    getQueueState,
+};
 
 export default getLiveCompetition;

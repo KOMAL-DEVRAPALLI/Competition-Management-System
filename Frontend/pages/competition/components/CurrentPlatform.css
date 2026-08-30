@@ -1,0 +1,462 @@
+/* =====================================
+   CURRENT PLATFORM
+===================================== */
+
+.current-platform {
+    width: 100%;
+
+    overflow: hidden;
+
+    border: 1px solid #d9dee7;
+    border-radius: 8px;
+
+    background: #ffffff;
+}
+
+
+/* =====================================
+   HEADER
+===================================== */
+
+.current-platform-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 11px 15px;
+
+    background: #122f52;
+    color: #ffffff;
+}
+
+
+.current-platform-label {
+    display: block;
+
+    margin-bottom: 3px;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 0.09em;
+
+    line-height: 1.2;
+
+    opacity: 0.82;
+}
+
+
+.current-platform-header h2 {
+    margin: 0;
+
+    font-size: 24px;
+    font-weight: 800;
+
+    line-height: 1.1;
+}
+
+
+.current-platform-status {
+    flex: 0 0 auto;
+
+    padding: 7px 12px;
+
+    border-radius: 5px;
+
+    background: #f5c400;
+    color: #171717;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 0.04em;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================
+   ATTEMPT META
+===================================== */
+
+.current-platform-meta {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 8px;
+
+    padding: 10px 15px;
+
+    background: #f5c400;
+}
+
+
+.current-platform-meta-item {
+    min-width: 0;
+
+    padding: 8px 11px;
+
+    border-radius: 6px;
+
+    background: rgba(255, 255, 255, 0.62);
+}
+
+
+.current-platform-meta-item span {
+    display: block;
+
+    margin-bottom: 3px;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 0.07em;
+
+    line-height: 1.2;
+
+    color: #5d4300;
+}
+
+
+.current-platform-meta-item strong {
+    display: block;
+
+    overflow: hidden;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    line-height: 1.15;
+
+    color: #1d1d1d;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =====================================
+   DECLARATION
+===================================== */
+
+.current-platform-declaration {
+    padding: 9px 15px 8px;
+
+    background: #f5c400;
+}
+
+
+.current-platform-declaration-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 5px;
+}
+
+
+.current-platform-declaration-label label {
+    font-size: 11px;
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    color: #4e3600;
+}
+
+
+.current-platform-declaration-label span {
+    font-size: 10px;
+    font-weight: 600;
+
+    line-height: 1.2;
+
+    color: #6b4c00;
+}
+
+
+.current-platform-declaration-controls {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+
+.current-platform-input-wrapper {
+    position: relative;
+
+    flex: 0 1 165px;
+}
+
+
+.current-platform-input-wrapper input {
+    box-sizing: border-box;
+
+    width: 100%;
+    height: 42px;
+
+    padding: 0 38px 0 11px;
+
+    border: 2px solid #6b3200;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #171717;
+
+    font-family: inherit;
+
+    font-size: 18px;
+    font-weight: 800;
+
+    outline: none;
+}
+
+
+.current-platform-input-wrapper input:focus {
+    border-color: #122f52;
+}
+
+
+.current-platform-input-wrapper input:disabled {
+    cursor: not-allowed;
+
+    background: #eeeeee;
+
+    opacity: 0.7;
+}
+
+
+/* Remove browser number spinner */
+
+.current-platform-input-wrapper input::-webkit-outer-spin-button,
+.current-platform-input-wrapper input::-webkit-inner-spin-button {
+    margin: 0;
+
+    -webkit-appearance: none;
+}
+
+
+
+
+.current-platform-input-wrapper span {
+    position: absolute;
+
+    top: 50%;
+    right: 10px;
+
+    transform: translateY(-50%);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    color: #5d4300;
+
+    pointer-events: none;
+}
+
+
+/* =====================================
+   SAVE DECLARATION
+===================================== */
+
+.current-platform-save {
+    flex: 0 0 auto;
+
+    min-width: 90px;
+    height: 42px;
+
+    padding: 0 15px;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: #5a2900;
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+.current-platform-save:hover:not(:disabled) {
+    background: #452000;
+}
+
+
+.current-platform-save:disabled {
+    cursor: not-allowed;
+
+    opacity: 0.55;
+}
+
+
+.current-platform-declaration small {
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 9px;
+
+    line-height: 1.25;
+
+    color: #624700;
+}
+
+
+/* =====================================
+   LIFT ACTIONS
+===================================== */
+
+.current-platform-actions {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 9px;
+
+    padding: 0 15px 12px;
+
+    background: #f5c400;
+}
+
+
+.current-platform-actions button {
+    min-height: 48px;
+
+    border: 0;
+    border-radius: 7px;
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    line-height: 1.1;
+
+    cursor: pointer;
+}
+
+
+.current-platform-actions button:disabled {
+    cursor: not-allowed;
+
+    opacity: 0.6;
+}
+
+
+.current-platform-good {
+    background: #147a3e;
+}
+
+
+.current-platform-good:hover:not(:disabled) {
+    background: #106632;
+}
+
+
+.current-platform-no-lift {
+    background: #b51f28;
+}
+
+
+.current-platform-no-lift:hover:not(:disabled) {
+    background: #961921;
+}
+
+
+/* =====================================
+   EMPTY PLATFORM
+===================================== */
+
+.current-platform-empty {
+    padding: 24px 15px;
+
+    color: #687386;
+
+    font-size: 13px;
+
+    line-height: 1.3;
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 800px) {
+
+    .current-platform-meta {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 560px) {
+
+    .current-platform-header {
+        padding: 10px 12px;
+    }
+
+
+    .current-platform-header h2 {
+        font-size: 21px;
+    }
+
+
+    .current-platform-meta {
+        padding: 8px 12px;
+    }
+
+
+    .current-platform-meta-item {
+        padding: 8px 9px;
+    }
+
+
+    .current-platform-declaration {
+        padding: 8px 12px;
+    }
+
+
+    .current-platform-declaration-controls {
+        align-items: stretch;
+    }
+
+
+    .current-platform-input-wrapper {
+        flex: 1;
+    }
+
+
+    .current-platform-save {
+        min-width: 78px;
+    }
+
+
+    .current-platform-actions {
+        padding: 0 12px 10px;
+    }
+
+
+    .current-platform-actions button {
+        min-height: 45px;
+
+        font-size: 14px;
+    }
+
+}

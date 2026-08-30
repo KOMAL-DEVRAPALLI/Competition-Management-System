@@ -1,110 +1,268 @@
-import getWeightCategoryRule from "./WeightCategoryService.js";
+import getWeightCategoryRule
+    from "./WeightCategoryService.js";
+
 
 const calculateEligibleWeightCategories = async (
+    competitionId,
     gender,
     category,
     bodyWeight
 ) => {
 
+    // =====================================
+    // VALIDATE BODY WEIGHT
+    // =====================================
+
+    const numericBodyWeight =
+        Number(bodyWeight);
+
+
+    if (
+        !Number.isFinite(
+            numericBodyWeight
+        ) ||
+        numericBodyWeight <= 0
+    ) {
+
+        throw new Error(
+            "Valid body weight is required."
+        );
+
+    }
+
+
+    // =====================================
+    // GET COMPETITION RULE
+    // =====================================
+
     const {
         weights,
         tolerance,
-    } = await getWeightCategoryRule(
-        gender,
-        category
+    } =
+        await getWeightCategoryRule(
+            competitionId,
+            gender,
+            category
+        );
+
+
+    // =====================================
+    // NORMALIZE CATEGORIES
+    // =====================================
+
+    const categories =
+        weights
+            .map((weight) => {
+
+                const label =
+                    String(weight).trim();
+
+                return {
+
+                    label,
+
+                    limit:
+                        label.startsWith("+")
+                            ? null
+                            : Number(label),
+
+                    isPlus:
+                        label.startsWith("+"),
+
+                };
+
+            })
+            .filter(
+                (category) =>
+                    category.isPlus ||
+                    Number.isFinite(
+                        category.limit
+                    )
+            );
+
+
+    const publishedCategories =
+        categories.filter(
+            (category) =>
+                !category.isPlus
+        );
+
+
+    const plusCategory =
+        categories.find(
+            (category) =>
+                category.isPlus
+        );
+
+
+    if (
+        publishedCategories.length === 0 &&
+        !plusCategory
+    ) {
+
+        throw new Error(
+            "No valid weight categories configured."
+        );
+
+    }
+
+
+    // =====================================
+    // SORT NORMAL CATEGORIES
+    // LOW → HIGH
+    // =====================================
+
+    publishedCategories.sort(
+        (a, b) =>
+            a.limit - b.limit
     );
 
-    const categories = weights.map((weight) => ({
-        label: weight,
-        limit: weight.startsWith("+")
-            ? null
-            : Number(weight),
-        isPlus: weight.startsWith("+"),
-    }));
 
-    const publishedCategories = categories.filter(
-        (category) => !category.isPlus
-    );
+    // =====================================
+    // CALCULATE
+    // =====================================
 
-    const plusCategory = categories.find(
-        (category) => category.isPlus
-    );
+    for (
+        let index = 0;
+        index <
+        publishedCategories.length;
+        index++
+    ) {
 
-    for (let index = 0; index < publishedCategories.length; index++) {
+        const currentCategory =
+            publishedCategories[index];
 
-        const currentCategory = publishedCategories[index];
+
         const nextCategory =
-            publishedCategories[index + 1];
+            publishedCategories[
+                index + 1
+            ];
 
-        const isHighestPublished =
-            index === publishedCategories.length - 1;
 
-        // Rule 1
-        if (bodyWeight <= currentCategory.limit) {
+        // =================================
+        // BODY WEIGHT IS INSIDE CATEGORY
+        // =================================
+
+        if (
+            numericBodyWeight <=
+            currentCategory.limit
+        ) {
 
             return {
+
                 eligibleCategories: [
                     currentCategory.label,
                 ],
-                requiresSelection: false,
+
+                requiresSelection:
+                    false,
+
                 assignedCategory:
                     currentCategory.label,
+
             };
 
         }
 
-        // Rule 2
+
+        // =================================
+        // TOLERANCE ZONE
+        // =================================
+
         if (
-            bodyWeight >
+            numericBodyWeight >
                 currentCategory.limit &&
-            bodyWeight <=
+
+            numericBodyWeight <=
                 currentCategory.limit +
-                    tolerance
+                tolerance
         ) {
 
-            if (isHighestPublished) {
+            // =============================
+            // HIGHEST CATEGORY
+            // =============================
+
+            if (!nextCategory) {
+
+                if (!plusCategory) {
+
+                    throw new Error(
+                        "Highest weight category configuration is incomplete."
+                    );
+
+                }
+
 
                 return {
+
                     eligibleCategories: [
                         currentCategory.label,
                         plusCategory.label,
                     ],
-                    requiresSelection: true,
-                    assignedCategory: null,
+
+                    requiresSelection:
+                        true,
+
+                    assignedCategory:
+                        null,
+
                 };
 
             }
 
+
+            // =============================
+            // NORMAL ADJACENT CATEGORIES
+            // =============================
+
             return {
+
                 eligibleCategories: [
                     currentCategory.label,
                     nextCategory.label,
                 ],
-                requiresSelection: true,
-                assignedCategory: null,
+
+                requiresSelection:
+                    true,
+
+                assignedCategory:
+                    null,
+
             };
 
         }
 
     }
 
+
+    // =====================================
+    // ABOVE ALL PUBLISHED CATEGORIES
+    // =====================================
+
     if (plusCategory) {
 
         return {
+
             eligibleCategories: [
                 plusCategory.label,
             ],
-            requiresSelection: false,
+
+            requiresSelection:
+                false,
+
             assignedCategory:
                 plusCategory.label,
+
         };
 
     }
+
 
     throw new Error(
         "Unable to determine eligible weight category."
     );
 
 };
+
 
 export default calculateEligibleWeightCategories;

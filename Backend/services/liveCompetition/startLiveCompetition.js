@@ -1,6 +1,45 @@
+import mongoose from "mongoose";
+
+import Competition from "../../models/Competition.js";
 import LiveCompetition from "../../models/LiveCompetition.js";
-import buildWorkingSheetData from "../pdf/workingSheet/buildWorkingSheetData.js";
-import getCurrentAttempt from "./getCurrentAttempt.js";
+
+import buildWorkingSheetData
+    from "../pdf/workingSheet/buildWorkingSheetData.js";
+
+import getCurrentAttempt
+    from "./getCurrentAttempt.js";
+
+import updateCurrentPlatformAthlete
+    from "./updateCurrentPlatformAthlete.js";
+
+
+// =====================================
+// START LIVE COMPETITION
+//
+// Responsibility:
+//
+// 1. Validate competition scope.
+// 2. Validate competition format.
+// 3. Load eligible competition entries.
+// 4. Validate initial attempt state.
+// 5. Create a fresh authoritative session.
+// 6. Mark session RUNNING.
+// 7. Resolve first athlete automatically
+//    through Feature 3.5.
+// 8. Return authoritative starting state.
+//
+// IMPORTANT:
+//
+// This service does NOT implement calling
+// order itself.
+//
+// Feature 3.1 = eligibility
+// Feature 3.2 = ordering
+// Feature 3.3 = queue
+// Feature 3.5 = platform assignment
+//
+// =====================================
+
 
 const startLiveCompetition = async ({
     competitionId,
@@ -9,28 +48,162 @@ const startLiveCompetition = async ({
     selectedWeightCategories = [],
 }) => {
 
-    // -----------------------------------
-    // Validate input
-    // -----------------------------------
+    // =====================================
+    // VALIDATE INPUT
+    // =====================================
 
     if (!competitionId) {
+
         throw new Error(
             "Competition ID is required."
         );
+
     }
 
     if (!gender) {
+
         throw new Error(
             "Gender is required."
         );
+
     }
 
-    const normalizedGender =
-        gender.toLowerCase();
 
-    // -----------------------------------
-    // Get competition entries
-    // -----------------------------------
+    // =====================================
+    // VALIDATE COMPETITION ID
+    // =====================================
+
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            competitionId
+        )
+    ) {
+
+        const error =
+            new Error(
+                "Invalid competition ID."
+            );
+
+        error.code =
+            "INVALID_COMPETITION_ID";
+
+        error.statusCode =
+            400;
+
+        throw error;
+
+    }
+
+
+    const normalizedGender =
+        String(gender)
+            .trim()
+            .toLowerCase();
+
+
+    // =====================================
+    // LOAD COMPETITION
+    //
+    // IMPORTANT:
+    //
+    // competitionFormat MUST already be
+    // explicitly established before a live
+    // competition session can become RUNNING.
+    //
+    // This validation happens BEFORE the
+    // old LiveCompetition session is deleted.
+    // =====================================
+
+    const competition =
+        await Competition.findById(
+            competitionId
+        );
+
+
+    if (!competition) {
+
+        const error =
+            new Error(
+                "Competition not found."
+            );
+
+        error.code =
+            "COMPETITION_NOT_FOUND";
+
+        error.statusCode =
+            404;
+
+        throw error;
+
+    }
+
+
+    // =====================================
+    // COMPETITION FORMAT PREREQUISITE
+    //
+    // Valid formats are established through
+    // the authoritative setCompetitionFormat
+    // service.
+    //
+    // Do NOT automatically choose a format.
+    // =====================================
+
+    const competitionFormat =
+        String(
+            competition.competitionFormat ?? ""
+        )
+            .trim()
+            .toUpperCase();
+
+
+    if (
+        !competitionFormat
+    ) {
+
+        const error =
+            new Error(
+                "Competition format must be explicitly established before starting live competition."
+            );
+
+        error.code =
+            "COMPETITION_FORMAT_REQUIRED";
+
+        error.statusCode =
+            400;
+
+        throw error;
+
+    }
+
+
+    // =====================================
+    // NORMALIZE CATEGORIES
+    // =====================================
+
+    const normalizedSelectedCategories =
+        Array.isArray(selectedWeightCategories)
+            ? selectedWeightCategories
+                .map((category) =>
+                    String(category).trim()
+                )
+                .filter(Boolean)
+            : [];
+
+
+    if (
+        normalizedSelectedCategories.length === 0
+    ) {
+
+        throw new Error(
+            "At least one weight category must be selected."
+        );
+
+    }
+
+
+    // =====================================
+    // LOAD COMPETITION ENTRIES
+    // =====================================
 
     let entries =
         await buildWorkingSheetData(
@@ -39,126 +212,113 @@ const startLiveCompetition = async ({
             true
         );
 
-    console.log(
-        "===== START LIVE COMPETITION ====="
-    );
 
-    console.log(
-        "Competition ID:",
-        competitionId.toString()
-    );
+    if (!Array.isArray(entries)) {
 
-    console.log(
-        "Gender:",
-        normalizedGender
-    );
-
-    console.log(
-        "Selected Categories:",
-        selectedWeightCategories
-    );
-
-    console.log(
-        "Total Entries Before Filter:",
-        entries.length
-    );
-
-    // -----------------------------------
-    // Filter selected weight categories
-    // -----------------------------------
-
-    if (
-        Array.isArray(
-            selectedWeightCategories
-        ) &&
-        selectedWeightCategories.length > 0
-    ) {
-
-        entries =
-            entries.filter(
-                (athlete) =>
-                    selectedWeightCategories.includes(
-                        athlete.weightCategory
-                    )
-            );
+        throw new Error(
+            "Unable to load competition athletes."
+        );
 
     }
 
-    console.log(
-        "Total Entries After Filter:",
-        entries.length
-    );
 
-    // -----------------------------------
-    // Make sure athletes exist
-    // -----------------------------------
+    // =====================================
+    // FILTER COMPETITION SCOPE
+    // =====================================
+
+    entries =
+        entries.filter(
+            (athlete) =>
+                normalizedSelectedCategories.includes(
+                    String(
+                        athlete.weightCategory ?? ""
+                    ).trim()
+                )
+        );
+
 
     if (!entries.length) {
+
         throw new Error(
-            "No athletes found for this session."
+            "No athletes found for the selected competition scope."
         );
+
     }
 
-    // -----------------------------------
-    // Verify that the session contains
-    // athletes who can compete in SNATCH.
+
+    // =====================================
+    // VALIDATE INITIAL ATTEMPT STATE
     //
-    // IMPORTANT:
-    //
-    // We DO NOT select anyone here.
-    // -----------------------------------
+    // This is diagnostic/integrity validation.
+    // Calling-order eligibility remains owned
+    // by the queue engine.
+    // =====================================
 
-    const eligibleEntries =
-        entries.filter(
-            (athlete) => {
+    for (const athlete of entries) {
 
-                const attempt =
-                    getCurrentAttempt(
-                        athlete.competitionEntry
-                    );
+        const attempt =
+            getCurrentAttempt(
+                athlete.competitionEntry,
+                "SNATCH"
+            );
 
-                return (
-                    !attempt.completed &&
-                    attempt.phase ===
-                        "SNATCH"
+
+        if (
+            attempt?.integrityError
+        ) {
+
+            const error =
+                new Error(
+                    `Invalid Snatch state for ${athlete.name}: ${attempt.integrityError}`
                 );
 
-            }
-        );
+            error.code =
+                "LIVE_START_INTEGRITY_ERROR";
 
-    if (!eligibleEntries.length) {
-        throw new Error(
-            "No athletes are available to start the Snatch session."
-        );
+            error.statusCode =
+                409;
+
+            throw error;
+
+        }
+
     }
 
-    console.log(
-        "Eligible Snatch Athletes:",
-        eligibleEntries.length
-    );
 
-    // -----------------------------------
-    // Remove existing live session
-    // -----------------------------------
+    // =====================================
+    // REMOVE OLD SESSION
+    //
+    // This happens ONLY AFTER all mandatory
+    // start prerequisites have passed.
+    //
+    // Therefore a missing competitionFormat
+    // can never destroy an existing test/live
+    // session before reporting the error.
+    // =====================================
 
     await LiveCompetition.deleteMany({
+
         competitionId,
-        gender: normalizedGender,
+
+        gender:
+            normalizedGender,
+
     });
 
-    // -----------------------------------
-    // CREATE NEW SESSION
+
+    // =====================================
+    // CREATE AUTHORITATIVE SESSION
     //
     // IMPORTANT:
     //
-    // currentEntryId = null
+    // A successful "Start Competition"
+    // action means the live session is now
+    // RUNNING.
     //
-    // Nobody is automatically placed
-    // on the platform.
-    //
-    // The official must manually select
-    // the first athlete.
-    // -----------------------------------
+    // currentEntryId starts empty because
+    // Feature 3.5 assigns it immediately
+    // from the authoritative queue.
+    // =====================================
 
     const session =
         await LiveCompetition.create({
@@ -170,7 +330,8 @@ const startLiveCompetition = async ({
 
             sessionName,
 
-            selectedWeightCategories,
+            selectedWeightCategories:
+                normalizedSelectedCategories,
 
             currentEntryId:
                 null,
@@ -182,157 +343,222 @@ const startLiveCompetition = async ({
                 "SNATCH",
 
             status:
-                "READY",
+                "RUNNING",
+
+            stateVersion:
+                0,
+
+            integrity: {
+
+                status:
+                    "VALID",
+
+                reason:
+                    "",
+
+                detectedAt:
+                    null,
+
+            },
 
         });
 
-    // -----------------------------------
-    // Verify database state
-    // -----------------------------------
 
-    console.log(
-        "===== LIVE SESSION CREATED ====="
-    );
+    // =====================================
+    // FIRST AUTOMATIC PLATFORM ASSIGNMENT
+    //
+    // Feature 3.5 owns the actual
+    // authoritative selection.
+    //
+    // It will:
+    //
+    // 1. calculate queue
+    // 2. take queue[0]
+    // 3. assign currentEntryId
+    // 4. increment stateVersion
+    //
+    // No React selection.
+    // No duplicate ordering logic.
+    // =====================================
 
-    console.log(
-        "Session ID:",
-        session._id.toString()
-    );
+    const platformResult =
+        await updateCurrentPlatformAthlete(
 
-    console.log(
-        "Current Entry:",
-        session.currentEntryId
-            ?.toString() ?? "NONE"
-    );
+            competitionId,
 
-    console.log(
-        "Prepare Entry:",
-        session.prepareEntryId
-            ?.toString() ?? "NONE"
-    );
+            normalizedGender
 
-    console.log(
-        "Phase:",
-        session.currentPhase
-    );
+        );
 
-    console.log(
-        "Status:",
-        session.status
-    );
 
-    // -----------------------------------
-    // Build response athlete mapper
-    // -----------------------------------
+    // =====================================
+    // LOAD FINAL AUTHORITATIVE SESSION
+    // =====================================
 
-    const mapAthlete = (
-        athlete
-    ) => {
+    const finalSession =
+        platformResult.session ??
+        await LiveCompetition.findOne({
 
-        const currentAttempt =
-            getCurrentAttempt(
-                athlete.competitionEntry
-            );
+            competitionId,
 
-        return {
+            gender:
+                normalizedGender,
 
-            entryId:
-                athlete.entryId,
+        });
 
-            athleteId:
-                athlete.athleteId,
 
-            name:
-                athlete.name,
+    if (!finalSession) {
 
-            registrationNo:
-                athlete.registrationNo,
+        throw new Error(
+            "Live competition session could not be recovered after start."
+        );
 
-            lotNumber:
-                athlete.lotNumber,
+    }
 
-            event:
-                athlete.isYouth
-                    ? "Y"
-                    : athlete.isJunior
-                    ? "J"
-                    : athlete.isSenior
-                    ? "S"
-                    : "",
 
-            bodyWeight:
-                athlete.bodyWeight,
+    // =====================================
+    // RESPONSE ATHLETE MAPPER
+    // =====================================
 
-            weightCategory:
-                athlete.weightCategory,
+    const mapAthlete =
+        (athlete) => {
 
-            openingSnatch:
-                athlete.openingSnatch,
+            const currentAttempt =
+                getCurrentAttempt(
+                    athlete.competitionEntry,
+                    finalSession.currentPhase
+                );
 
-            openingCleanJerk:
-                athlete.openingCleanJerk,
 
-            bestSnatch:
-                athlete.bestSnatch,
+            return {
 
-            bestCleanJerk:
-                athlete.bestCleanJerk,
+                entryId:
+                    athlete.entryId,
 
-            total:
-                athlete.total,
+                athleteId:
+                    athlete.athleteId,
 
-            place:
-                athlete.place,
+                name:
+                    athlete.name,
 
-            status:
-                "AVAILABLE",
+                registrationNo:
+                    athlete.registrationNo,
 
-            currentAttempt,
+                lotNumber:
+                    athlete.lotNumber,
 
-            snatchAttempts:
-                athlete
-                    .competitionEntry
-                    .snatchAttempts,
+                event:
+                    athlete.isYouth
+                        ? "Y"
+                        : athlete.isJunior
+                        ? "J"
+                        : athlete.isSenior
+                        ? "S"
+                        : "",
 
-            cleanJerkAttempts:
-                athlete
-                    .competitionEntry
-                    .cleanJerkAttempts,
+                bodyWeight:
+                    athlete.bodyWeight,
 
-            competitionEntry:
-                athlete.competitionEntry,
+                weightCategory:
+                    athlete.weightCategory,
+
+                displayWeightCategory:
+                    athlete.displayWeightCategory,
+
+                openingSnatch:
+                    athlete.openingSnatch,
+
+                openingCleanJerk:
+                    athlete.openingCleanJerk,
+
+                bestSnatch:
+                    athlete.bestSnatch,
+
+                bestCleanJerk:
+                    athlete.bestCleanJerk,
+
+                total:
+                    athlete.total,
+
+                place:
+                    athlete.place,
+
+                status:
+                    "AVAILABLE",
+
+                currentAttempt,
+
+                snatchAttempts:
+                    athlete
+                        .competitionEntry
+                        .snatchAttempts,
+
+                cleanJerkAttempts:
+                    athlete
+                        .competitionEntry
+                        .cleanJerkAttempts,
+
+                competitionEntry:
+                    athlete.competitionEntry,
+
+            };
 
         };
 
-    };
-
-    // -----------------------------------
-    // Build complete athlete list
-    //
-    // This is NOT an automatic queue.
-    //
-    // It is simply the list available
-    // to the official for manual selection.
-    // -----------------------------------
 
     const athleteList =
         entries.map(
             mapAthlete
         );
 
-    // -----------------------------------
-    // IMPORTANT:
-    //
-    // No current athlete.
-    // No next athlete.
-    // No automatic selection.
-    // -----------------------------------
+
+    // =====================================
+    // FINAL RESULT
+    // =====================================
+
+    console.log(
+        "===== LIVE COMPETITION STARTED ====="
+    );
+
+    console.log({
+
+        competitionId:
+            competitionId.toString(),
+
+        gender:
+            normalizedGender,
+
+        competitionFormat,
+
+        phase:
+            finalSession.currentPhase,
+
+        status:
+            finalSession.status,
+
+        currentEntryId:
+            finalSession.currentEntryId
+                ?.toString() ?? null,
+
+        stateVersion:
+            finalSession.stateVersion,
+
+        assignmentReason:
+            platformResult.reason,
+
+        assigned:
+            platformResult.assigned,
+
+    });
+
 
     return {
 
-        session,
+        session:
+            finalSession,
 
         currentAthlete:
+            platformResult.athlete ??
             null,
 
         declarationQueue:
@@ -348,5 +574,5 @@ const startLiveCompetition = async ({
 
 };
 
-export default startLiveCompetition;
 
+export default startLiveCompetition;

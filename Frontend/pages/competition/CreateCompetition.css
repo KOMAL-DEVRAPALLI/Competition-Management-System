@@ -1,0 +1,246 @@
+/* =====================================
+   CREATE COMPETITION PAGE
+   ===================================== */
+
+.create-competition-page {
+    min-height: 100vh;
+    padding: 32px;
+    background: #f5f7fb;
+    box-sizing: border-box;
+}
+
+
+/* =====================================
+   HEADER
+   ===================================== */
+
+.create-competition-header {
+    max-width: 1100px;
+    margin: 0 auto 28px;
+}
+
+.create-competition-header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.create-competition-header p {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 15px;
+}
+
+
+/* =====================================
+   FORM CONTAINER
+   ===================================== */
+
+.create-competition-form {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+
+/* =====================================
+   SECTION
+   ===================================== */
+
+.create-competition-section {
+    margin-bottom: 30px;
+}
+
+.create-competition-section:last-child {
+    margin-bottom: 0;
+}
+
+.create-competition-section h2 {
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+
+    font-size: 19px;
+    font-weight: 600;
+    color: #111827;
+}
+
+
+/* =====================================
+   FORM GRID
+   ===================================== */
+
+.create-competition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+
+/* =====================================
+   FORM GROUP
+   ===================================== */
+
+.create-competition-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.create-competition-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.create-competition-form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.create-competition-form-group input,
+.create-competition-form-group select,
+.create-competition-form-group textarea {
+    width: 100%;
+    padding: 11px 12px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #111827;
+
+    font-size: 14px;
+    font-family: inherit;
+
+    outline: none;
+    box-sizing: border-box;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.create-competition-form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.create-competition-form-group input:focus,
+.create-competition-form-group select:focus,
+.create-competition-form-group textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+
+/* =====================================
+   ERROR
+   ===================================== */
+
+.create-competition-error {
+    margin-bottom: 22px;
+    padding: 12px 14px;
+
+    border: 1px solid #fecaca;
+    border-radius: 7px;
+
+    background: #fef2f2;
+    color: #b91c1c;
+
+    font-size: 14px;
+}
+
+
+/* =====================================
+   ACTIONS
+   ===================================== */
+
+.create-competition-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    margin-top: 30px;
+    padding-top: 20px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.create-competition-actions button {
+    min-width: 120px;
+    padding: 11px 18px;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.create-competition-cancel {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+}
+
+.create-competition-cancel:hover {
+    background: #f9fafb;
+}
+
+.create-competition-submit {
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.create-competition-submit:hover {
+    background: #1d4ed8;
+}
+
+.create-competition-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* =====================================
+   RESPONSIVE
+   ===================================== */
+
+@media (max-width: 768px) {
+
+    .create-competition-page {
+        padding: 20px;
+    }
+
+    .create-competition-form {
+        padding: 20px;
+    }
+
+    .create-competition-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .create-competition-form-group.full-width {
+        grid-column: auto;
+    }
+
+    .create-competition-actions {
+        flex-direction: column-reverse;
+    }
+
+    .create-competition-actions button {
+        width: 100%;
+    }
+}

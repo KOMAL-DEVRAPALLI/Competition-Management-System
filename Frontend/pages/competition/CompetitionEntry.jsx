@@ -96,10 +96,13 @@ const CompetitionEntry = () => {
                     athlete={athlete}
                 />
 
-                <WeighInSection
-                    athlete={athlete}
-                    setAthlete={setAthlete}
-                />
+               <WeighInSection
+    athlete={athlete}
+    competitionEntryId={
+        athlete?.competitionEntries?.[0]?._id
+    }
+    setAthlete={setAthlete}
+/>
 
                 <OpeningLiftSection
                      athlete={athlete}

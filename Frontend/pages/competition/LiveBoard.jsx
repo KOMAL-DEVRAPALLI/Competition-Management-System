@@ -31,15 +31,6 @@ const LiveScoreBoard = () => {
 
     // =====================================
     // PREVIOUS CURRENT ATHLETE
-    //
-    // IMPORTANT:
-    //
-    // undefined = first render
-    // null      = no athlete selected
-    // value     = selected athlete ID
-    //
-    // This prevents scrolling on the
-    // initial page load.
     // =====================================
 
     const previousCurrentAthleteIdRef =
@@ -47,7 +38,20 @@ const LiveScoreBoard = () => {
 
 
     // =====================================
-    // LIVE COMPETITION STATE
+    // LIVE COMPETITION RESULT STATE
+    //
+    // This remains the source for:
+    //
+    // - athlete rows
+    // - attempts
+    // - best lifts
+    // - totals
+    // - rankings
+    //
+    // IMPORTANT:
+    //
+    // We do NOT replace this with queue
+    // data.
     // =====================================
 
     const [liveCompetition, setLiveCompetition] =
@@ -55,13 +59,34 @@ const LiveScoreBoard = () => {
 
 
     // =====================================
+    // AUTHORITATIVE QUEUE STATE
+    //
+    // Source:
+    //
+    // GET /live-competition/:competitionId/
+    //     :gender/queue
+    //
+    // This controls:
+    //
+    // - current athlete
+    // - next athlete
+    // - upcoming athletes
+    // - authoritative phase
+    // - stateVersion
+    //
+    // It is read-only.
+    // =====================================
+
+    const [queueState, setQueueState] =
+        useState(null);
+
+
+    // =====================================
     // LOAD SCOREBOARD
     //
-    // READ ONLY
+    // Existing endpoint.
     //
-    // This page only GETs competition
-    // state. It never changes competition
-    // state.
+    // READ ONLY.
     // =====================================
 
     const loadScoreBoard = async () => {
@@ -91,61 +116,145 @@ const LiveScoreBoard = () => {
 
 
     // =====================================
-    // LIVE POLLING
+    // LOAD AUTHORITATIVE QUEUE
     //
-    // Refresh scoreboard every second.
+    // NEW AUTOMATIC CALLING ORDER SOURCE.
     //
-    // This does NOT control the competition.
-    // It only reads the latest server state.
+    // READ ONLY.
     // =====================================
 
-   useEffect(() => {
-    loadScoreBoard();
+    const loadQueueState = async () => {
 
-    const interval = setInterval(() => {
-        loadScoreBoard();
-    }, 2000);
+        try {
 
-    return () => {
-        clearInterval(interval);
+            const response =
+                await apiRequest(
+                    `/live-competition/${competitionId}/${gender}/queue`,
+                    "GET"
+                );
+
+            setQueueState(
+                response.data
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load authoritative queue:",
+                error
+            );
+
+        }
+
     };
-}, [competitionId, gender]);
+
+
+    // =====================================
+    // LIVE POLLING
+    //
+    // Both endpoints are read-only.
+    //
+    // The scoreboard never controls
+    // competition progression.
+    // =====================================
+
+    useEffect(() => {
+
+        if (
+            !competitionId ||
+            !gender
+        ) {
+
+            return;
+
+        }
+
+
+        loadScoreBoard();
+        loadQueueState();
+
+
+        const interval =
+            setInterval(() => {
+
+                loadScoreBoard();
+                loadQueueState();
+
+            }, 2000);
+
+
+        return () => {
+
+            clearInterval(
+                interval
+            );
+
+        };
+
+    }, [
+        competitionId,
+        gender,
+    ]);
+
+
+    // =====================================
+    // AUTHORITATIVE CURRENT ATHLETE
+    //
+    // Queue state is now authoritative.
+    // =====================================
+
+    const currentAthlete =
+        queueState?.current ??
+        null;
+
+
+    // =====================================
+    // AUTHORITATIVE NEXT ATHLETE
+    // =====================================
+
+    const nextAthlete =
+        queueState?.next ??
+        null;
+
+
+    // =====================================
+    // AUTHORITATIVE CURRENT PHASE
+    // =====================================
+
+    const currentPhase =
+        queueState?.currentPhase ??
+        liveCompetition?.currentPhase ??
+        null;
 
 
     // =====================================
     // AUTO-SCROLL
     //
-    // IMPORTANT:
+    // Scroll ONLY when the authoritative
+    // current athlete changes.
     //
-    // Scroll ONLY when the OFFICIAL selects
-    // a DIFFERENT athlete.
+    // Do NOT scroll for:
     //
-    // DO NOT scroll when:
-    //
-    // - page initially loads
+    // - initial load
     // - declaration changes
-    // - GOOD LIFT is recorded
-    // - NO LIFT is recorded
-    // - same athlete gets next attempt
-    // - scoreboard polls
+    // - GOOD LIFT
+    // - NO LIFT
+    // - same athlete's next attempt
+    // - polling
     // =====================================
 
     useEffect(() => {
 
         const currentAthleteId =
-            liveCompetition
-                ?.currentAthlete
+            currentAthlete
                 ?.entryId
                 ?.toString() ??
             null;
 
 
-        // =================================
+        // ---------------------------------
         // FIRST DATA LOAD
-        //
-        // Remember the current athlete,
-        // but DO NOT scroll.
-        // =================================
+        // ---------------------------------
 
         if (
             previousCurrentAthleteIdRef.current ===
@@ -160,29 +269,15 @@ const LiveScoreBoard = () => {
         }
 
 
-        // =================================
-        // ATHLETE HAS CHANGED
-        //
-        // Example:
-        //
-        // Athlete A
-        //      ↓
-        // Athlete B
-        //
-        // This is the official selecting
-        // another athlete.
-        // =================================
+        // ---------------------------------
+        // ATHLETE CHANGED
+        // ---------------------------------
 
         if (
             currentAthleteId &&
             currentAthleteId !==
                 previousCurrentAthleteIdRef.current
         ) {
-
-            // ---------------------------------
-            // Wait until the current row has
-            // been rendered.
-            // ---------------------------------
 
             requestAnimationFrame(() => {
 
@@ -196,18 +291,15 @@ const LiveScoreBoard = () => {
         }
 
 
-        // =================================
+        // ---------------------------------
         // REMEMBER CURRENT ATHLETE
-        // =================================
+        // ---------------------------------
 
         previousCurrentAthleteIdRef.current =
             currentAthleteId;
 
-
     }, [
-        liveCompetition
-            ?.currentAthlete
-            ?.entryId,
+        currentAthlete?.entryId,
     ]);
 
 
@@ -249,8 +341,7 @@ const LiveScoreBoard = () => {
         // =================================
         // ATTEMPT 1
         //
-        // Use opening weight if declaration
-        // has not been stored yet.
+        // Opening weight fallback.
         // =================================
 
         if (
@@ -327,6 +418,14 @@ const LiveScoreBoard = () => {
 
     // =====================================
     // CURRENT ATTEMPT HIGHLIGHT
+    //
+    // IMPORTANT:
+    //
+    // Athlete identity comes from the
+    // authoritative queue.
+    //
+    // Attempt information comes from the
+    // athlete's existing result row.
     // =====================================
 
     const isCurrentAttempt = (
@@ -335,20 +434,25 @@ const LiveScoreBoard = () => {
         attemptNo
     ) => {
 
+        if (!currentAthlete) {
+
+            return false;
+
+        }
+
+
         return (
 
-            athlete.entryId ===
-                liveCompetition
-                    .currentAthlete
-                    ?.entryId &&
+            athlete.entryId?.toString() ===
+                currentAthlete.entryId?.toString() &&
 
-            athlete.currentAttempt
-                ?.phase ===
+            currentAthlete.phase ===
                 phase &&
 
-            athlete.currentAttempt
-                ?.attemptNo ===
-                attemptNo
+            Number(
+                currentAthlete.attemptNo
+            ) ===
+                Number(attemptNo)
 
         );
 
@@ -357,39 +461,47 @@ const LiveScoreBoard = () => {
 
     // =====================================
     // GROUP RESULTS BY WEIGHT CATEGORY
+    //
+    // EXISTING ATHLETE DATA IS PRESERVED.
     // =====================================
 
+    const competitionResults =
+        Array.isArray(
+            liveCompetition.competitionResults
+        )
+            ? liveCompetition.competitionResults
+            : [];
+
+
     const groupedResults =
-        liveCompetition
-            .competitionResults
-            .reduce(
-                (
-                    groups,
+        competitionResults.reduce(
+            (
+                groups,
+                athlete
+            ) => {
+
+                const weight =
+                    athlete.weightCategory;
+
+
+                if (!groups[weight]) {
+
+                    groups[weight] =
+                        [];
+
+                }
+
+
+                groups[weight].push(
                     athlete
-                ) => {
-
-                    const weight =
-                        athlete.weightCategory;
+                );
 
 
-                    if (!groups[weight]) {
+                return groups;
 
-                        groups[weight] =
-                            [];
-
-                    }
-
-
-                    groups[weight].push(
-                        athlete
-                    );
-
-
-                    return groups;
-
-                },
-                {}
-            );
+            },
+            {}
+        );
 
 
     // =====================================
@@ -404,19 +516,21 @@ const LiveScoreBoard = () => {
 
                 const weightA =
                     Number(
-                        a.replace(
-                            "+",
-                            ""
-                        )
+                        String(a)
+                            .replace(
+                                "+",
+                                ""
+                            )
                     );
 
 
                 const weightB =
                     Number(
-                        b.replace(
-                            "+",
-                            ""
-                        )
+                        String(b)
+                            .replace(
+                                "+",
+                                ""
+                            )
                     );
 
 
@@ -503,10 +617,7 @@ const LiveScoreBoard = () => {
                     <span>
 
                         {
-                            liveCompetition
-                                .currentAthlete
-                                ?.currentAttempt
-                                ?.phase ??
+                            currentPhase ??
                             "-"
                         }
 
@@ -523,9 +634,7 @@ const LiveScoreBoard = () => {
                         ATT.{" "}
 
                         {
-                            liveCompetition
-                                .currentAthlete
-                                ?.currentAttempt
+                            currentAthlete
                                 ?.attemptNo ??
                             "-"
                         }
@@ -554,23 +663,23 @@ const LiveScoreBoard = () => {
 
                         <colgroup>
 
-                          <col className="col-lot" />
+                            <col className="col-lot" />
 
-<col className="col-athlete" />
+                            <col className="col-athlete" />
 
-<col className="col-attempt" />
-<col className="col-attempt" />
-<col className="col-attempt" />
-<col className="col-best" />
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-best" />
 
-<col className="col-attempt" />
-<col className="col-attempt" />
-<col className="col-attempt" />
-<col className="col-best" />
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-attempt" />
+                            <col className="col-best" />
 
-<col className="col-total" />
+                            <col className="col-total" />
 
-<col className="col-rank" />
+                            <col className="col-rank" />
 
                         </colgroup>
 
@@ -709,18 +818,39 @@ const LiveScoreBoard = () => {
                                                         athlete
                                                     ) => {
 
+                                                        const athleteId =
+                                                            athlete.entryId
+                                                                ?.toString();
+
+
+                                                        const currentId =
+                                                            currentAthlete
+                                                                ?.entryId
+                                                                ?.toString();
+
+
+                                                        const nextId =
+                                                            nextAthlete
+                                                                ?.entryId
+                                                                ?.toString();
+
+
                                                         const isCurrent =
-                                                            athlete.entryId ===
-                                                            liveCompetition
-                                                                .currentAthlete
-                                                                ?.entryId;
+                                                            Boolean(
+                                                                athleteId &&
+                                                                currentId &&
+                                                                athleteId ===
+                                                                    currentId
+                                                            );
 
 
                                                         const isNext =
-                                                            athlete.entryId ===
-                                                            liveCompetition
-                                                                .nextAthlete
-                                                                ?.entryId;
+                                                            Boolean(
+                                                                athleteId &&
+                                                                nextId &&
+                                                                athleteId ===
+                                                                    nextId
+                                                            );
 
 
                                                         return (
@@ -751,8 +881,7 @@ const LiveScoreBoard = () => {
                                                                 <td>
 
                                                                     {
-                                                                        athlete
-                                                                            .lotNumber
+                                                                        athlete.lotNumber
                                                                     }
 
                                                                 </td>
@@ -774,7 +903,6 @@ const LiveScoreBoard = () => {
                                                                 </td>
 
 
-
                                                                 {/* =========================
                                                                     SNATCH
                                                                 ========================== */}
@@ -793,8 +921,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         renderAttempt(
-                                                                            athlete
-                                                                                .snatchAttempts[0],
+                                                                            athlete.snatchAttempts?.[0],
                                                                             athlete.openingSnatch
                                                                         )
                                                                     }
@@ -816,8 +943,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         renderAttempt(
-                                                                            athlete
-                                                                                .snatchAttempts[1]
+                                                                            athlete.snatchAttempts?.[1]
                                                                         )
                                                                     }
 
@@ -838,8 +964,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         renderAttempt(
-                                                                            athlete
-                                                                                .snatchAttempts[2]
+                                                                            athlete.snatchAttempts?.[2]
                                                                         )
                                                                     }
 
@@ -876,8 +1001,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         renderAttempt(
-                                                                            athlete
-                                                                                .cleanJerkAttempts[0],
+                                                                            athlete.cleanJerkAttempts?.[0],
                                                                             athlete.openingCleanJerk
                                                                         )
                                                                     }
@@ -899,8 +1023,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         renderAttempt(
-                                                                            athlete
-                                                                                .cleanJerkAttempts[1]
+                                                                            athlete.cleanJerkAttempts?.[1]
                                                                         )
                                                                     }
 
@@ -921,8 +1044,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         renderAttempt(
-                                                                            athlete
-                                                                                .cleanJerkAttempts[2]
+                                                                            athlete.cleanJerkAttempts?.[2]
                                                                         )
                                                                     }
 
@@ -978,6 +1100,31 @@ const LiveScoreBoard = () => {
 
                                     )
                                 )
+                            }
+
+
+                            {/* =================================
+                                NO ATHLETE DATA
+                            ================================= */}
+
+                            {
+                                sortedCategories.length === 0 && (
+
+                                    <tr>
+
+                                        <td
+                                            colSpan="12"
+                                        >
+
+                                            No athlete data
+                                            available.
+
+                                        </td>
+
+                                    </tr>
+
+                                )
+
                             }
 
                         </tbody>

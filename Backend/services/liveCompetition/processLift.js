@@ -1,15 +1,421 @@
-import CompetitionEntry from "../../models/CompetitionEntry.js";
-import LiveCompetition from "../../models/LiveCompetition.js";
+import mongoose from "mongoose";
 
-import updateCompetitionResults from "../calculations/updateCompetitionResults.js";
-import getCurrentAttempt from "./getCurrentAttempt.js";
+import CompetitionEntry
+    from "../../models/CompetitionEntry.js";
 
+import LiveCompetition
+    from "../../models/LiveCompetition.js";
+
+import updateCompetitionResults
+    from "../calculations/updateCompetitionResults.js";
+
+import getCurrentAttempt
+    from "./getCurrentAttempt.js";
+
+import advanceCompetition
+    from "./advanceCompetition.js";
+
+
+// =====================================
+// PROCESS LIFT
+//
+// AUTHORITATIVE STATE TRANSITION
+//
+// Flow:
+//
+// 1. Validate request
+// 2. Load authoritative LiveCompetition
+// 3. Validate state/version
+// 4. Verify athlete is on platform
+// 5. Resolve current attempt
+// 6. Record GOOD / NO_LIFT
+// 7. Assign performedAt
+// 8. Assign performedSequence
+// 9. Establish next attempt weight
+// 10. Recalculate competition results
+// 11. CLEAR the occupied platform
+// 12. Advance using the recalculated queue
+// 13. Increment stateVersion ONCE
+// 14. Return authoritative state
+//
+// IMPORTANT:
+//
+// After a result:
+//
+//     previous athlete leaves platform
+//
+// before the next queue is resolved.
+//
+// The previous athlete may still become the
+// next athlete later if the authoritative
+// calling-order rules make that athlete first.
+//
+// React never selects the next athlete.
+//
+// =====================================
+
+
+/**
+ * Resolve the applicable weight of an attempt.
+ *
+ * Attempt 1:
+ *   declared weight if present,
+ *   otherwise opening weight.
+ *
+ * Attempt 2/3:
+ *   declared weight is required.
+ */
+const getApplicableAttemptWeight = (
+    competitionEntry,
+    phase,
+    attempt
+) => {
+
+    if (!attempt) {
+        return null;
+    }
+
+
+    const declaredWeight =
+        Number(
+            attempt.declaredWeight
+        );
+
+
+    if (
+        Number.isFinite(declaredWeight) &&
+        declaredWeight > 0
+    ) {
+
+        return declaredWeight;
+
+    }
+
+
+    // =====================================
+    // ATTEMPT 1 OPENING WEIGHT FALLBACK
+    // =====================================
+
+    if (
+        attempt.attemptNo === 1
+    ) {
+
+        const openingWeight =
+            phase === "SNATCH"
+                ? competitionEntry.opening?.snatch
+                : competitionEntry.opening?.cleanJerk;
+
+
+        const numericOpeningWeight =
+            Number(
+                openingWeight
+            );
+
+
+        if (
+            Number.isFinite(
+                numericOpeningWeight
+            ) &&
+            numericOpeningWeight > 0
+        ) {
+
+            return numericOpeningWeight;
+
+        }
+
+    }
+
+
+    return null;
+
+};
+
+
+/**
+ * Establish automatic weight for the next
+ * pending attempt.
+ *
+ * GOOD:
+ *   current applicable weight + 1 kg
+ *
+ * NO_LIFT:
+ *   same applicable weight
+ *
+ * Existing valid declaration:
+ *   preserve it.
+ */
+const establishNextAttemptWeight = ({
+    competitionEntry,
+    currentAttempt,
+    result,
+}) => {
+
+    if (!currentAttempt) {
+
+        throw new Error(
+            "Current attempt is required to establish the next attempt."
+        );
+
+    }
+
+
+   const phase =
+    currentAttempt.phase;
+
+const attempts =
+    phase === "SNATCH"
+        ? competitionEntry.snatchAttempts
+        : competitionEntry.cleanJerkAttempts;
+
+
+// =====================================
+// SNATCH → CLEAN & JERK
+// =====================================
+
+if (
+    phase === "SNATCH" &&
+    currentAttempt.attemptNo === 3
+) {
+
+    if (result !== "GOOD") {
+        return null;
+    }
+
+    const nextAttempt =
+        competitionEntry.cleanJerkAttempts?.find(
+            (item) =>
+                item.attemptNo === 1
+        );
+
+    if (!nextAttempt) {
+        return null;
+    }
+
+    if (
+        nextAttempt.result &&
+        nextAttempt.result !== "PENDING"
+    ) {
+        return null;
+    }
+
+    const existingNextWeight =
+        Number(
+            nextAttempt.declaredWeight
+        );
+
+    if (
+        Number.isFinite(existingNextWeight) &&
+        existingNextWeight > 0
+    ) {
+        return {
+            attempt: nextAttempt,
+            weight: existingNextWeight,
+            changed: false,
+        };
+    }
+
+    const openingWeight =
+        Number(
+            competitionEntry.opening?.cleanJerk
+        );
+
+    if (
+        !Number.isFinite(openingWeight) ||
+        openingWeight <= 0
+    ) {
+        const error =
+            new Error(
+                "Unable to determine Clean & Jerk opening weight."
+            );
+
+        error.code =
+            "QUEUE_INTEGRITY_ERROR";
+
+        error.statusCode =
+            409;
+
+        throw error;
+    }
+
+    nextAttempt.declaredWeight =
+        openingWeight;
+
+    return {
+        attempt: nextAttempt,
+        weight: openingWeight,
+        changed: true,
+    };
+}
+
+
+// =====================================
+// FIND NEXT ATTEMPT
+// =====================================
+
+const nextAttempt =
+    attempts.find(
+        (item) =>
+            item.attemptNo ===
+            currentAttempt.attemptNo + 1
+    );
+    // =====================================
+    // NO NEXT ATTEMPT
+    // =====================================
+
+    if (!nextAttempt) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // NEVER MODIFY COMPLETED ATTEMPT
+    // =====================================
+
+    if (
+        nextAttempt.result &&
+        nextAttempt.result !== "PENDING"
+    ) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // PRESERVE EXISTING DECLARATION
+    // =====================================
+
+    const existingNextWeight =
+        Number(
+            nextAttempt.declaredWeight
+        );
+
+
+    if (
+        Number.isFinite(existingNextWeight) &&
+        existingNextWeight > 0
+    ) {
+
+        return {
+
+            attempt:
+                nextAttempt,
+
+            weight:
+                existingNextWeight,
+
+            changed:
+                false,
+
+        };
+
+    }
+
+
+    // =====================================
+    // RESOLVE CURRENT WEIGHT
+    // =====================================
+
+    const currentWeight =
+        getApplicableAttemptWeight(
+            competitionEntry,
+            phase,
+            currentAttempt
+        );
+
+
+    if (
+        !Number.isFinite(currentWeight) ||
+        currentWeight <= 0
+    ) {
+
+        const error =
+            new Error(
+                "Unable to determine the current applicable weight. Automatic progression stopped."
+            );
+
+        error.code =
+            "QUEUE_INTEGRITY_ERROR";
+
+        error.statusCode =
+            409;
+
+        throw error;
+
+    }
+
+
+    // =====================================
+    // CALCULATE NEXT WEIGHT
+    // =====================================
+
+    const nextWeight =
+        result === "GOOD"
+            ? currentWeight + 1
+            : currentWeight;
+
+
+    // =====================================
+    // WEIGHT SAFETY
+    // =====================================
+
+    if (
+        !Number.isInteger(nextWeight) ||
+        nextWeight <= 0
+    ) {
+
+        const error =
+            new Error(
+                `Calculated next attempt weight is invalid: ${nextWeight}.`
+            );
+
+        error.code =
+            "QUEUE_INTEGRITY_ERROR";
+
+        error.statusCode =
+            409;
+
+        throw error;
+
+    }
+
+
+    // =====================================
+    // SAVE AUTOMATIC NEXT WEIGHT
+    // =====================================
+
+    nextAttempt.declaredWeight =
+        nextWeight;
+
+
+    return {
+
+        attempt:
+            nextAttempt,
+
+        weight:
+            nextWeight,
+
+        changed:
+            true,
+
+    };
+
+};
+
+
+// =====================================
+// MAIN SERVICE
+// =====================================
 
 const processLift = async ({
     entryId,
     competitionId,
     gender,
     result,
+    expectedStateVersion,
 }) => {
 
     // =====================================
@@ -20,9 +426,64 @@ const processLift = async ({
         result !== "GOOD" &&
         result !== "NO_LIFT"
     ) {
-        throw new Error(
-            "Invalid lift result."
-        );
+
+        const error =
+            new Error(
+                "Invalid lift result."
+            );
+
+        error.code =
+            "INVALID_LIFT_RESULT";
+
+        error.statusCode =
+            400;
+
+        throw error;
+
+    }
+
+
+    // =====================================
+    // VALIDATE COMPETITION
+    // =====================================
+
+    if (!competitionId) {
+
+        const error =
+            new Error(
+                "Competition ID is required."
+            );
+
+        error.code =
+            "INVALID_COMPETITION_ID";
+
+        error.statusCode =
+            400;
+
+        throw error;
+
+    }
+
+
+    // =====================================
+    // VALIDATE ENTRY
+    // =====================================
+
+    if (!entryId) {
+
+        const error =
+            new Error(
+                "Entry ID is required."
+            );
+
+        error.code =
+            "INVALID_ENTRY_ID";
+
+        error.statusCode =
+            400;
+
+        throw error;
+
     }
 
 
@@ -31,533 +492,938 @@ const processLift = async ({
     // =====================================
 
     if (!gender) {
-        throw new Error(
-            "Gender is required."
-        );
+
+        const error =
+            new Error(
+                "Gender is required."
+            );
+
+        error.code =
+            "INVALID_GENDER";
+
+        error.statusCode =
+            400;
+
+        throw error;
+
     }
 
 
     const normalizedGender =
-        gender.toLowerCase();
+        String(gender)
+            .trim()
+            .toLowerCase();
 
 
     // =====================================
-    // LOAD ENTRY + LIVE SESSION
-    // IN PARALLEL
-    // =====================================
-
-    const [
-        competitionEntry,
-        session,
-    ] = await Promise.all([
-
-        CompetitionEntry.findById(
-            entryId
-        ),
-
-        LiveCompetition.findOne({
-            competitionId,
-            gender: normalizedGender,
-        }),
-
-    ]);
-
-
-    // =====================================
-    // VALIDATE ENTRY
-    // =====================================
-
-    if (!competitionEntry) {
-        throw new Error(
-            "Competition entry not found."
-        );
-    }
-
-
-    // =====================================
-    // VALIDATE SESSION
-    // =====================================
-
-    if (!session) {
-        throw new Error(
-            "Live competition session not found."
-        );
-    }
-
-
-    // =====================================
-    // VERIFY CURRENT ATHLETE
+    // VALIDATE STATE VERSION
     // =====================================
 
     if (
-        !session.currentEntryId ||
-        session.currentEntryId
-            .toString() !==
-        competitionEntry._id
-            .toString()
-    ) {
-        throw new Error(
-            "This athlete is not currently selected."
-        );
-    }
-
-
-    // =====================================
-    // GET CURRENT ATTEMPT
-    // =====================================
-
-    const currentAttempt =
-        getCurrentAttempt(
-            competitionEntry
-        );
-
-
-    if (
-        currentAttempt.completed
-    ) {
-        throw new Error(
-            "Athlete has already completed the competition."
-        );
-    }
-
-
-    // =====================================
-    // VERIFY PHASE
-    // =====================================
-
-    if (
-        currentAttempt.phase !==
-        session.currentPhase
-    ) {
-        throw new Error(
-            `Athlete attempt is ${currentAttempt.phase}, but live session is in ${session.currentPhase}.`
-        );
-    }
-
-
-    // =====================================
-    // SELECT ATTEMPT ARRAY
-    // =====================================
-
-    const attempts =
-        currentAttempt.phase === "SNATCH"
-            ? competitionEntry.snatchAttempts
-            : competitionEntry.cleanJerkAttempts;
-
-
-    const attempt =
-        attempts.find(
-            (item) =>
-                item.attemptNo ===
-                currentAttempt.attemptNo
-        );
-
-
-    if (!attempt) {
-        throw new Error(
-            "Attempt not found."
-        );
-    }
-
-
-    // =====================================
-    // PREVENT DUPLICATE RESULT
-    // =====================================
-
-    if (
-        attempt.result !== "PENDING"
-    ) {
-        throw new Error(
-            "This attempt has already been judged."
-        );
-    }
-
-
-    // =====================================
-    // SAVE RESULT IN MEMORY
-    //
-    // updateCompetitionResults()
-    // performs the CompetitionEntry save.
-    // =====================================
-
-    attempt.result =
-        result;
-
-    attempt.completedAt =
-        new Date();
-
-
-    // =====================================
-    // UPDATE RESULTS
-    //
-    // IMPORTANT:
-    //
-    // Pass the actual CompetitionEntry
-    // document, NOT entryId.
-    //
-    // updateCompetitionResults() expects
-    // the complete Mongoose document.
-    // =====================================
-
-    const updatedEntry =
-        await updateCompetitionResults(
-            competitionEntry
-        );
-
-
-    // =====================================
-    // DETERMINE NEXT ATTEMPT
-    // =====================================
-
-    const nextAttempt =
-        getCurrentAttempt(
-            updatedEntry
-        );
-
-
-    // =====================================
-    // CASE 1
-    //
-    // SAME PHASE CONTINUES
-    //
-    // S1 → S2
-    // S2 → S3
-    // CJ1 → CJ2
-    // CJ2 → CJ3
-    //
-    // KEEP SAME ATHLETE SELECTED.
-    // =====================================
-
-    if (
-        !nextAttempt.completed &&
-        nextAttempt.phase ===
-            session.currentPhase
+        !Number.isInteger(
+            expectedStateVersion
+        ) ||
+        expectedStateVersion < 0
     ) {
 
-        session.currentEntryId =
-            updatedEntry._id;
-
-        session.status =
-            "RUNNING";
-
-        await session.save();
-
-
-        return {
-
-            athlete:
-                updatedEntry,
-
-            session,
-
-            nextAttempt,
-
-            platformCleared:
-                false,
-
-            manualSelectionRequired:
-                false,
-
-        };
-
-    }
-
-
-    // =====================================
-    // CASE 2
-    //
-    // ATHLETE FINISHED SNATCH
-    //
-    // NEXT PHASE = CLEAN & JERK
-    //
-    // Do not start CJ for this athlete
-    // until ALL athletes have completed
-    // their Snatch attempts.
-    // =====================================
-
-    if (
-        currentAttempt.phase ===
-            "SNATCH" &&
-        nextAttempt.phase ===
-            "CLEAN_JERK"
-    ) {
-
-        // ---------------------------------
-        // Load competition entries.
-        // ---------------------------------
-
-        const sessionEntries =
-            await CompetitionEntry
-                .find({
-                    competitionId,
-                })
-                .populate({
-                    path: "athleteId",
-                    select:
-                        "personalInfo.gender",
-                })
-                .lean();
-
-
-        // ---------------------------------
-        // Determine athletes participating
-        // in this live session.
-        // ---------------------------------
-
-        const liveEntries =
-            sessionEntries.filter(
-                (entry) => {
-
-                    const athleteGender =
-                        entry.athleteId
-                            ?.personalInfo
-                            ?.gender;
-
-
-                    if (!athleteGender) {
-                        return false;
-                    }
-
-
-                    if (
-                        athleteGender
-                            .toLowerCase() !==
-                        normalizedGender
-                    ) {
-                        return false;
-                    }
-
-
-                    // -----------------------------
-                    // Selected weight categories
-                    // -----------------------------
-
-                    if (
-                        Array.isArray(
-                            session
-                                .selectedWeightCategories
-                        ) &&
-                        session
-                            .selectedWeightCategories
-                            .length > 0
-                    ) {
-
-                        const category =
-                            entry
-                                .official
-                                ?.finalWeightCategory
-                                ?.trim();
-
-
-                        return session
-                            .selectedWeightCategories
-                            .includes(
-                                category
-                            );
-
-                    }
-
-
-                    return true;
-
-                }
+        const error =
+            new Error(
+                "expectedStateVersion must be a non-negative integer."
             );
 
+        error.code =
+            "INVALID_STATE_VERSION";
 
-        // ---------------------------------
-        // CHECK ALL SNATCH COMPLETED
-        // ---------------------------------
+        error.statusCode =
+            400;
 
-        const allSnatchCompleted =
-            liveEntries.every(
-                (entry) => {
+        throw error;
 
-                    const snatchAttempts =
-                        entry.snatchAttempts ||
-                        [];
+    }
 
 
-                    return (
-                        snatchAttempts.length >=
-                            3 &&
-                        snatchAttempts.every(
-                            (snatchAttempt) =>
-                                snatchAttempt
-                                    .result !==
-                                "PENDING"
-                        )
+    // =====================================
+    // START TRANSACTION
+    // =====================================
+
+    const dbSession =
+        await mongoose.startSession();
+
+
+    try {
+
+        let response = null;
+
+
+        await dbSession.withTransaction(
+            async () => {
+
+                // =================================
+                // LOAD AUTHORITATIVE LIVE SESSION
+                // =================================
+
+                const liveSession =
+                    await LiveCompetition.findOne({
+
+                        competitionId,
+
+                        gender:
+                            normalizedGender,
+
+                    }).session(
+                        dbSession
                     );
 
+
+                if (!liveSession) {
+
+                    const error =
+                        new Error(
+                            "Live competition session not found."
+                        );
+
+                    error.code =
+                        "LIVE_SESSION_NOT_FOUND";
+
+                    error.statusCode =
+                        404;
+
+                    throw error;
+
                 }
-            );
 
 
-        // =================================
-        // SNATCH STILL IN PROGRESS
-        //
-        // Official may select another
-        // athlete manually.
-        // =================================
+                // =================================
+                // RECOVERY SAFETY
+                // =================================
 
-        if (
-            !allSnatchCompleted
-        ) {
+                if (
+                    liveSession.status ===
+                    "RECOVERY_REQUIRED"
+                ) {
 
-            session.currentPhase =
-                "SNATCH";
+                    const error =
+                        new Error(
+                            "Live competition requires recovery."
+                        );
 
-            session.currentEntryId =
-                updatedEntry._id;
+                    error.code =
+                        "RECOVERY_REQUIRED";
 
-            session.status =
-                "RUNNING";
+                    error.statusCode =
+                        409;
 
-            await session.save();
+                    throw error;
 
-
-            return {
-
-                athlete:
-                    updatedEntry,
-
-                session,
-
-                nextAttempt,
-
-                platformCleared:
-                    false,
-
-                manualSelectionRequired:
-                    true,
-
-                phaseTransitioned:
-                    false,
-
-            };
-
-        }
+                }
 
 
-        // =================================
-        // ALL SNATCH COMPLETED
-        //
-        // MOVE TO CLEAN & JERK.
-        //
-        // Do NOT automatically select
-        // another athlete.
-        // =================================
+                if (
+                    liveSession.integrity?.status ===
+                    "RECOVERY_REQUIRED"
+                ) {
 
-        session.currentPhase =
-            "CLEAN_JERK";
+                    const error =
+                        new Error(
+                            "Live competition integrity requires recovery."
+                        );
 
-        session.currentEntryId =
-            updatedEntry._id;
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
 
-        session.status =
-            "RUNNING";
+                    error.statusCode =
+                        409;
 
-        await session.save();
+                    throw error;
 
-
-        return {
-
-            athlete:
-                updatedEntry,
-
-            session,
-
-            nextAttempt,
-
-            platformCleared:
-                false,
-
-            manualSelectionRequired:
-                true,
-
-            phaseTransitioned:
-                true,
-
-        };
-
-    }
+                }
 
 
-    // =====================================
-    // CASE 3
+                // =================================
+                // SESSION MUST BE RUNNING
+                // =================================
+
+                if (
+                    liveSession.status !==
+                    "RUNNING"
+                ) {
+
+                    const error =
+                        new Error(
+                            "Live competition is not currently running."
+                        );
+
+                    error.code =
+                        "LIVE_COMPETITION_NOT_RUNNING";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // STALE STATE PROTECTION
+                // =================================
+
+                const currentStateVersion =
+                    liveSession.stateVersion;
+
+
+                if (
+                    currentStateVersion !==
+                    expectedStateVersion
+                ) {
+
+                    const error =
+                        new Error(
+                            "Live competition state has changed. Refresh the Officials Screen and try again."
+                        );
+
+                    error.code =
+                        "STALE_STATE";
+
+                    error.statusCode =
+                        409;
+
+                    error.expectedStateVersion =
+                        expectedStateVersion;
+
+                    error.currentStateVersion =
+                        currentStateVersion;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // VERIFY PLATFORM OCCUPANCY
+                // =================================
+
+                if (
+                    !liveSession.currentEntryId
+                ) {
+
+                    const error =
+                        new Error(
+                            "No athlete is currently on the platform."
+                        );
+
+                    error.code =
+                        "NO_CURRENT_ATHLETE";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // VERIFY REQUESTED ATHLETE
+                // =================================
+
+                if (
+                    liveSession.currentEntryId
+                        .toString() !==
+                    entryId.toString()
+                ) {
+
+                    const error =
+                        new Error(
+                            "This athlete is not currently on the platform."
+                        );
+
+                    error.code =
+                        "ATHLETE_NOT_ON_PLATFORM";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // LOAD COMPETITION ENTRY
+                // =================================
+
+                const competitionEntry =
+                    await CompetitionEntry.findById(
+                        entryId
+                    ).session(
+                        dbSession
+                    );
+
+
+                if (!competitionEntry) {
+
+                    const error =
+                        new Error(
+                            "Competition entry not found."
+                        );
+
+                    error.code =
+                        "ENTRY_NOT_FOUND";
+
+                    error.statusCode =
+                        404;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // RESOLVE CURRENT ATTEMPT
+                //
+                // Phase MUST come from the
+                // authoritative live session.
+                // =================================
+
+                const currentAttempt =
+                    getCurrentAttempt(
+                        competitionEntry,
+                        liveSession.currentPhase
+                    );
+
+
+                // =================================
+                // RESOLVER INTEGRITY
+                // =================================
+
+                if (
+                    currentAttempt?.integrityError
+                ) {
+
+                    const error =
+                        new Error(
+                            `Athlete attempt history integrity failed: ${currentAttempt.integrityError}`
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                if (
+                    !currentAttempt ||
+                    currentAttempt.completed
+                ) {
+
+                    const error =
+                        new Error(
+                            "Unable to determine a pending attempt for the athlete."
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // PHASE INTEGRITY
+                // =================================
+
+                if (
+                    currentAttempt.phase !==
+                    liveSession.currentPhase
+                ) {
+
+                    const error =
+                        new Error(
+                            `Athlete attempt is ${currentAttempt.phase}, but live competition is in ${liveSession.currentPhase}.`
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // FIND AUTHORITATIVE ATTEMPT
+                // =================================
+
+                const attempts =
+                    currentAttempt.phase ===
+                        "SNATCH"
+                        ? competitionEntry.snatchAttempts
+                        : competitionEntry.cleanJerkAttempts;
+
+
+                const attempt =
+                    attempts.find(
+                        (item) =>
+                            item.attemptNo ===
+                            currentAttempt.attemptNo
+                    );
+
+
+                if (!attempt) {
+
+                    const error =
+                        new Error(
+                            "Authoritative attempt not found."
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // DUPLICATE RESULT PROTECTION
+                // =================================
+
+                if (
+                    attempt.result !==
+                    "PENDING"
+                ) {
+
+                    const error =
+                        new Error(
+                            "This attempt has already been judged."
+                        );
+
+                    error.code =
+                        "DUPLICATE_LIFT_RESULT";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // RECORD RESULT
+                // =================================
+
+                const performedAt =
+                    new Date();
+
+
+                attempt.result =
+                    result;
+
+                attempt.performedAt =
+                    performedAt;
+
+
+                // =================================
+                // PERFORMED SEQUENCE
+                //
+                // Persist chronological lift order.
+                // =================================
+
+                const allEntries =
+                    await CompetitionEntry.find({
+
+                        competitionId,
+
+                    })
+                        .session(
+                            dbSession
+                        )
+                        .select(
+                            "snatchAttempts cleanJerkAttempts"
+                        )
+                        .lean();
+
+
+                const allSequences =
+                    allEntries
+                        .flatMap(
+                            (entry) => [
+
+                                ...(entry.snatchAttempts || [])
+                                    .map(
+                                        (item) =>
+                                            item.performedSequence
+                                    ),
+
+                                ...(entry.cleanJerkAttempts || [])
+                                    .map(
+                                        (item) =>
+                                            item.performedSequence
+                                    ),
+
+                            ]
+                        )
+                        .filter(
+                            (value) =>
+                                Number.isInteger(value)
+                        );
+
+
+                const highestSequence =
+                    allSequences.length > 0
+                        ? Math.max(
+                            ...allSequences
+                        )
+                        : 0;
+
+
+                attempt.performedSequence =
+                    highestSequence + 1;
+
+
+                // =================================
+                // ESTABLISH NEXT ATTEMPT STATE
+                // =================================
+
+                const nextAttemptState =
+                    establishNextAttemptWeight({
+
+                        competitionEntry,
+
+                        currentAttempt,
+
+                        result,
+
+                    });
+
+
+                // =================================
+                // SAVE ATHLETE RESULT
+                //
+                // Save before queue resolution so
+                // the queue sees the authoritative
+                // completed attempt + next state.
+                // =================================
+
+                await competitionEntry.save({
+
+                    session:
+                        dbSession,
+
+                });
+
+
+                // =================================
+                // UPDATE COMPETITION RESULTS
+                // =================================
+
+                const updatedEntry =
+                    await updateCompetitionResults(
+                        competitionEntry,
+                        dbSession
+                    );
+
+
+                // =================================
+                // CRITICAL PLATFORM TRANSITION
+                //
+                // The athlete whose lift was just
+                // judged has LEFT the platform.
+                //
+                // This MUST happen before
+                // advanceCompetition().
+                //
+                // The athlete can still be selected
+                // again by the queue engine if the
+                // verified calling-order rules make
+                // that athlete next.
+                //
+                // But they are no longer the
+                // currently occupied platform.
+                // =================================
+
+                const previousCurrentEntryId =
+                    liveSession.currentEntryId;
+
+
+                liveSession.currentEntryId =
+                    null;
+
+                liveSession.prepareEntryId =
+                    null;
+
+
+                console.log(
+                    "===== PLATFORM CLEARED AFTER RESULT ====="
+                );
+
+                console.log(
+                    "Previous athlete:",
+                    previousCurrentEntryId
+                        ?.toString() ??
+                        "NONE"
+                );
+
+                console.log(
+                    "Result:",
+                    result
+                );
+
+                console.log(
+                    "Phase:",
+                    liveSession.currentPhase
+                );
+
+
+                // =================================
+                // SAVE CLEARED PLATFORM STATE
+                //
+                // Keep the same Mongoose document.
+                // Do not create a second session.
+                // =================================
+
+                await liveSession.save({
+
+                    session:
+                        dbSession,
+
+                });
+
+
+                // =================================
+                // AUTOMATIC ADVANCEMENT
+                //
+                // advanceCompetition receives the
+                // SAME liveSession object.
+                //
+                // Its post-result queue mode allows
+                // the previous athlete to compete
+                // again if the normal queue rules
+                // make that athlete next.
+                // =================================
+
+                const advanceResult =
+                    await advanceCompetition(
+
+                        competitionId,
+
+                        normalizedGender,
+
+                        dbSession,
+
+                        liveSession
+
+                    );
+
+
+                const advancedSession =
+                    advanceResult?.session ??
+                    advanceResult;
+
+
+                if (!advancedSession) {
+
+                    const error =
+                        new Error(
+                            "Automatic advancement did not return a valid LiveCompetition session."
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // STATE VERSION
+                //
+                // One accepted lift = one version
+                // increment.
+                //
+                // advanceCompetition() does NOT
+                // increment it.
+                // =================================
+
+                const previousStateVersion =
+                    currentStateVersion;
+
+
+                advancedSession.stateVersion =
+                    previousStateVersion + 1;
+
+
+                // =================================
+                // PERSIST FINAL AUTHORITATIVE STATE
+                // =================================
+
+                await advancedSession.save({
+
+                    session:
+                        dbSession,
+
+                });
+
+
+                // =================================
+                // RESOLVE NEW CURRENT ATHLETE
+                // =================================
+
+                let nextAttempt =
+                    null;
+
+
+                if (
+                    advancedSession.currentEntryId
+                ) {
+
+                    const nextEntry =
+                        await CompetitionEntry.findById(
+
+                            advancedSession.currentEntryId
+
+                        )
+                            .session(
+                                dbSession
+                            );
+
+
+                    if (!nextEntry) {
+
+                        const error =
+                            new Error(
+                                "New current athlete could not be found."
+                            );
+
+                        error.code =
+                            "QUEUE_INTEGRITY_ERROR";
+
+                        error.statusCode =
+                            409;
+
+                        throw error;
+
+                    }
+
+
+                    nextAttempt =
+                        getCurrentAttempt(
+                            nextEntry,
+                            advancedSession.currentPhase
+                        );
+
+
+                    if (
+                        nextAttempt?.integrityError
+                    ) {
+
+                        const error =
+                            new Error(
+                                `New current athlete has invalid attempt state: ${nextAttempt.integrityError}`
+                            );
+
+                        error.code =
+                            "QUEUE_INTEGRITY_ERROR";
+
+                        error.statusCode =
+                            409;
+
+                        throw error;
+
+                    }
+
+                }
+
+
+                // =================================
+                // FINAL DIAGNOSTIC
+                // =================================
+
+                console.log(
+                    "===================================="
+                );
+
+                console.log(
+                    "PROCESS LIFT COMPLETE"
+                );
+
+                console.log(
+                    "Previous Current:",
+                    previousCurrentEntryId
+                        ?.toString() ??
+                        "NONE"
+                );
+
+                console.log(
+                    "New Current:",
+                    advancedSession.currentEntryId
+                        ?.toString() ??
+                        "NONE"
+                );
+
+                console.log(
+                    "Phase:",
+                    advancedSession.currentPhase
+                );
+
+                console.log(
+                    "Result:",
+                    result
+                );
+
+                console.log(
+                    "Attempt:",
+                    currentAttempt.attemptNo
+                );
+
+                console.log(
+                    "Next Attempt Weight:",
+                    nextAttemptState?.weight ??
+                        null
+                );
+
+                console.log(
+                    "State Version:",
+                    advancedSession.stateVersion
+                );
+
+                console.log(
+                    "===================================="
+                );
+
+
+                // =================================
+                // AUTHORITATIVE RESPONSE
+                // =================================
+
+             response = {
+
+    athlete:
+        updatedEntry,
+
+    session:
+        advancedSession,
+
+    result,
+
+    performedAt,
+
+    performedSequence:
+        attempt.performedSequence,
+
+    nextAttempt,
+
+    nextAttemptState,
+
+    previousCurrentEntryId,
+
+    currentEntryId:
+        advancedSession.currentEntryId ??
+        null,
+
+    platformCleared:
+        !Boolean(
+            advancedSession.currentEntryId
+        ),
+
+    manualSelectionRequired:
+        false,
+
+    previousStateVersion,
+
+    stateVersion:
+        advancedSession.stateVersion,
+
+    // =================================
+    // JUST COMPLETED
     //
-    // ATHLETE COMPLETED ENTIRE COMPETITION
-    // =====================================
+    // Snapshot of the athlete and attempt
+    // that has just been processed.
+    //
+    // This is created from the authoritative
+    // transaction state. It does NOT affect
+    // calling-order calculation.
+    // =================================
 
-    if (
-        nextAttempt.completed
-    ) {
-
-        session.currentEntryId =
-            updatedEntry._id;
-
-        session.status =
-            "RUNNING";
-
-        await session.save();
-
-
-        return {
-
-            athlete:
-                updatedEntry,
-
-            session,
-
-            nextAttempt,
-
-            platformCleared:
-                false,
-
-            manualSelectionRequired:
-                true,
-
-            phaseTransitioned:
-                false,
-
-        };
-
-    }
-
-
-    // =====================================
-    // SAFETY FALLBACK
-    // =====================================
-
-    session.currentEntryId =
-        updatedEntry._id;
-
-    session.status =
-        "RUNNING";
-
-    await session.save();
-
-
-    return {
+    justCompleted: {
 
         athlete:
             updatedEntry,
 
-        session,
+        completedAttempt: {
+
+            phase:
+                currentAttempt.phase,
+
+            attemptNo:
+                currentAttempt.attemptNo,
+
+            declaredWeight:
+                currentAttempt.declaredWeight,
+
+            applicableWeight:
+                currentAttempt.applicableWeight,
+
+            result,
+
+            completed:
+                true,
+
+        },
 
         nextAttempt,
 
-        platformCleared:
-            false,
+        nextAttemptState,
 
-        manualSelectionRequired:
-            true,
+        previousCurrentEntryId,
 
-        phaseTransitioned:
-            false,
+        currentEntryId:
+            advancedSession.currentEntryId ??
+            null,
 
-    };
+        performedAt,
+
+        performedSequence:
+            attempt.performedSequence,
+
+        stateVersion:
+            advancedSession.stateVersion,
+
+    },
 
 };
+            }
+        );
 
 
+        return response;
+
+    } finally {
+
+        await dbSession.endSession();
+
+    }
+
+};
 export default processLift;

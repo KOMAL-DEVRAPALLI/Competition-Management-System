@@ -1,16 +1,26 @@
 import express from "express";
+import authMiddleware from "../middleware/authMiddleware.js";
+import requireAdmin from "../middleware/requireAdmin.js";
 
 import {
     startLiveCompetitionController,
     processLiftController,
     saveDeclaredWeightController,
-    updateQueueDeclarationController,
     getLiveCompetitionController,
     selectOfficialAthleteController,
+    getQueueStateController
 } from "../controllers/liveCompetitionController.js";
 
 
 const router = express.Router();
+router.use(
+    authMiddleware,
+    requireAdmin
+);
+router.get(
+    "/:competitionId/:gender/queue",
+    getQueueStateController
+);
 
 
 // =====================================
@@ -69,10 +79,7 @@ router.patch(
 // Kept for compatibility.
 // =====================================
 
-router.patch(
-    "/queue-declaration",
-    updateQueueDeclarationController
-);
+
 
 
 export default router;
