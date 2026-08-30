@@ -22,6 +22,10 @@ import competitionConfigRoutes
 dns.setDefaultResultOrder("ipv4first");
 dotenv.config();
 
+console.log(
+    "JWT_SECRET configured:",
+    Boolean(process.env.JWT_SECRET)
+);
 const app = express();
 connectDB()
 app.use(cors({
