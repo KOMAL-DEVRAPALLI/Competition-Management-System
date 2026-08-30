@@ -15,26 +15,20 @@ export const loginController = async (req, res) => {
                 password
             );
 
-        res.cookie(
-            "adminToken",
-            result.token,
-            {
-                httpOnly: true,
-                secure:
-                    process.env.NODE_ENV ===
-                    "production",
+       res.cookie(
+    "adminToken",
+    result.token,
+    {
+        httpOnly: true,
 
-                sameSite:
-                    process.env.NODE_ENV ===
-                    "production"
-                        ? "none"
-                        : "lax",
+        secure: true,
 
-                maxAge:
-                    8 * 60 * 60 * 1000,
-            }
-        );
+        sameSite: "none",
 
+        maxAge:
+            8 * 60 * 60 * 1000,
+    }
+);
         return res.status(200).json({
 
             success: true,
