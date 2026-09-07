@@ -331,7 +331,8 @@ const sortCategories = (
 export const finalResultTemplate = (
     competition,
     resultRows,
-    gender
+    gender,
+    ageCategory
 ) => {
 
     const competitionName =
@@ -340,11 +341,15 @@ export const finalResultTemplate = (
         "Competition";
 
 
-    const genderLabel =
-        String(gender).toLowerCase() ===
-        "female"
-            ? "WOMEN'S"
-            : "MEN'S";
+   const genderLabel =
+    String(gender).toLowerCase() ===
+    "female"
+        ? "WOMEN'S"
+        : "MEN'S";
+
+
+const ageCategoryLabel =
+    String(ageCategory || "").toUpperCase();
 
 
     const venue =
@@ -794,8 +799,12 @@ export const finalResultTemplate = (
 
 
     <h2>
-        ${genderLabel} FINAL RESULT
-    </h2>
+    ${genderLabel}${
+        ageCategoryLabel
+            ? ` ${ageCategoryLabel}`
+            : ""
+    } FINAL RESULT
+</h2>
 
 
     <p>

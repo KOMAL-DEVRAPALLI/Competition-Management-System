@@ -65,12 +65,12 @@ const generateFinalResult = async (
 
 
         await page.setContent(
-            html,
-            {
-                waitUntil:
-                    "networkidle0",
-            }
-        );
+    html,
+    {
+        waitUntil:
+            "domcontentloaded",
+    }
+);
 
 
         return await page.pdf({
