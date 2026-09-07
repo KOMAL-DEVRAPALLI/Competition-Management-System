@@ -24,9 +24,9 @@ export const getDashboardData = async () => {
         await CompetitionEntry.countDocuments();
 
     const pendingEntries =
-    await Athlete.countDocuments({
-        "verification.status": "Pending"
-    });
+        await Athlete.countDocuments({
+            "verification.status": "Pending"
+        });
 
     const activeCompetitions =
         await Competition.countDocuments({
@@ -38,7 +38,7 @@ export const getDashboardData = async () => {
             .sort({ createdAt: -1 })
             .limit(5)
             .select(
-                "name venue startDate endDate status"
+                "competitionName venue startDate endDate status"
             );
 
     return {
