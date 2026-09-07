@@ -1,6 +1,7 @@
 import {
     useCallback,
     useEffect,
+    useRef,
     useState,
 } from "react";
 
@@ -165,6 +166,19 @@ const LiveScore = () => {
         processingLift,
         setProcessingLift,
     ] = useState(false);
+
+
+    // =====================================
+    // SYNCHRONOUS LIFT SUBMISSION LOCK
+    //
+    // React state updates are asynchronous.
+    // A rapid double-click can otherwise submit
+    // the same lift twice before processingLift
+    // becomes true.
+    // =====================================
+
+    const processingLiftRef =
+        useRef(false);
 
 
     // =====================================
@@ -2162,13 +2176,18 @@ if (
 
             if (
                 !platformAthlete ||
-                processingLift
+                processingLiftRef.current
             ) {
 
                 return;
 
             }
 
+
+            // Lock immediately. React state updates are
+            // asynchronous, so this closes the rapid
+            // double-click race that can produce STALE_STATE.
+            processingLiftRef.current = true;
 
             const expectedStateVersion =
                 Number(
@@ -2182,6 +2201,8 @@ if (
                 ) ||
                 expectedStateVersion < 0
             ) {
+
+                processingLiftRef.current = false;
 
                 setLiftError(
                     "Live competition state version is unavailable. Refresh the Officials Screen before processing the lift."
@@ -2674,6 +2695,8 @@ if (
                 }
 
             } finally {
+
+                processingLiftRef.current = false;
 
                 setProcessingLift(
                     false
