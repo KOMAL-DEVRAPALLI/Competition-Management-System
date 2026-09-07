@@ -243,7 +243,104 @@ export const getSnatchBombOutState = (
 
 };
 
+const getCleanJerkBombOutState = (
+    entry,
+    competitionFormat
+) => {
 
+    if (
+        competitionFormat !==
+        TOTAL_ONLY
+    ) {
+
+        return {
+            eliminated: false,
+            eliminationReason: null,
+        };
+
+    }
+
+
+    const competitionEntry =
+        entry?.competitionEntry;
+
+
+    const cleanJerkAttempts =
+        competitionEntry
+            ?.cleanJerkAttempts;
+
+
+    if (
+        !Array.isArray(cleanJerkAttempts)
+    ) {
+
+        return {
+            eliminated: false,
+            eliminationReason: null,
+        };
+
+    }
+
+
+    const cleanJerk1 =
+        getAttemptByNumber(
+            cleanJerkAttempts,
+            1
+        );
+
+
+    const cleanJerk2 =
+        getAttemptByNumber(
+            cleanJerkAttempts,
+            2
+        );
+
+
+    const cleanJerk3 =
+        getAttemptByNumber(
+            cleanJerkAttempts,
+            3
+        );
+
+
+    if (
+        !cleanJerk1 ||
+        !cleanJerk2 ||
+        !cleanJerk3
+    ) {
+
+        return {
+            eliminated: false,
+            eliminationReason: null,
+        };
+
+    }
+
+
+    const threeFailedCleanJerks =
+        cleanJerk1.result === "NO_LIFT" &&
+        cleanJerk2.result === "NO_LIFT" &&
+        cleanJerk3.result === "NO_LIFT";
+
+
+    if (
+        !threeFailedCleanJerks
+    ) {
+
+        return {
+            eliminated: false,
+            eliminationReason: null,
+        };
+
+    }
+
+
+    return {
+        eliminated: true,
+        eliminationReason: "CLEAN_JERK_BOMB_OUT",
+    };
+
+};
 // =====================================
 // MAP QUEUE ATHLETE
 // =====================================
@@ -286,11 +383,24 @@ const mapQueueAthlete = (
         );
 
 
-    const bombOutState =
-        getSnatchBombOutState(
-            entry,
-            competitionFormat
-        );
+   const snatchBombOutState =
+    getSnatchBombOutState(
+        entry,
+        competitionFormat
+    );
+
+
+const cleanJerkBombOutState =
+    getCleanJerkBombOutState(
+        entry,
+        competitionFormat
+    );
+
+
+const bombOutState =
+    snatchBombOutState.eliminated
+        ? snatchBombOutState
+        : cleanJerkBombOutState;
 
 
     const resolvedStatus =

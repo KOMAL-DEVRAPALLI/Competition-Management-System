@@ -267,23 +267,23 @@ export const generateFinalResultService = async (
     // =====================================
 
     const resultRows =
-        await buildWorkingSheetData(
+    await buildWorkingSheetData(
 
-            competitionId,
+        competitionId,
 
-            normalizedGender,
+        normalizedGender,
 
-            true,
+        true,
 
-            liveCompetition
-                .selectedWeightCategories ||
-            [],
+        liveCompetition
+            .selectedWeightCategories ||
+        [],
 
-            null,
+        null,
 
-            null
+        normalizedAgeCategory
 
-        );
+    );
 
 
     if (

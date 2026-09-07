@@ -16,10 +16,13 @@ import updateCategoryRanking from "./updateCategoryRanking.js";
 // 3. Calculate best Clean & Jerk from the
 //    authoritative CompetitionEntry
 //    attempt history.
-// 4. Calculate Total.
-// 5. Save calculated results to
+// 4. Determine whether the athlete has
+//    completed all C&J attempts without
+//    a successful lift.
+// 5. Calculate Total.
+// 6. Save calculated results to
 //    CompetitionEntry.
-// 6. Recalculate category ranking.
+// 7. Recalculate category ranking.
 //
 // IMPORTANT:
 //
@@ -31,8 +34,6 @@ import updateCategoryRanking from "./updateCategoryRanking.js";
 //
 // LiveCompetition is responsible for
 // competition/session state only.
-//
-
 //
 // =====================================
 //
@@ -171,14 +172,49 @@ const updateCompetitionResults = async (
 
 
     // =====================================
+    // DETERMINE CLEAN & JERK BOMB-OUT
+    //
+    // An athlete has completed the C&J
+    // without a successful lift when all
+    // three C&J attempts are NO_LIFT.
+    //
+    // IMPORTANT:
+    //
+    // Do NOT use bestCleanJerk === 0 alone
+    // because an athlete may simply still
+    // be in progress and have no successful
+    // C&J yet.
+    // =====================================
+
+    const cleanJerkBombOut =
+        competitionEntry.cleanJerkAttempts.length === 3 &&
+        competitionEntry.cleanJerkAttempts.every(
+            (attempt) =>
+                attempt.result === "NO_LIFT"
+        );
+
+
+    // =====================================
     // CALCULATE TOTAL
+    //
+    // Normal:
+    //
+    // bestSnatch + bestCleanJerk
+    //
+    // C&J BOMB-OUT:
+    //
+    // No valid competition total.
+    // Store total as 0 so the existing
+    // ranking logic will not assign a rank.
     // =====================================
 
     const total =
-        calculateTotal(
-            bestSnatch,
-            bestCleanJerk
-        );
+        cleanJerkBombOut
+            ? 0
+            : calculateTotal(
+                bestSnatch,
+                bestCleanJerk
+            );
 
 
     // =====================================
@@ -198,10 +234,27 @@ const updateCompetitionResults = async (
 
 
     // =====================================
+    // C&J BOMB-OUT
+    //
+    // Explicitly clear any previous rank.
+    //
+    // This protects against an athlete
+    // who previously had a calculated rank
+    // before completing all three C&J lifts.
+    // =====================================
+
+    if (cleanJerkBombOut) {
+
+        competitionEntry.results.rank =
+            null;
+
+    }
+
+
+    // =====================================
     // SAVE CALCULATED RESULTS
     //
     // Results belong to CompetitionEntry.
-    //
     // =====================================
 
     if (session) {
@@ -222,6 +275,12 @@ const updateCompetitionResults = async (
     //
     // Ranking is recalculated from the
     // authoritative CompetitionEntry.
+    //
+    // Existing ranking logic only assigns
+    // ranks where total > 0.
+    //
+    // Therefore a C&J bomb-out with total 0
+    // receives rank null.
     // =====================================
 
     await updateCategoryRanking(

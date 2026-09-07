@@ -1743,12 +1743,14 @@ const CompetitionResults = ({
 
                                                         <div className="scoreboard-elimination-reason">
 
-                                                            {
-                                                                athlete.eliminationReason ===
-                                                                "SNATCH_BOMB_OUT"
-                                                                    ? "3 NO LIFTS — NO TOTAL"
-                                                                    : "ELIMINATED"
-                                                            }
+                                                           {
+    athlete.eliminationReason ===
+        "SNATCH_BOMB_OUT" ||
+    athlete.eliminationReason ===
+        "CLEAN_JERK_BOMB_OUT"
+        ? "3 NO LIFTS — NO TOTAL"
+        : "ELIMINATED"
+}
 
                                                         </div>
 

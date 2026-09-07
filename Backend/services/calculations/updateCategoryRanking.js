@@ -8,7 +8,8 @@ import CompetitionEntry from "../../models/CompetitionEntry.js";
 //
 // 1. Read the authoritative CompetitionEntry.
 // 2. Find all CompetitionEntry records in
-//    the same competition/category.
+//    the same competition, age category,
+//    and weight category.
 // 3. Rank using CompetitionEntry results.
 // 4. Persist rank to CompetitionEntry.results.
 //
@@ -18,6 +19,7 @@ import CompetitionEntry from "../../models/CompetitionEntry.js";
 // competition-entry record containing:
 //
 // - competitionId
+// - competitionCategory.ageCategory
 // - official.finalWeightCategory
 // - official.bodyWeight
 // - results.bestSnatch
@@ -86,6 +88,16 @@ const updateCategoryRanking = async (
             ?.finalWeightCategory;
 
 
+    const ageCategory =
+        competitionEntry
+            .competitionCategory
+            ?.ageCategory;
+
+
+    // =====================================
+    // VALIDATE COMPETITION
+    // =====================================
+
     if (!competitionId) {
 
         throw new Error(
@@ -94,6 +106,10 @@ const updateCategoryRanking = async (
 
     }
 
+
+    // =====================================
+    // VALIDATE WEIGHT CATEGORY
+    // =====================================
 
     if (!finalWeightCategory) {
 
@@ -105,16 +121,43 @@ const updateCategoryRanking = async (
 
 
     // =====================================
+    // VALIDATE AGE CATEGORY
+    // =====================================
+
+    if (!ageCategory) {
+
+        throw new Error(
+            "Age category is missing from competition entry."
+        );
+
+    }
+
+
+    // =====================================
     // LOAD ALL ENTRIES
     //
-    // Only entries belonging to the same
-    // competition are considered.
+    // IMPORTANT:
+    //
+    // Ranking is independently calculated
+    // for:
+    //
+    // Competition
+    // +
+    // Age Category
+    // +
+    // Weight Category
+    //
+    // Therefore U17 and U19 never share
+    // the same ranking sequence.
     // =====================================
 
     let entriesQuery =
         CompetitionEntry.find({
 
             competitionId,
+
+            "competitionCategory.ageCategory":
+                ageCategory,
 
             "official.finalWeightCategory":
                 finalWeightCategory,
@@ -146,7 +189,7 @@ const updateCategoryRanking = async (
     // 3. Best Snatch DESC
     // 4. Body Weight ASC
     //
-    // Only the data source has changed.
+    // Only the ranking scope has changed.
     // =====================================
 
     categoryEntries.sort(
@@ -154,6 +197,7 @@ const updateCategoryRanking = async (
 
             const aResults =
                 a.results ?? {};
+
 
             const bResults =
                 b.results ?? {};
@@ -167,6 +211,7 @@ const updateCategoryRanking = async (
                 Number(
                     aResults.total ?? 0
                 );
+
 
             const bTotal =
                 Number(
@@ -196,6 +241,7 @@ const updateCategoryRanking = async (
                     aResults.bestCleanJerk ?? 0
                 );
 
+
             const bBestCleanJerk =
                 Number(
                     bResults.bestCleanJerk ?? 0
@@ -224,6 +270,7 @@ const updateCategoryRanking = async (
                     aResults.bestSnatch ?? 0
                 );
 
+
             const bBestSnatch =
                 Number(
                     bResults.bestSnatch ?? 0
@@ -251,16 +298,15 @@ const updateCategoryRanking = async (
                 Number(
                     a
                         .official
-                        ?.bodyWeight ??
-                    999
+                        ?.bodyWeight ?? 999
                 );
+
 
             const bBodyWeight =
                 Number(
                     b
                         .official
-                        ?.bodyWeight ??
-                    999
+                        ?.bodyWeight ?? 999
                 );
 
 
@@ -303,12 +349,13 @@ const updateCategoryRanking = async (
     // =====================================
     // ASSIGN RANK
     //
-    // Existing behaviour:
-    //
     // Only athletes with total > 0
     // receive a rank.
     //
-    // Rank increments sequentially.
+    // Non-ranked athletes receive null.
+    //
+    // Rank increments only for valid
+    // competition results.
     // =====================================
 
     let currentRank = 1;
@@ -344,6 +391,18 @@ const updateCategoryRanking = async (
             currentRank++;
 
         }
+
+
+        // =================================
+        // KEEP IN-MEMORY RESULT IN SYNC
+        //
+        // The returned ranking state must
+        // contain the same rank that is being
+        // persisted to MongoDB.
+        // =================================
+
+        entry.results.rank =
+            rank;
 
 
         bulkOperations.push({
@@ -395,6 +454,14 @@ const updateCategoryRanking = async (
 
     // =====================================
     // RETURN RANKING STATE
+    //
+    // IMPORTANT:
+    //
+    // Return the exact rank assigned above.
+    //
+    // Do NOT use array index because
+    // non-ranked athletes may exist between
+    // ranked athletes.
     // =====================================
 
     return categoryEntries.map(
@@ -404,22 +471,9 @@ const updateCategoryRanking = async (
                 entry._id,
 
             rank:
-                Number(
-                    entry.results
-                        ?.total ??
-                    0
-                ) > 0
-                    ? categoryEntries
-                        .findIndex(
-                            (item) =>
-                                String(
-                                    item._id
-                                ) ===
-                                String(
-                                    entry._id
-                                )
-                        ) + 1
-                    : null,
+                entry.results
+                    ?.rank ??
+                null,
 
             bestSnatch:
                 Number(

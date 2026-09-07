@@ -564,41 +564,36 @@ const saveDeclaration = async ({
 
                     throw error;
                 }
+// =====================================
+// APPLY RECALCULATED CALLING ORDER
+//
+// Declaration changes may change who has
+// the highest calling priority.
+//
+// IMPORTANT:
+//
+// currentEntryId:
+//     follows the recalculated queue.
+//
+// platformEntryId:
+//     remains the athlete physically on
+//     the platform.
+//
+// A declaration save must NOT move the
+// physical platform athlete.
+// =====================================
 
 
-                // =================================
-                // UPDATE CALLING CURRENT
-                //
-                // IMPORTANT:
-                //
-                // This does NOT modify platformEntryId.
-                //
-                // Example:
-                //
-                //     previous current = C
-                //     platform          = C
-                //
-                //     B: 48 -> 47
-                //
-                //     current = B
-                //     platform = C
-                // =================================
 
-                liveCompetition.currentEntryId =
-                    nextAthlete.entryId;
+liveCompetition.currentEntryId =
+    nextAthlete.entryId;
+
+liveCompetition.platformEntryId =
+    nextAthlete.entryId;
 
 
-                // =================================
-                // PRESERVE PLATFORM ATHLETE
-                // =================================
 
-                liveCompetition.platformEntryId =
-                    previousPlatformEntryId ??
-                    previousCurrentEntryId ??
-                    null;
-
-
-                // =================================
+                   // =================================
                 // STATE VERSION
                 // =================================
 
