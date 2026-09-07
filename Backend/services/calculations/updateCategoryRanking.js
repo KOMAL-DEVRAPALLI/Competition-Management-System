@@ -14,8 +14,6 @@ import CompetitionEntry from "../../models/CompetitionEntry.js";
 //
 // IMPORTANT:
 //
-
-//
 // CompetitionEntry is the authoritative
 // competition-entry record containing:
 //
@@ -34,13 +32,13 @@ import CompetitionEntry from "../../models/CompetitionEntry.js";
 // Normal:
 //
 // updateCategoryRanking(
-//     competitionEntryId
+//     competitionEntry
 // )
 //
 // Transactional:
 //
 // updateCategoryRanking(
-//     competitionEntryId,
+//     competitionEntry,
 //     session
 // )
 //
@@ -53,49 +51,37 @@ const updateCategoryRanking = async (
 ) => {
 
     // =====================================
-    // VALIDATE INPUT
+    // VALIDATE CURRENT COMPETITION ENTRY
     // =====================================
 
-    if (!competitionEntryId) {
+    if (!competitionEntry) {
 
         throw new Error(
-            "Competition entry ID is required."
+            "Competition entry not found."
         );
 
     }
 
 
-  // =====================================
-// VALIDATE CURRENT COMPETITION ENTRY
-// =====================================
+    if (!competitionEntry._id) {
 
-if (!competitionEntry) {
+        throw new Error(
+            "Competition entry ID is missing."
+        );
 
-    throw new Error(
-        "Competition entry not found."
-    );
+    }
 
-}
-
-
-if (!competitionEntry._id) {
-
-    throw new Error(
-        "Competition entry ID is missing."
-    );
-
-}
 
     // =====================================
     // READ CATEGORY INFORMATION
     // =====================================
 
     const competitionId =
-        currentEntry.competitionId;
+        competitionEntry.competitionId;
 
 
     const finalWeightCategory =
-        currentEntry
+        competitionEntry
             .official
             ?.finalWeightCategory;
 
