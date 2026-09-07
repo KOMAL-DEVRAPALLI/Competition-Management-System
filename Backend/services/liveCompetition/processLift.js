@@ -383,81 +383,65 @@ const getHighestPerformedSequence = async (
     dbSession
 ) => {
 
-    const result =
-        await CompetitionEntry.aggregate([
-
-            {
-                $match: {
-                    competitionId,
-                },
-            },
-
-            {
-                $project: {
-                    sequences: {
-                        $concatArrays: [
-                            {
-                                $map: {
-                                    input: {
-                                        $ifNull: [
-                                            "$snatchAttempts",
-                                            [],
-                                        ],
-                                    },
-                                    as: "attempt",
-                                    in: "$$attempt.performedSequence",
-                                },
-                            },
-                            {
-                                $map: {
-                                    input: {
-                                        $ifNull: [
-                                            "$cleanJerkAttempts",
-                                            [],
-                                        ],
-                                    },
-                                    as: "attempt",
-                                    in: "$$attempt.performedSequence",
-                                },
-                            },
-                        ],
-                    },
-                },
-            },
-
-            {
-                $unwind: "$sequences",
-            },
-
-            {
-                $match: {
-                    sequences: {
-                        $type: "number",
-                    },
-                },
-            },
-
-            {
-                $group: {
-                    _id: null,
-                    highestSequence: {
-                        $max: "$sequences",
-                    },
-                },
-            },
-
-        ]).session(
-            dbSession
-        );
+    const entries =
+        await CompetitionEntry.find({
+            competitionId,
+        })
+            .select(
+                "snatchAttempts cleanJerkAttempts"
+            )
+            .session(
+                dbSession
+            )
+            .lean();
 
 
-    return (
-        Number.isInteger(
-            result?.[0]?.highestSequence
-        )
-            ? result[0].highestSequence
-            : 0
-    );
+    let highestSequence = 0;
+
+
+    for (
+        const entry
+        of entries
+    ) {
+
+        const allAttempts = [
+            ...(Array.isArray(entry.snatchAttempts)
+                ? entry.snatchAttempts
+                : []),
+
+            ...(Array.isArray(entry.cleanJerkAttempts)
+                ? entry.cleanJerkAttempts
+                : []),
+        ];
+
+
+        for (
+            const attempt
+            of allAttempts
+        ) {
+
+            const sequence =
+                Number(
+                    attempt?.performedSequence
+                );
+
+
+            if (
+                Number.isInteger(sequence) &&
+                sequence > highestSequence
+            ) {
+
+                highestSequence =
+                    sequence;
+
+            }
+
+        }
+
+    }
+
+
+    return highestSequence;
 
 };
 

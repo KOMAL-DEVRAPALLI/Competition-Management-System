@@ -429,30 +429,32 @@ export const correctCompletedAttemptResultController =
             );
 
 
-if (
-    error?.code === "STALE_STATE" ||
-    error?.statusCode === 409
-) {
+            if (
+                error?.code === "STALE_STATE" ||
+                error?.statusCode === 409
+            ) {
 
-    return res.status(409).json({
+                return res.status(409).json({
 
-        success: false,
+                    success: false,
 
-        code:
-            error?.code || "STALE_STATE",
+                    code:
+                        error?.code ||
+                        "STALE_STATE",
 
-        message:
-            error?.message,
+                    message:
+                        error.message,
 
-        expectedStateVersion:
-            error?.expectedStateVersion,
+                    expectedStateVersion:
+                        error.expectedStateVersion,
 
-        currentStateVersion:
-            error?.currentStateVersion,
+                    currentStateVersion:
+                        error.currentStateVersion,
 
-    });
+                });
 
-}
+            }
+
 
             return res.status(
                 error?.statusCode || 400
@@ -850,31 +852,34 @@ export const processLiftController =
 
         } catch (error) {
 
-            if (
-                error?.code === "STALE_STATE" ||
-                error?.statusCode === 409
-            ) {
+          if (
+    error?.code === "STALE_STATE" ||
+    error?.statusCode === 409
+) {
 
-                return res.status(409).json({
+    return res.status(409).json({
 
-                    success: false,
+        success: false,
 
-                    code:
-                        "STALE_STATE",
+        code:
+            error?.code ||
+            "STALE_STATE",
 
-                    message:
-                        error.message,
+        message:
+            error?.message,
 
-                    expectedStateVersion:
-                        error.expectedStateVersion,
+        expectedStateVersion:
+            error?.expectedStateVersion,
 
-                    currentStateVersion:
-                        error.currentStateVersion,
+        currentStateVersion:
+            error?.currentStateVersion,
 
-                });
+        integrityErrors:
+            error?.integrityErrors || null,
 
-            }
+    });
 
+}
 
             return res.status(
                 error?.statusCode || 400
