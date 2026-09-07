@@ -48,7 +48,7 @@ import CompetitionEntry from "../../models/CompetitionEntry.js";
 
 
 const updateCategoryRanking = async (
-    competitionEntryId,
+    competitionEntry,
     session = null
 ) => {
 
@@ -65,38 +65,26 @@ const updateCategoryRanking = async (
     }
 
 
-    // =====================================
-    // LOAD CURRENT COMPETITION ENTRY
-    // =====================================
+  // =====================================
+// VALIDATE CURRENT COMPETITION ENTRY
+// =====================================
 
-    let currentEntryQuery =
-        CompetitionEntry.findById(
-            competitionEntryId
-        );
+if (!competitionEntry) {
 
+    throw new Error(
+        "Competition entry not found."
+    );
 
-    if (session) {
-
-        currentEntryQuery =
-            currentEntryQuery.session(
-                session
-            );
-
-    }
+}
 
 
-    const currentEntry =
-        await currentEntryQuery;
+if (!competitionEntry._id) {
 
+    throw new Error(
+        "Competition entry ID is missing."
+    );
 
-    if (!currentEntry) {
-
-        throw new Error(
-            "Competition entry not found."
-        );
-
-    }
-
+}
 
     // =====================================
     // READ CATEGORY INFORMATION

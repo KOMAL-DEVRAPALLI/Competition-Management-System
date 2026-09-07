@@ -225,7 +225,7 @@ const updateCompetitionResults = async (
     // =====================================
 
     await updateCategoryRanking(
-        competitionEntry._id,
+        competitionEntry,
         session
     );
 
