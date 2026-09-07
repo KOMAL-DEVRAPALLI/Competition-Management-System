@@ -1,190 +1,358 @@
 import mongoose from "mongoose";
 
-const liveCompetitionSchema = new mongoose.Schema(
-    {
-        // -----------------------------------
-        // Competition
-        // -----------------------------------
 
-        competitionId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Competition",
-            required: true,
-        },
+const liveCompetitionSchema =
+    new mongoose.Schema(
+        {
 
-        // -----------------------------------
-        // Gender / Session / Scope
-        // -----------------------------------
+            // =====================================
+            // COMPETITION
+            // =====================================
 
-        gender: {
-            type: String,
-            enum: ["male", "female"],
-            required: true,
-        },
+            competitionId: {
 
-        sessionName: {
-            type: String,
-            trim: true,
-            default: "",
-        },
+                type:
+                    mongoose.Schema.Types.ObjectId,
 
-        selectedWeightCategories: {
-            type: [String],
-            default: [],
-        },
+                ref:
+                    "Competition",
 
-        // -----------------------------------
-        // CURRENT ATHLETE
-        //
-        // Temporary authoritative platform
-        // state.
-        //
-        // Later, the automatic queue/state
-        // resolution system will determine
-        // this value.
-        // -----------------------------------
+                required:
+                    true,
 
-        currentEntryId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "CompetitionEntry",
-            default: null,
-        },
+            },
 
-        // -----------------------------------
-        // CURRENT PHASE
-        //
-        // This represents the authoritative
-        // competition phase.
-        //
-        // BREAK is a transition state when
-        // applicable.
-        // COMPLETED represents the terminal
-        // competition phase.
-        // -----------------------------------
 
-        currentPhase: {
-            type: String,
-            enum: [
-                "SNATCH",
-                "BREAK",
-                "CLEAN_JERK",
-                "COMPLETED",
-            ],
-            default: "SNATCH",
-        },
+            // =====================================
+            // GENDER / SESSION / SCOPE
+            // =====================================
 
-        // -----------------------------------
-        // SESSION STATUS
-        //
-        // Lifecycle state is separate from
-        // competition phase.
-        // -----------------------------------
+            gender: {
 
-        status: {
-            type: String,
-            enum: [
-                "READY",
-                "RUNNING",
-                "PAUSED",
-                "FINISHED",
-                "RECOVERY_REQUIRED",
-            ],
-            default: "READY",
-        },
+                type:
+                    String,
 
-        // -----------------------------------
-        // AUTHORITATIVE STATE VERSION
-        //
-        // Incremented for every accepted
-        // state-changing live competition
-        // transition.
-        //
-        // Used later to reject stale
-        // Officials Screen actions.
-        // -----------------------------------
-
-        stateVersion: {
-            type: Number,
-            required: true,
-            default: 0,
-            min: 0,
-        },
-
-        // -----------------------------------
-        // ATTEMPT HISTORY SEQUENCE COUNTER
-        //
-        // Represents the NEXT historical
-        // sequence number available for an
-        // actually performed attempt.
-        //
-        // This is NOT the athlete's attempt
-        // number.
-        //
-        // Example:
-        //
-        // counter = 1
-        // attempt performed → sequence 1
-        // counter becomes 2
-        // -----------------------------------
-
-        attemptSequenceCounter: {
-            type: Number,
-            required: true,
-            default: 1,
-            min: 1,
-        },
-
-        // -----------------------------------
-        // STATE INTEGRITY
-        //
-        // Automatic progression must never
-        // guess when authoritative history
-        // is missing or contradictory.
-        // -----------------------------------
-
-        integrity: {
-            status: {
-                type: String,
                 enum: [
-                    "VALID",
-                    "RECOVERY_REQUIRED",
+                    "male",
+                    "female",
                 ],
-                default: "VALID",
+
+                required:
+                    true,
+
             },
 
-            reason: {
-                type: String,
-                trim: true,
-                default: "",
+
+            sessionName: {
+
+                type:
+                    String,
+
+                trim:
+                    true,
+
+                default:
+                    "",
+
             },
 
-            detectedAt: {
-                type: Date,
-                default: null,
+
+            selectedWeightCategories: {
+
+                type:
+                    [String],
+
+                default:
+                    [],
+
             },
+
+
+            // =====================================
+            // CURRENT CALLING ATHLETE
+            //
+            // This represents the athlete currently
+            // resolved by the Officials calling state.
+            //
+            // IMPORTANT:
+            //
+            // This is intentionally separate from
+            // platformEntryId.
+            //
+            // An official declaration correction may
+            // change the calling priority without
+            // changing the athlete physically being
+            // processed on the platform.
+            // =====================================
+
+            currentEntryId: {
+
+                type:
+                    mongoose.Schema.Types.ObjectId,
+
+                ref:
+                    "CompetitionEntry",
+
+                default:
+                    null,
+
+            },
+
+
+            // =====================================
+            // PHYSICAL PLATFORM ATHLETE
+            //
+            // This identifies the athlete whose lift
+            // is actually active / being judged.
+            //
+            // Normally:
+            //
+            //     platformEntryId === currentEntryId
+            //
+            // But during an official declaration
+            // correction they may temporarily differ.
+            //
+            // Example:
+            //
+            //     C is physically on platform
+            //     B declaration changes 48 -> 47
+            //
+            // Result:
+            //
+            //     currentEntryId  = B
+            //     platformEntryId = C
+            //
+            // processLift() must continue using the
+            // physical platform athlete.
+            // =====================================
+
+            platformEntryId: {
+
+                type:
+                    mongoose.Schema.Types.ObjectId,
+
+                ref:
+                    "CompetitionEntry",
+
+                default:
+                    null,
+
+            },
+
+
+            // =====================================
+            // CURRENT PHASE
+            // =====================================
+
+            currentPhase: {
+
+                type:
+                    String,
+
+                enum: [
+
+                    "SNATCH",
+
+                    "BREAK",
+
+                    "CLEAN_JERK",
+
+                    "COMPLETED",
+
+                ],
+
+                default:
+                    "SNATCH",
+
+            },
+
+
+            // =====================================
+            // SESSION STATUS
+            // =====================================
+
+            status: {
+
+                type:
+                    String,
+
+                enum: [
+
+                    "READY",
+
+                    "RUNNING",
+
+                    "PAUSED",
+
+                    "FINISHED",
+
+                    "RECOVERY_REQUIRED",
+
+                ],
+
+                default:
+                    "READY",
+
+            },
+
+
+            // =====================================
+            // AUTHORITATIVE STATE VERSION
+            //
+            // Incremented for accepted state-changing
+            // live competition transitions.
+            //
+            // Used for stale Officials Screen
+            // protection and concurrency control.
+            // =====================================
+
+            stateVersion: {
+
+                type:
+                    Number,
+
+                required:
+                    true,
+
+                default:
+                    0,
+
+                min:
+                    0,
+
+            },
+
+
+            // =====================================
+            // ATTEMPT HISTORY SEQUENCE COUNTER
+            //
+            // This is the NEXT sequence number
+            // available for a performed attempt.
+            //
+            // It is NOT the athlete attempt number.
+            //
+            // Example:
+            //
+            //     counter = 1
+            //     performed lift gets sequence 1
+            //     counter becomes 2
+            // =====================================
+
+            attemptSequenceCounter: {
+
+                type:
+                    Number,
+
+                required:
+                    true,
+
+                default:
+                    1,
+
+                min:
+                    1,
+
+            },
+
+
+            // =====================================
+            // STATE INTEGRITY
+            //
+            // Automatic progression must never guess
+            // when authoritative history is missing
+            // or contradictory.
+            // =====================================
+
+            integrity: {
+
+                status: {
+
+                    type:
+                        String,
+
+                    enum: [
+
+                        "VALID",
+
+                        "RECOVERY_REQUIRED",
+
+                    ],
+
+                    default:
+                        "VALID",
+
+                },
+
+
+                reason: {
+
+                    type:
+                        String,
+
+                    trim:
+                        true,
+
+                    default:
+                        "",
+
+                },
+
+
+                detectedAt: {
+
+                    type:
+                        Date,
+
+                    default:
+                        null,
+
+                },
+
+            },
+
         },
-    },
-    {
-        timestamps: true,
-    }
-);
 
-// -----------------------------------
-// One live session per competition +
-// gender
-// -----------------------------------
+        {
+
+            timestamps:
+                true,
+
+        }
+
+    );
+
+
+// =====================================
+// ONE LIVE SESSION PER
+// COMPETITION + GENDER
+// =====================================
 
 liveCompetitionSchema.index(
+
     {
-        competitionId: 1,
-        gender: 1,
+
+        competitionId:
+            1,
+
+        gender:
+            1,
+
     },
+
     {
-        unique: true,
+
+        unique:
+            true,
+
     }
+
 );
 
+
 export default mongoose.model(
+
     "LiveCompetition",
+
     liveCompetitionSchema
+
 );

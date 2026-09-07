@@ -64,6 +64,8 @@ const DeclarationEditor = ({
         athlete?.entryId,
         attempt?.phase,
         attempt?.attemptNo,
+        attempt?.declaredWeight,
+        attempt?.applicableWeight,
     ]);
 
 
@@ -201,6 +203,230 @@ const DeclarationEditor = ({
 
 
 // =====================================
+// COMPLETED ATTEMPT WEIGHT EDITOR
+//
+// Used only for already completed
+// attempts.
+//
+// This does NOT call processLift and
+// therefore cannot create/consume an
+// additional attempt.
+// =====================================
+
+const CompletedAttemptWeightEditor = ({
+    athlete,
+    attempt,
+    saving,
+    onSave,
+    onCancel,
+}) => {
+
+    const [
+        weight,
+        setWeight,
+    ] = useState("");
+
+
+    // =====================================
+    // INITIALIZE EDITOR
+    // =====================================
+
+    useEffect(() => {
+
+        if (
+            attempt?.declaredWeight != null &&
+            Number(attempt.declaredWeight) > 0
+        ) {
+
+            setWeight(
+                String(attempt.declaredWeight)
+            );
+
+            return;
+
+        }
+
+
+        if (
+            attempt?.applicableWeight != null &&
+            Number(attempt.applicableWeight) > 0
+        ) {
+
+            setWeight(
+                String(attempt.applicableWeight)
+            );
+
+            return;
+
+        }
+
+
+        if (
+            attempt?.openingWeight != null &&
+            Number(attempt.openingWeight) > 0
+        ) {
+
+            setWeight(
+                String(attempt.openingWeight)
+            );
+
+            return;
+
+        }
+
+
+        setWeight("");
+
+    }, [
+        athlete?.entryId,
+        attempt?.phase,
+        attempt?.attemptNo,
+        attempt?.declaredWeight,
+        attempt?.applicableWeight,
+        attempt?.openingWeight,
+    ]);
+
+
+    // =====================================
+    // SAVE
+    // =====================================
+
+    const handleSubmit = async (event) => {
+
+        event.preventDefault();
+
+
+        if (
+            saving ||
+            !weight
+        ) {
+
+            return;
+
+        }
+
+
+        const numericWeight =
+            Number(weight);
+
+
+        if (
+            !Number.isFinite(numericWeight) ||
+            numericWeight <= 0
+        ) {
+
+            return;
+
+        }
+
+
+        await onSave({
+
+            entryId:
+                athlete?.entryId,
+
+            phase:
+                attempt?.phase,
+
+            attemptNo:
+                Number(attempt?.attemptNo),
+
+            correctedWeight:
+                numericWeight,
+
+        });
+
+    };
+
+
+    // =====================================
+    // PHASE LABEL
+    // =====================================
+
+    const phaseLabel =
+        attempt?.phase === "CLEAN_JERK"
+            ? "CJ"
+            : "S";
+
+
+    return (
+
+        <form
+            className="scoreboard-declaration-editor"
+            onSubmit={handleSubmit}
+        >
+
+            <span
+                className="scoreboard-declaration-attempt"
+            >
+                {phaseLabel}
+                {attempt?.attemptNo ?? "-"}
+            </span>
+
+
+            <div
+                className="scoreboard-declaration-input-wrapper"
+            >
+
+                <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={weight}
+                    onChange={(event) =>
+                        setWeight(
+                            event.target.value
+                        )
+                    }
+                    disabled={saving}
+                    aria-label={
+                        `${athlete.name} ${phaseLabel}${attempt?.attemptNo ?? ""} corrected weight`
+                    }
+                />
+
+                <span>
+                    kg
+                </span>
+
+            </div>
+
+
+            <button
+                type="submit"
+                disabled={
+                    saving ||
+                    !weight
+                }
+            >
+
+                {
+                    saving
+                        ? "..."
+                        : "Save"
+                }
+
+            </button>
+
+
+            <button
+                type="button"
+                className="scoreboard-declaration-cancel"
+                onClick={onCancel}
+                disabled={saving}
+            >
+
+                Cancel
+
+            </button>
+
+        </form>
+
+    );
+
+};
+
+
+// =====================================
 // COMPETITION RESULTS
 //
 // DISPLAY / UI ONLY.
@@ -212,8 +438,11 @@ const DeclarationEditor = ({
 const CompetitionResults = ({
     competitionResults = [],
     currentAthlete = null,
+    nextAthlete = null,
     queue = [],
     onEditDeclaration = null,
+    onCorrectCompletedAttemptWeight = null,
+    onCorrectCompletedAttemptResult = null,
     savingDeclarationEntryId = null,
 }) => {
 
@@ -225,6 +454,35 @@ const CompetitionResults = ({
     const [
         editingEntryId,
         setEditingEntryId,
+    ] = useState(null);
+
+
+    const [
+        selectedCompletedAttempt,
+        setSelectedCompletedAttempt,
+    ] = useState(null);
+
+
+    const [
+        editingCompletedAttemptKey,
+        setEditingCompletedAttemptKey,
+    ] = useState(null);
+
+
+    const [
+        savingCompletedAttemptKey,
+        setSavingCompletedAttemptKey,
+    ] = useState(null);
+
+
+    // =====================================
+    // FEATURE 2
+    // COMPLETED ATTEMPT RESULT CORRECTION
+    // =====================================
+
+    const [
+        savingCompletedAttemptResultKey,
+        setSavingCompletedAttemptResultKey,
     ] = useState(null);
 
 
@@ -373,12 +631,167 @@ const CompetitionResults = ({
 
 
     // =====================================
+    // GET COMPLETED ATTEMPTS
+    //
+    // Read-only extraction from the
+    // authoritative CompetitionResults data.
+    //
+    // No ordering is calculated here.
+    // =====================================
+
+    const getCompletedAttempts = (athlete) => {
+
+        const completedAttempts = [];
+
+
+        const snatchAttempts =
+            Array.isArray(
+                athlete?.snatchAttempts
+            )
+                ? athlete.snatchAttempts
+                : [];
+
+
+        snatchAttempts.forEach(
+            (attempt, index) => {
+
+                if (
+                    !attempt
+                ) {
+
+                    return;
+
+                }
+
+
+                const result =
+                    attempt.result ??
+                    "PENDING";
+
+
+                if (
+                    result !== "GOOD" &&
+                    result !== "NO_LIFT"
+                ) {
+
+                    return;
+
+                }
+
+
+                completedAttempts.push({
+
+                    ...attempt,
+
+                    phase:
+                        "SNATCH",
+
+                    attemptNo:
+                        attempt.attemptNo ??
+                        index + 1,
+
+                    openingWeight:
+                        index === 0
+                            ? athlete.openingSnatch ??
+                                null
+                            : null,
+
+                });
+
+            }
+        );
+
+
+        const cleanJerkAttempts =
+            Array.isArray(
+                athlete?.cleanJerkAttempts
+            )
+                ? athlete.cleanJerkAttempts
+                : [];
+
+
+        cleanJerkAttempts.forEach(
+            (attempt, index) => {
+
+                if (
+                    !attempt
+                ) {
+
+                    return;
+
+                }
+
+
+                const result =
+                    attempt.result ??
+                    "PENDING";
+
+
+                if (
+                    result !== "GOOD" &&
+                    result !== "NO_LIFT"
+                ) {
+
+                    return;
+
+                }
+
+
+                completedAttempts.push({
+
+                    ...attempt,
+
+                    phase:
+                        "CLEAN_JERK",
+
+                    attemptNo:
+                        attempt.attemptNo ??
+                        index + 1,
+
+                    openingWeight:
+                        index === 0
+                            ? athlete.openingCleanJerk ??
+                                null
+                            : null,
+
+                });
+
+            }
+        );
+
+
+        return completedAttempts;
+
+    };
+
+
+    // =====================================
+    // COMPLETED ATTEMPT KEY
+    // =====================================
+
+    const getCompletedAttemptKey = (
+        athlete,
+        attempt
+    ) => {
+
+        return (
+            `${athlete?.entryId ?? ""}-` +
+            `${attempt?.phase ?? ""}-` +
+            `${attempt?.attemptNo ?? ""}`
+        );
+
+    };
+
+
+    // =====================================
     // RENDER ATTEMPT
     // =====================================
 
     const renderAttempt = (
         attempt,
-        openingWeight = null
+        openingWeight = null,
+        athlete = null,
+        phase = null
     ) => {
 
         if (!attempt) {
@@ -397,8 +810,28 @@ const CompetitionResults = ({
         }
 
 
+        // =================================
+        // NORMALIZE ATTEMPT PHASE
+        //
+        // Raw CompetitionEntry attempts
+        // do not necessarily contain phase.
+        // The table provides the authoritative
+        // phase for this attempt column.
+        // =================================
+
+        const normalizedAttempt = {
+
+            ...attempt,
+
+            phase:
+                attempt.phase ??
+                phase,
+
+        };
+
+
         const weight =
-            attempt.declaredWeight;
+            normalizedAttempt.declaredWeight;
 
 
         // =================================
@@ -406,7 +839,7 @@ const CompetitionResults = ({
         // =================================
 
         if (
-            attempt.result === "PENDING"
+            normalizedAttempt.result === "PENDING"
         ) {
 
             return (
@@ -424,15 +857,51 @@ const CompetitionResults = ({
         // =================================
 
         if (
-            attempt.result === "GOOD"
+            normalizedAttempt.result === "GOOD"
         ) {
 
-            return (
+            if (
                 weight != null &&
                 Number(weight) > 0
-            )
-                ? `${weight}`
-                : "✓";
+            ) {
+
+                const content = (
+                    <span className="attempt-good">
+                        {weight}
+                    </span>
+                );
+
+
+                if (athlete?.entryId) {
+
+                    return (
+                        <button
+                            type="button"
+                            className="scoreboard-attempt-button"
+                            onClick={() =>
+                                handleEditCompletedAttemptClick(
+                                    athlete,
+                                    normalizedAttempt
+                                )
+                            }
+                            title="Open completed attempt actions"
+                        >
+                            {content}
+                        </button>
+                    );
+
+                }
+
+
+                return content;
+
+            }
+
+            return (
+                <span className="attempt-good">
+                    ✓
+                </span>
+            );
 
         }
 
@@ -442,7 +911,7 @@ const CompetitionResults = ({
         // =================================
 
         if (
-            attempt.result === "NO_LIFT"
+            normalizedAttempt.result === "NO_LIFT"
         ) {
 
             if (
@@ -450,8 +919,7 @@ const CompetitionResults = ({
                 Number(weight) > 0
             ) {
 
-                return (
-
+                const content = (
                     <span
                         className="attempt-no-lift"
                     >
@@ -459,8 +927,31 @@ const CompetitionResults = ({
                         {weight}
 
                     </span>
-
                 );
+
+
+                if (athlete?.entryId) {
+
+                    return (
+                        <button
+                            type="button"
+                            className="scoreboard-attempt-button"
+                            onClick={() =>
+                                handleEditCompletedAttemptClick(
+                                    athlete,
+                                    normalizedAttempt
+                                )
+                            }
+                            title="Open completed attempt actions"
+                        >
+                            {content}
+                        </button>
+                    );
+
+                }
+
+
+                return content;
 
             }
 
@@ -484,10 +975,23 @@ const CompetitionResults = ({
 
 
     // =====================================
-    // EDIT
+    // EDIT PENDING DECLARATION
     // =====================================
 
     const handleEditClick = (athlete) => {
+
+        // Eliminated athletes cannot receive
+        // a new pending declaration.
+
+        if (
+            athlete?.eliminated === true ||
+            athlete?.status === "ELIMINATED"
+        ) {
+
+            return;
+
+        }
+
 
         const attempt =
             getEditableAttempt(
@@ -502,7 +1006,8 @@ const CompetitionResults = ({
         }
 
 
-        // Completed attempt cannot be edited.
+        // Completed attempt cannot be edited
+        // through the normal declaration flow.
 
         if (
             attempt.completed ||
@@ -527,6 +1032,9 @@ const CompetitionResults = ({
         }
 
 
+        setEditingCompletedAttemptKey(null);
+
+
         setEditingEntryId(
             (current) => {
 
@@ -549,7 +1057,135 @@ const CompetitionResults = ({
 
 
     // =====================================
-    // SAVE
+    // EDIT COMPLETED ATTEMPT
+    // =====================================
+
+    const handleEditCompletedAttemptClick = (
+        athlete,
+        attempt
+    ) => {
+
+        if (
+            (
+                !onCorrectCompletedAttemptWeight &&
+                !onCorrectCompletedAttemptResult
+            ) ||
+            !athlete ||
+            !attempt
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            attempt.result !== "GOOD" &&
+            attempt.result !== "NO_LIFT"
+        ) {
+
+            return;
+
+        }
+
+
+        // =================================
+        // PHASE MUST BE EXPLICIT
+        // =================================
+
+        const phase =
+            attempt.phase ?? null;
+
+
+        if (
+            phase !== "SNATCH" &&
+            phase !== "CLEAN_JERK"
+        ) {
+
+            return;
+
+        }
+
+
+        const normalizedAttempt = {
+
+            ...attempt,
+
+            phase,
+
+        };
+
+
+        const key =
+            getCompletedAttemptKey(
+                athlete,
+                normalizedAttempt
+            );
+
+
+        setEditingEntryId(null);
+
+        setEditingCompletedAttemptKey(null);
+
+        setSelectedCompletedAttempt({
+
+            athlete,
+
+            attempt:
+                normalizedAttempt,
+
+            key,
+
+        });
+
+    };
+
+
+    // =====================================
+    // START COMPLETED ATTEMPT WEIGHT EDIT
+    // =====================================
+
+    const handleStartCompletedAttemptWeightEdit = () => {
+
+        if (!selectedCompletedAttempt) {
+
+            return;
+
+        }
+
+
+        setEditingCompletedAttemptKey(
+            selectedCompletedAttempt.key
+        );
+
+    };
+
+
+    // =====================================
+    // CLOSE COMPLETED ATTEMPT PANEL
+    // =====================================
+
+    const handleCloseCompletedAttemptPanel = () => {
+
+        if (
+            savingCompletedAttemptKey ||
+            savingCompletedAttemptResultKey
+        ) {
+
+            return;
+
+        }
+
+
+        setEditingCompletedAttemptKey(null);
+
+        setSelectedCompletedAttempt(null);
+
+    };
+
+
+    // =====================================
+    // SAVE PENDING DECLARATION
     // =====================================
 
     const handleSave = async (payload) => {
@@ -572,12 +1208,205 @@ const CompetitionResults = ({
 
 
     // =====================================
-    // CANCEL
+    // SAVE COMPLETED ATTEMPT WEIGHT
+    // =====================================
+
+    const handleSaveCompletedAttempt = async (
+        payload
+    ) => {
+
+        if (
+            !onCorrectCompletedAttemptWeight
+        ) {
+
+            return;
+
+        }
+
+
+        const key =
+            getCompletedAttemptKey(
+                {
+                    entryId:
+                        payload.entryId,
+                },
+                payload
+            );
+
+
+        setSavingCompletedAttemptKey(
+            key
+        );
+
+
+        try {
+
+            const success =
+                await onCorrectCompletedAttemptWeight(
+                    payload
+                );
+
+
+            if (
+                success !== false
+            ) {
+
+                setEditingCompletedAttemptKey(
+                    null
+                );
+
+                setSelectedCompletedAttempt(
+                    null
+                );
+
+            }
+
+        } finally {
+
+            setSavingCompletedAttemptKey(
+                null
+            );
+
+        }
+
+    };
+
+
+    // =====================================
+    // SAVE COMPLETED ATTEMPT RESULT
+    // =====================================
+
+    const handleSaveCompletedAttemptResult = async (
+        correctedResult
+    ) => {
+
+        if (
+            !onCorrectCompletedAttemptResult ||
+            !selectedCompletedAttempt
+        ) {
+
+            return;
+
+        }
+
+
+        const {
+            athlete,
+            attempt,
+            key,
+        } = selectedCompletedAttempt;
+
+
+        if (
+            !athlete?.entryId ||
+            !attempt?.phase ||
+            !attempt?.attemptNo
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            attempt.result !== "GOOD" &&
+            attempt.result !== "NO_LIFT"
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            correctedResult !== "GOOD" &&
+            correctedResult !== "NO_LIFT"
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            correctedResult ===
+            attempt.result
+        ) {
+
+            return;
+
+        }
+
+
+        setSavingCompletedAttemptResultKey(
+            key
+        );
+
+
+        try {
+
+            const success =
+                await onCorrectCompletedAttemptResult({
+
+                    entryId:
+                        athlete.entryId,
+
+                    phase:
+                        attempt.phase,
+
+                    attemptNo:
+                        Number(
+                            attempt.attemptNo
+                        ),
+
+                    correctedResult,
+
+                });
+
+
+            if (
+                success !== false
+            ) {
+
+                setEditingCompletedAttemptKey(
+                    null
+                );
+
+                setSelectedCompletedAttempt(
+                    null
+                );
+
+            }
+
+        } finally {
+
+            setSavingCompletedAttemptResultKey(
+                null
+            );
+
+        }
+
+    };
+
+
+    // =====================================
+    // CANCEL PENDING DECLARATION
     // =====================================
 
     const handleCancel = () => {
 
         setEditingEntryId(null);
+
+    };
+
+
+    // =====================================
+    // CANCEL COMPLETED ATTEMPT
+    // =====================================
+
+    const handleCompletedAttemptCancel = () => {
+
+        setEditingCompletedAttemptKey(null);
 
     };
 
@@ -613,6 +1442,8 @@ const CompetitionResults = ({
                 </div>
 
             </div>
+
+
 
 
             {/* =================================
@@ -675,10 +1506,6 @@ const CompetitionResults = ({
                                 Rank
                             </th>
 
-                            <th>
-                                Action
-                            </th>
-
                         </tr>
 
                     </thead>
@@ -691,16 +1518,60 @@ const CompetitionResults = ({
                                 (athlete) => {
 
                                     // =================================
+                                    // ELIMINATED ATHLETE
+                                    //
+                                    // Backend authoritative state.
+                                    // Must take priority over current,
+                                    // next, and completed styling.
+                                    // =================================
+
+                                    const isEliminated =
+                                        athlete?.eliminated === true ||
+                                        athlete?.status === "ELIMINATED";
+
+
+                                    // =================================
                                     // CURRENT ATHLETE
                                     // =================================
 
                                     const isCurrent =
+                                        Boolean(
+                                            currentAthlete?.entryId
+                                        ) &&
                                         String(
                                             athlete.entryId
                                         ) ===
                                         String(
-                                            currentAthlete?.entryId
+                                            currentAthlete.entryId
                                         );
+
+
+                                    // =================================
+                                    // NEXT ATHLETE
+                                    //
+                                    // Backend-provided only.
+                                    // No queue calculation here.
+                                    // =================================
+
+                                    const isNext =
+                                        Boolean(
+                                            nextAthlete?.entryId
+                                        ) &&
+                                        String(
+                                            athlete.entryId
+                                        ) ===
+                                        String(
+                                            nextAthlete.entryId
+                                        );
+
+
+                                    // =================================
+                                    // COMPLETED
+                                    // =================================
+
+                                    const isCompleted =
+                                        athlete.completed === true ||
+                                        athlete.status === "COMPLETED";
 
 
                                     // =================================
@@ -714,7 +1585,17 @@ const CompetitionResults = ({
 
 
                                     // =================================
-                                    // EDITING
+                                    // COMPLETED ATTEMPTS
+                                    // =================================
+
+                                    const completedAttempts =
+                                        getCompletedAttempts(
+                                            athlete
+                                        );
+
+
+                                    // =================================
+                                    // PENDING DECLARATION EDITING
                                     // =================================
 
                                     const isEditing =
@@ -727,7 +1608,7 @@ const CompetitionResults = ({
 
 
                                     // =================================
-                                    // SAVING
+                                    // PENDING DECLARATION SAVING
                                     // =================================
 
                                     const isSaving =
@@ -741,17 +1622,27 @@ const CompetitionResults = ({
 
                                     // =================================
                                     // ROW CLASS
+                                    //
+                                    // Presentation only.
+                                    // Calling order is NOT calculated.
+                                    //
+                                    // ELIMINATED MUST BE FIRST.
                                     // =================================
 
                                     const rowClassName =
-                                        isCurrent
-                                            ? "scoreboard-current-row"
-                                            : (
-                                                athlete.completed === true ||
-                                                athlete.status === "COMPLETED"
-                                            )
-                                                ? "scoreboard-completed-row"
-                                                : "";
+                                        isEliminated
+                                            ? "scoreboard-eliminated-row"
+
+                                            : isCurrent
+                                                ? "scoreboard-current-row"
+
+                                                : isNext
+                                                    ? "scoreboard-next-row"
+
+                                                    : isCompleted
+                                                        ? "scoreboard-completed-row"
+
+                                                        : "";
 
 
                                     return (
@@ -785,28 +1676,144 @@ const CompetitionResults = ({
 
                                             <td>
 
-                                                <strong>
+                                                <div className="scoreboard-athlete-name">
+
+                                                    <strong>
+
+                                                        {
+                                                            athlete.name ??
+                                                            "-"
+                                                        }
+
+                                                    </strong>
+
 
                                                     {
-                                                        athlete.name ??
-                                                        "-"
+                                                        isEliminated && (
+
+                                                            <span
+                                                                className="scoreboard-eliminated-badge"
+                                                            >
+
+                                                                ELIMINATED
+
+                                                            </span>
+
+                                                        )
                                                     }
 
-                                                </strong>
+
+                                                    {
+                                                        isCurrent &&
+                                                        !isEliminated && (
+
+                                                            <span
+                                                                className="scoreboard-current-badge"
+                                                            >
+
+                                                                CURRENT
+
+                                                            </span>
+
+                                                        )
+                                                    }
+
+
+                                                    {
+                                                        isNext &&
+                                                        !isCurrent &&
+                                                        !isEliminated && (
+
+                                                            <span
+                                                                className="scoreboard-next-badge"
+                                                            >
+
+                                                                NEXT
+
+                                                            </span>
+
+                                                        )
+                                                    }
+
+                                                </div>
 
 
                                                 {
-                                                    isCurrent && (
+                                                    isEliminated && (
 
-                                                        <span
-                                                            className="scoreboard-current-badge"
-                                                        >
+                                                        <div className="scoreboard-elimination-reason">
 
-                                                            CURRENT
+                                                            {
+                                                                athlete.eliminationReason ===
+                                                                "SNATCH_BOMB_OUT"
+                                                                    ? "3 NO LIFTS — NO TOTAL"
+                                                                    : "ELIMINATED"
+                                                            }
 
-                                                        </span>
+                                                        </div>
 
                                                     )
+                                                }
+
+
+                                                {/* =================================
+                                                    NORMAL PENDING DECLARATION EDIT
+                                                ================================= */}
+
+                                                {
+                                                    !isEliminated &&
+                                                    isEditing &&
+                                                    editableAttempt
+                                                        ? (
+
+                                                            <DeclarationEditor
+
+                                                                athlete={
+                                                                    athlete
+                                                                }
+
+                                                                attempt={
+                                                                    editableAttempt
+                                                                }
+
+                                                                saving={
+                                                                    isSaving
+                                                                }
+
+                                                                onSave={
+                                                                    handleSave
+                                                                }
+
+                                                                onCancel={
+                                                                    handleCancel
+                                                                }
+
+                                                            />
+
+                                                        )
+                                                        : !isEliminated &&
+                                                          editableAttempt
+                                                            ? (
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="scoreboard-edit-declaration"
+                                                                    onClick={() =>
+                                                                        handleEditClick(
+                                                                            athlete
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        isSaving
+                                                                    }
+                                                                >
+
+                                                                    Edit Declaration
+
+                                                                </button>
+
+                                                            )
+                                                            : null
                                                 }
 
                                             </td>
@@ -825,7 +1832,11 @@ const CompetitionResults = ({
                                                             .snatchAttempts
                                                             ?.[0],
 
-                                                        athlete.openingSnatch
+                                                        athlete.openingSnatch,
+
+                                                        athlete,
+
+                                                        "SNATCH"
 
                                                     )
                                                 }
@@ -844,7 +1855,13 @@ const CompetitionResults = ({
 
                                                         athlete
                                                             .snatchAttempts
-                                                            ?.[1]
+                                                            ?.[1],
+
+                                                        null,
+
+                                                        athlete,
+
+                                                        "SNATCH"
 
                                                     )
                                                 }
@@ -863,7 +1880,13 @@ const CompetitionResults = ({
 
                                                         athlete
                                                             .snatchAttempts
-                                                            ?.[2]
+                                                            ?.[2],
+
+                                                        null,
+
+                                                        athlete,
+
+                                                        "SNATCH"
 
                                                     )
                                                 }
@@ -884,7 +1907,11 @@ const CompetitionResults = ({
                                                             .cleanJerkAttempts
                                                             ?.[0],
 
-                                                        athlete.openingCleanJerk
+                                                        athlete.openingCleanJerk,
+
+                                                        athlete,
+
+                                                        "CLEAN_JERK"
 
                                                     )
                                                 }
@@ -903,7 +1930,13 @@ const CompetitionResults = ({
 
                                                         athlete
                                                             .cleanJerkAttempts
-                                                            ?.[1]
+                                                            ?.[1],
+
+                                                        null,
+
+                                                        athlete,
+
+                                                        "CLEAN_JERK"
 
                                                     )
                                                 }
@@ -922,7 +1955,13 @@ const CompetitionResults = ({
 
                                                         athlete
                                                             .cleanJerkAttempts
-                                                            ?.[2]
+                                                            ?.[2],
+
+                                                        null,
+
+                                                        athlete,
+
+                                                        "CLEAN_JERK"
 
                                                     )
                                                 }
@@ -998,94 +2037,6 @@ const CompetitionResults = ({
 
                                             </td>
 
-
-                                            {/* =====================
-                                                ACTION
-                                            ===================== */}
-
-                                            <td
-                                                className={
-                                                    isEditing
-                                                        ? "scoreboard-action-cell scoreboard-action-cell-editing"
-                                                        : "scoreboard-action-cell"
-                                                }
-                                            >
-
-                                                {
-                                                    isEditing &&
-                                                    editableAttempt
-                                                        ? (
-
-                                                            /*
-                                                             * IMPORTANT:
-                                                             * The editor is INSIDE
-                                                             * this athlete's existing
-                                                             * table row.
-                                                             *
-                                                             * No additional <tr>.
-                                                             */
-
-                                                            <DeclarationEditor
-
-                                                                athlete={
-                                                                    athlete
-                                                                }
-
-                                                                attempt={
-                                                                    editableAttempt
-                                                                }
-
-                                                                saving={
-                                                                    isSaving
-                                                                }
-
-                                                                onSave={
-                                                                    handleSave
-                                                                }
-
-                                                                onCancel={
-                                                                    handleCancel
-                                                                }
-
-                                                            />
-
-                                                        )
-                                                        : editableAttempt
-                                                            ? (
-
-                                                                <button
-                                                                    type="button"
-                                                                    className="scoreboard-edit-declaration"
-                                                                    onClick={() =>
-                                                                        handleEditClick(
-                                                                            athlete
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        isSaving
-                                                                    }
-                                                                >
-
-                                                                    Edit
-
-                                                                </button>
-
-                                                            )
-                                                            : (
-
-                                                                <span
-                                                                    className="scoreboard-action-empty"
-                                                                >
-
-                                                                    —
-
-                                                                </span>
-
-                                                            )
-                                                }
-
-                                            </td>
-
                                         </tr>
 
                                     );
@@ -1105,7 +2056,7 @@ const CompetitionResults = ({
                                 <tr>
 
                                     <td
-                                        colSpan="13"
+                                        colSpan="12"
                                         className="no-scoreboard-data"
                                     >
 
@@ -1123,6 +2074,222 @@ const CompetitionResults = ({
                 </table>
 
             </div>
+
+
+            {/* =================================
+                COMPLETED ATTEMPT ACTION PANEL
+            ================================= */}
+
+            {
+                selectedCompletedAttempt && (
+
+                    <div
+                        className="scoreboard-attempt-panel-backdrop"
+                        onMouseDown={handleCloseCompletedAttemptPanel}
+                    >
+
+                        <aside
+                            className="scoreboard-attempt-panel"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="Completed attempt actions"
+                            onMouseDown={(event) =>
+                                event.stopPropagation()
+                            }
+                        >
+
+                            <div className="scoreboard-attempt-panel-header">
+
+                                <div>
+
+                                    <span className="scoreboard-attempt-panel-eyebrow">
+                                        COMPLETED ATTEMPT
+                                    </span>
+
+                                    <h3>
+                                        {
+                                            selectedCompletedAttempt.athlete.name ??
+                                            "-"
+                                        }
+                                    </h3>
+
+                                    <span className="scoreboard-attempt-panel-meta">
+                                        Lot {
+                                            selectedCompletedAttempt.athlete.lotNumber ??
+                                            "-"
+                                        }
+                                        {" · "}
+                                        {
+                                            selectedCompletedAttempt.attempt.phase ===
+                                            "CLEAN_JERK"
+                                                ? "Clean & Jerk"
+                                                : "Snatch"
+                                        }
+                                        {" · Attempt "}
+                                        {
+                                            selectedCompletedAttempt.attempt.attemptNo ??
+                                            "-"
+                                        }
+                                    </span>
+
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="scoreboard-attempt-panel-close"
+                                    onClick={handleCloseCompletedAttemptPanel}
+                                    disabled={
+                                        Boolean(
+                                            savingCompletedAttemptKey
+                                        ) ||
+                                        Boolean(
+                                            savingCompletedAttemptResultKey
+                                        )
+                                    }
+                                    aria-label="Close"
+                                >
+                                    ×
+                                </button>
+
+                            </div>
+
+
+                            <div className="scoreboard-attempt-panel-summary">
+
+                                <div>
+                                    <span>Recorded weight</span>
+                                    <strong>
+                                        {
+                                            selectedCompletedAttempt.attempt.declaredWeight ??
+                                            selectedCompletedAttempt.attempt.applicableWeight ??
+                                            "-"
+                                        }
+                                        {" kg"}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Result</span>
+                                    <strong
+                                        className={
+                                            selectedCompletedAttempt.attempt.result === "GOOD"
+                                                ? "attempt-good"
+                                                : "attempt-no-lift"
+                                        }
+                                    >
+                                        {
+                                            selectedCompletedAttempt.attempt.result === "GOOD"
+                                                ? "GOOD LIFT"
+                                                : "NO LIFT"
+                                        }
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div className="scoreboard-attempt-panel-actions">
+
+                                {
+                                    editingCompletedAttemptKey ===
+                                    selectedCompletedAttempt.key
+                                        ? (
+
+                                            <CompletedAttemptWeightEditor
+                                                athlete={
+                                                    selectedCompletedAttempt.athlete
+                                                }
+                                                attempt={
+                                                    selectedCompletedAttempt.attempt
+                                                }
+                                                saving={
+                                                    savingCompletedAttemptKey ===
+                                                    selectedCompletedAttempt.key
+                                                }
+                                                onSave={
+                                                    handleSaveCompletedAttempt
+                                                }
+                                                onCancel={
+                                                    handleCompletedAttemptCancel
+                                                }
+                                            />
+
+                                        )
+                                        : (
+
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    className="scoreboard-attempt-primary-action"
+                                                    onClick={
+                                                        handleStartCompletedAttemptWeightEdit
+                                                    }
+                                                    disabled={
+                                                        Boolean(
+                                                            savingCompletedAttemptResultKey
+                                                        )
+                                                    }
+                                                >
+                                                    Correct Weight
+                                                </button>
+
+
+                                                {
+                                                    onCorrectCompletedAttemptResult &&
+                                                    (
+
+                                                        <button
+                                                            type="button"
+                                                            className="scoreboard-attempt-primary-action"
+                                                            onClick={() =>
+                                                                handleSaveCompletedAttemptResult(
+                                                                    selectedCompletedAttempt.attempt.result ===
+                                                                    "GOOD"
+                                                                        ? "NO_LIFT"
+                                                                        : "GOOD"
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                Boolean(
+                                                                    savingCompletedAttemptResultKey
+                                                                )
+                                                            }
+                                                        >
+
+                                                            {
+                                                                savingCompletedAttemptResultKey ===
+                                                                selectedCompletedAttempt.key
+                                                                    ? "..."
+                                                                    : selectedCompletedAttempt.attempt.result ===
+                                                                      "GOOD"
+                                                                        ? "Correct to No Lift"
+                                                                        : "Correct to Good Lift"
+                                                            }
+
+                                                        </button>
+
+                                                    )
+                                                }
+
+                                            </>
+
+                                        )
+                                }
+
+                            </div>
+
+
+                            <p className="scoreboard-attempt-panel-note">
+                                Corrections are validated by the backend. The original
+                                attempt result and execution sequence are preserved.
+                            </p>
+
+                        </aside>
+
+                    </div>
+
+                )
+            }
 
         </section>
 

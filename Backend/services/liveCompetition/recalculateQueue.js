@@ -59,6 +59,17 @@ import {
 //     dbSession,
 // })
 //
+// PERFORMANCE:
+//
+// When the caller already has the
+// authoritative LiveCompetition document,
+// it may provide:
+//
+//     liveSession
+//
+// This avoids another LiveCompetition
+// database read.
+//
 // =====================================
 //
 // CURRENT-ENTRY BEHAVIOUR
@@ -85,6 +96,7 @@ const recalculateQueue = async ({
     gender,
     dbSession = null,
     allowCurrentEntry = false,
+    liveSession = null,
 }) => {
 
     // =====================================
@@ -117,31 +129,48 @@ const recalculateQueue = async ({
 
     // =====================================
     // LOAD AUTHORITATIVE SESSION
+    //
+    // PERFORMANCE OPTIMIZATION:
+    //
+    // If the caller already has the
+    // authoritative session, reuse it.
+    //
+    // This is especially important during
+    // processLift() because advanceCompetition()
+    // already owns the same Mongoose document.
     // =====================================
 
-    let sessionQuery =
-        LiveCompetition.findOne({
-
-            competitionId,
-
-            gender:
-                normalizedGender,
-
-        });
+    let session =
+        liveSession;
 
 
-    if (dbSession) {
+    if (!session) {
 
-        sessionQuery =
-            sessionQuery.session(
-                dbSession
-            );
+        let sessionQuery =
+            LiveCompetition.findOne({
+
+                competitionId,
+
+                gender:
+                    normalizedGender,
+
+            });
+
+
+        if (dbSession) {
+
+            sessionQuery =
+                sessionQuery.session(
+                    dbSession
+                );
+
+        }
+
+
+        session =
+            await sessionQuery;
 
     }
-
-
-    const session =
-        await sessionQuery;
 
 
     if (!session) {
@@ -203,6 +232,10 @@ const recalculateQueue = async ({
     // GET ELIGIBLE CANDIDATES
     //
     // Feature 3.1
+    //
+    // IMPORTANT:
+    //
+    // Queue eligibility remains unchanged.
     // =====================================
 
     const candidateResult =
@@ -234,19 +267,6 @@ const recalculateQueue = async ({
 
     // =====================================
     // PRESERVE REJECTION INFORMATION
-    //
-    // IMPORTANT:
-    //
-    // An empty eligible queue does NOT
-    // automatically mean competition
-    // completion.
-    //
-    // For example, athletes may exist but
-    // require a declaration before they can
-    // enter the calling queue.
-    //
-    // This information is therefore passed
-    // to the transition layer.
     // =====================================
 
     const rejectedCandidates =

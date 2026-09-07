@@ -6,11 +6,13 @@ import {
     startLiveCompetitionController,
     processLiftController,
     saveDeclaredWeightController,
+    correctCompletedAttemptWeightController,
+    correctCompletedAttemptResultController,
     getLiveCompetitionController,
     selectOfficialAthleteController,
-    getQueueStateController
+    getQueueStateController,
+    generateFinalResultPdfController
 } from "../controllers/liveCompetitionController.js";
-
 
 const router = express.Router();
 router.use(
@@ -32,7 +34,18 @@ router.get(
     getLiveCompetitionController
 );
 
+// =====================================
+// FINAL RESULT PDF
+//
+// Available only when the competition
+// has been completed.
+//
+// =====================================
 
+router.get(
+    "/:competitionId/:gender/final-result-pdf",
+    generateFinalResultPdfController
+);
 // =====================================
 // START LIVE COMPETITION
 // =====================================
@@ -78,7 +91,20 @@ router.patch(
 //
 // Kept for compatibility.
 // =====================================
+// =====================================
+// CORRECT COMPLETED ATTEMPT WEIGHT
+// =====================================
 
+router.patch(
+    "/correct-attempt-weight",
+    correctCompletedAttemptWeightController
+);
+
+
+router.patch(
+    "/correct-attempt-result",
+    correctCompletedAttemptResultController
+);
 
 
 

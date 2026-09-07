@@ -15,49 +15,6 @@ import {
 
 
 // =====================================
-// FEATURE 3.4
-// AUTHORITATIVE QUEUE STATE EXPOSURE
-//
-// READ ONLY.
-//
-// Responsibilities:
-//
-// 1. Read authoritative live session.
-// 2. Resolve current platform athlete.
-// 3. Resolve next athlete.
-// 4. Resolve upcoming athletes.
-// 5. Expose authoritative queue.
-// 6. Expose athletes whose next attempt
-//    requires declaration before they can
-//    enter the calling queue.
-//
-// TERMINAL STATE:
-//
-// When currentPhase === "COMPLETED":
-//
-// - current = null
-// - next = null
-// - upcoming = []
-// - queue = []
-// - queueCount = 0
-// - declarationRequired = []
-//
-// recalculateQueue() MUST NOT be called
-// for COMPLETED because it is an active-phase
-// queue engine.
-//
-// This service MUST NOT:
-//
-// - assign currentEntryId
-// - modify attempts
-// - modify results
-// - modify declarations
-// - increment stateVersion
-// - select an athlete
-// =====================================
-
-
-// =====================================
 // MAP QUEUE ATHLETE
 // =====================================
 
@@ -143,14 +100,6 @@ const mapQueueAthlete = (
         declaredWeight:
             attempt?.declaredWeight ?? null,
 
-        // IMPORTANT:
-        //
-        // getAttemptWeight() expects the
-        // complete queue candidate because
-        // it resolves candidate.competitionEntry.
-        //
-        // Do NOT pass entry.competitionEntry
-        // directly.
         applicableWeight:
             getAttemptWeight(
                 entry,
@@ -176,23 +125,6 @@ const mapQueueAthlete = (
 // =====================================
 // MAP DECLARATION-REQUIRED ATHLETE
 // =====================================
-//
-// These athletes are NOT yet part of the
-// calling queue because their next attempt
-// does not have a declared weight.
-//
-// They MUST nevertheless remain visible to
-// Officials so that the declaration can be
-// entered.
-//
-// IMPORTANT:
-//
-// This does NOT make them queue candidates.
-//
-// Once declaration is saved, the normal
-// queue engine will recalculate and place
-// them according to calling-order rules.
-// =====================================
 
 const mapDeclarationRequiredAthlete = (
     entry,
@@ -201,9 +133,13 @@ const mapDeclarationRequiredAthlete = (
 
     const mapped =
         mapQueueAthlete(
+
             entry,
+
             "DECLARATION_REQUIRED",
+
             currentPhase
+
         );
 
 
@@ -228,6 +164,24 @@ const mapDeclarationRequiredAthlete = (
 
 // =====================================
 // GET AUTHORITATIVE QUEUE STATE
+//
+// IMPORTANT STATE CONTRACT:
+//
+// current:
+//     Calling-order current athlete.
+//
+// platform:
+//     Physical athlete currently on platform.
+//
+// These may intentionally differ.
+//
+// Example:
+//
+// current  = B
+// platform = C
+// next     = C
+//
+// This service is READ ONLY.
 // =====================================
 
 const getQueueState = async ({
@@ -336,13 +290,6 @@ const getQueueState = async ({
     // =================================
     // TERMINAL COMPETITION STATE
     // =================================
-    //
-    // COMPLETED is not an active queue
-    // phase.
-    //
-    // Therefore do not call
-    // recalculateQueue().
-    // =================================
 
     if (
         session.currentPhase ===
@@ -378,7 +325,13 @@ const getQueueState = async ({
             currentEntryId:
                 null,
 
+            platformEntryId:
+                null,
+
             current:
+                null,
+
+            platform:
                 null,
 
             next:
@@ -435,7 +388,167 @@ const getQueueState = async ({
 
 
     // =================================
+    // BUILD ENTRY MAP
+    // =================================
+
+    const entryMap =
+        new Map(
+
+            entries.map(
+                (entry) => [
+
+                    String(
+                        entry.entryId
+                    ),
+
+                    entry,
+
+                ]
+            )
+
+        );
+
+
+    // =================================
+    // CURRENT CALLING ATHLETE
+    // =================================
+
+    let current =
+        null;
+
+
+    if (
+        session.currentEntryId
+    ) {
+
+        const currentEntry =
+            entryMap.get(
+
+                String(
+                    session.currentEntryId
+                )
+
+            );
+
+
+        if (!currentEntry) {
+
+            const error =
+                new Error(
+                    "Current calling athlete is not present in the active competition scope."
+                );
+
+            error.code =
+                "QUEUE_INTEGRITY_ERROR";
+
+            error.statusCode =
+                409;
+
+            throw error;
+
+        }
+
+
+        current =
+            mapQueueAthlete(
+
+                currentEntry,
+
+                "CURRENT",
+
+                session.currentPhase
+
+            );
+
+    }
+
+
+    // =================================
+    // PHYSICAL PLATFORM ATHLETE
+    // =================================
+
+    let platform =
+        null;
+
+
+    if (
+        session.platformEntryId
+    ) {
+
+        const platformEntry =
+            entryMap.get(
+
+                String(
+                    session.platformEntryId
+                )
+
+            );
+
+
+        if (!platformEntry) {
+
+            const error =
+                new Error(
+                    "Physical platform athlete is not present in the active competition scope."
+                );
+
+            error.code =
+                "QUEUE_INTEGRITY_ERROR";
+
+            error.statusCode =
+                409;
+
+            throw error;
+
+        }
+
+
+        platform =
+            mapQueueAthlete(
+
+                platformEntry,
+
+                "ON_PLATFORM",
+
+                session.currentPhase
+
+            );
+
+    }
+
+
+    // =================================
+    // BACKWARD COMPATIBILITY
+    // =================================
+    //
+    // Older sessions may not have
+    // platformEntryId.
+    //
+    // Do not write to the database here.
+    // =================================
+
+    if (
+        !platform &&
+        current
+    ) {
+
+        platform = {
+
+            ...current,
+
+            status:
+                "ON_PLATFORM",
+
+        };
+
+    }
+
+
+    // =================================
     // RECALCULATE WAITING QUEUE
+    //
+    // The queue engine remains
+    // authoritative.
     // =================================
 
     const recalculated =
@@ -461,75 +574,7 @@ const getQueueState = async ({
 
 
     // =================================
-    // CURRENT PLATFORM ATHLETE
-    // =================================
-
-    let current = null;
-
-
-    if (
-        session.currentEntryId
-    ) {
-
-        const currentEntry =
-            entries.find(
-                (entry) =>
-                    String(
-                        entry.entryId
-                    ) ===
-                    String(
-                        session.currentEntryId
-                    )
-            );
-
-
-        // ---------------------------------
-        // NEVER GUESS ON CONTRADICTION
-        // ---------------------------------
-
-        if (!currentEntry) {
-
-            const error =
-                new Error(
-                    "Current platform athlete is not present in the active competition scope."
-                );
-
-            error.code =
-                "QUEUE_INTEGRITY_ERROR";
-
-            error.statusCode =
-                409;
-
-            throw error;
-
-        }
-
-
-        current =
-            mapQueueAthlete(
-                currentEntry,
-                "ON_PLATFORM",
-                session.currentPhase
-            );
-
-    }
-
-
-    // =================================
     // DECLARATION-REQUIRED ATHLETES
-    // =================================
-    //
-    // IMPORTANT:
-    //
-    // recalculateQueue() returns:
-    //
-    // rejectedCandidates
-    //
-    // NOT:
-    //
-    // rejected
-    //
-    // Use the authoritative property.
     // =================================
 
     const rejected =
@@ -542,16 +587,19 @@ const getQueueState = async ({
 
     const declarationRequired =
         rejected
+
             .filter(
                 (candidate) =>
                     candidate?.reason ===
                     "DECLARATION_REQUIRED"
             )
+
             .map(
                 (candidate) => {
 
                     const entry =
                         entries.find(
+
                             (item) =>
                                 String(
                                     item.entryId
@@ -559,6 +607,7 @@ const getQueueState = async ({
                                 String(
                                     candidate.entryId
                                 )
+
                         );
 
 
@@ -570,12 +619,17 @@ const getQueueState = async ({
 
 
                     return mapDeclarationRequiredAthlete(
+
                         entry,
+
                         session.currentPhase
+
                     );
 
                 }
+
             )
+
             .filter(Boolean);
 
 
@@ -585,11 +639,17 @@ const getQueueState = async ({
 
     const next =
         orderedQueue.length > 0
+
             ? mapQueueAthlete(
+
                 orderedQueue[0],
+
                 "NEXT",
+
                 session.currentPhase
+
             )
+
             : null;
 
 
@@ -599,14 +659,22 @@ const getQueueState = async ({
 
     const upcoming =
         orderedQueue
+
             .slice(1)
+
             .map(
+
                 (entry) =>
                     mapQueueAthlete(
+
                         entry,
+
                         "UPCOMING",
+
                         session.currentPhase
+
                     )
+
             );
 
 
@@ -616,12 +684,18 @@ const getQueueState = async ({
 
     const queue =
         orderedQueue.map(
+
             (entry) =>
                 mapQueueAthlete(
+
                     entry,
+
                     "QUEUED",
+
                     session.currentPhase
+
                 )
+
         );
 
 
@@ -655,10 +729,23 @@ const getQueueState = async ({
         integrity:
             session.integrity,
 
+        // =================================
+        // SEPARATED CURRENT / PLATFORM
+        // =================================
+
         currentEntryId:
             session.currentEntryId ?? null,
 
+        platformEntryId:
+            session.platformEntryId ?? null,
+
         current,
+
+        platform,
+
+        // =================================
+        // CALLING ORDER
+        // =================================
 
         next,
 
@@ -689,9 +776,5 @@ const getQueueState = async ({
 
 };
 
-
-// =====================================
-// EXPORT
-// =====================================
 
 export default getQueueState;

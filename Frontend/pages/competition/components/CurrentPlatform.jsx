@@ -17,15 +17,39 @@ const formatPhase = (phase) => {
 
 
 const CurrentPlatform = ({
+    // =====================================
+    // BACKEND-AUTHORITATIVE CALLING CURRENT
+    //
+    // This is the athlete currently having
+    // the highest calling priority.
+    //
+    // IMPORTANT:
+    // This athlete may be different from the
+    // athlete physically on the platform during
+    // a declaration correction.
+    // =====================================
+
     currentAthlete,
+
+    // =====================================
+    // PHYSICAL PLATFORM ATHLETE
+    //
+    // This is the athlete who is actually
+    // performing the lift.
+    //
+    // Good Lift / No Lift MUST target this
+    // athlete.
+    // =====================================
+
+    platformAthlete,
+
     currentPhase,
 
     // =====================================
     // DECLARATION CONTROL
     //
-    // These values come from LiveScore.jsx.
-    // This component does not own authoritative
-    // competition state.
+    // Declaration editing belongs to the
+    // backend calling current.
     // =====================================
 
     declaredWeight,
@@ -41,65 +65,97 @@ const CurrentPlatform = ({
     processingLift,
 }) => {
 
-    const currentAttempt =
+    // =====================================
+    // CALLING CURRENT ATTEMPT
+    // =====================================
+
+    const currentAthleteAttempt =
         currentAthlete?.currentAttempt ??
         null;
 
 
-    const attemptPhase =
-        currentAttempt?.phase ??
+    const currentAthleteAttemptPhase =
+        currentAthleteAttempt?.phase ??
         currentPhase ??
         null;
 
 
-    const attemptNo =
-        currentAttempt?.attemptNo ??
+    const currentAthleteAttemptNo =
+        currentAthleteAttempt?.attemptNo ??
         null;
 
 
-    const applicableWeight =
-        currentAttempt?.applicableWeight ??
+    const currentAthleteApplicableWeight =
+        currentAthleteAttempt?.applicableWeight ??
         null;
 
 
-    const authoritativeDeclaredWeight =
-        currentAttempt?.declaredWeight ??
+    const currentAthleteDeclaredWeight =
+        currentAthleteAttempt?.declaredWeight ??
+        null;
+
+
+    // =====================================
+    // PHYSICAL PLATFORM ATTEMPT
+    //
+    // This is the attempt whose result is
+    // being processed by GOOD / NO LIFT.
+    // =====================================
+
+    const platformAttempt =
+        platformAthlete?.currentAttempt ??
+        null;
+
+
+    const platformAttemptPhase =
+        platformAttempt?.phase ??
+        currentPhase ??
+        null;
+
+
+    const platformAttemptNo =
+        platformAttempt?.attemptNo ??
+        null;
+
+
+    const platformApplicableWeight =
+        platformAttempt?.applicableWeight ??
+        null;
+
+
+    const platformDeclaredWeight =
+        platformAttempt?.declaredWeight ??
         null;
 
 
     // =====================================
     // DECLARATION STATE
     //
-    // We only use the parent's editable
-    // value for the input.
-    //
-    // We do NOT calculate a declaration here.
+    // The editable declaration belongs to
+    // currentAthlete, NOT necessarily the
+    // physical platform athlete.
     // =====================================
 
     const editableDeclaredWeight =
         declaredWeight !== undefined &&
         declaredWeight !== null
             ? declaredWeight
-            : authoritativeDeclaredWeight ?? "";
+            : currentAthleteDeclaredWeight ?? "";
 
 
     // =====================================
     // DECLARATION LOCK
     //
-    // Only allow editing when the current
-    // attempt belongs to the active phase.
+    // Backend remains authoritative.
     //
-    // This is a UI guard.
-    //
-    // The backend remains responsible for
-    // authoritative validation.
+    // This is only a UI guard.
     // =====================================
 
     const declarationLocked =
         Boolean(
-            attemptPhase &&
+            currentAthleteAttemptPhase &&
             currentPhase &&
-            attemptPhase !== currentPhase
+            currentAthleteAttemptPhase !== currentPhase
         );
 
 
@@ -143,6 +199,13 @@ const CurrentPlatform = ({
 
     // =====================================
     // PROCESS LIFT
+    //
+    // LiveScore.jsx is responsible for
+    // submitting the platform athlete's
+    // entryId.
+    //
+    // This component must NOT substitute
+    // currentAthlete for platformAthlete.
     // =====================================
 
     const handleProcessLift =
@@ -151,7 +214,8 @@ const CurrentPlatform = ({
         if (
             processingLift ||
             typeof onProcessLift !==
-                "function"
+                "function" ||
+            !platformAthlete
         ) {
 
             return;
@@ -170,7 +234,7 @@ const CurrentPlatform = ({
     // EMPTY PLATFORM
     // =====================================
 
-    if (!currentAthlete) {
+    if (!platformAthlete) {
 
         return (
 
@@ -207,14 +271,46 @@ const CurrentPlatform = ({
                 </div>
 
 
-                <div
-                    className="current-platform-empty"
-                >
+                {/* =================================
+                    CALLING CURRENT MAY STILL EXIST
+                ================================= */}
 
-                    Waiting for the backend to provide
-                    the next current athlete.
+                {currentAthlete && (
 
-                </div>
+                    <div
+                        className="current-platform-empty"
+                    >
+
+                        <strong>
+                            Current Call:{" "}
+                            {
+                                currentAthlete.name ??
+                                "-"
+                            }
+                        </strong>
+
+                        <br />
+
+                        Waiting for the backend platform
+                        state.
+
+                    </div>
+
+                )}
+
+
+                {!currentAthlete && (
+
+                    <div
+                        className="current-platform-empty"
+                    >
+
+                        Waiting for the backend to provide
+                        the next current athlete.
+
+                    </div>
+
+                )}
 
             </section>
 
@@ -224,7 +320,7 @@ const CurrentPlatform = ({
 
 
     // =====================================
-    // CURRENT PLATFORM
+    // PHYSICAL PLATFORM
     // =====================================
 
     return (
@@ -252,7 +348,7 @@ const CurrentPlatform = ({
 
                     <h2>
                         {
-                            currentAthlete.name ??
+                            platformAthlete.name ??
                             "-"
                         }
                     </h2>
@@ -270,7 +366,93 @@ const CurrentPlatform = ({
 
 
             {/* =================================
-                ATHLETE / ATTEMPT INFORMATION
+                CALLING CURRENT
+            =================================
+            
+            Normally this will be the same athlete
+            as platformAthlete.
+
+            During a declaration correction it may
+            intentionally differ.
+            ================================= */}
+
+            {currentAthlete &&
+                currentAthlete.entryId !==
+                platformAthlete.entryId && (
+
+                <div
+                    className="current-platform-meta"
+                >
+
+                    <div
+                        className="current-platform-meta-item"
+                    >
+
+                        <span>
+                            CURRENT CALL
+                        </span>
+
+
+                        <strong>
+                            {
+                                currentAthlete.name ??
+                                "-"
+                            }
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        className="current-platform-meta-item"
+                    >
+
+                        <span>
+                            LOT
+                        </span>
+
+
+                        <strong>
+                            {
+                                currentAthlete.lotNumber ??
+                                "-"
+                            }
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        className="current-platform-meta-item"
+                    >
+
+                        <span>
+                            ATTEMPT
+                        </span>
+
+
+                        <strong>
+                            {
+                                formatPhase(
+                                    currentAthleteAttemptPhase
+                                )
+                            }{" "}
+
+                            {
+                                currentAthleteAttemptNo ??
+                                "-"
+                            }
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            )}
+
+
+            {/* =================================
+                PLATFORM ATHLETE INFORMATION
             ================================= */}
 
             <div
@@ -288,7 +470,7 @@ const CurrentPlatform = ({
 
                     <strong>
                         {
-                            currentAthlete.lotNumber ??
+                            platformAthlete.lotNumber ??
                             "-"
                         }
                     </strong>
@@ -308,12 +490,12 @@ const CurrentPlatform = ({
                     <strong>
                         {
                             formatPhase(
-                                attemptPhase
+                                platformAttemptPhase
                             )
                         }{" "}
 
                         {
-                            attemptNo ??
+                            platformAttemptNo ??
                             "-"
                         }
                     </strong>
@@ -332,8 +514,8 @@ const CurrentPlatform = ({
 
                     <strong>
                         {
-                            applicableWeight != null
-                                ? `${applicableWeight} kg`
+                            platformApplicableWeight != null
+                                ? `${platformApplicableWeight} kg`
                                 : "-"
                         }
                     </strong>
@@ -352,8 +534,8 @@ const CurrentPlatform = ({
 
                     <strong>
                         {
-                            authoritativeDeclaredWeight != null
-                                ? `${authoritativeDeclaredWeight} kg`
+                            platformDeclaredWeight != null
+                                ? `${platformDeclaredWeight} kg`
                                 : "-"
                         }
                     </strong>
@@ -365,143 +547,167 @@ const CurrentPlatform = ({
 
             {/* =================================
                 DECLARATION
+                =================================
+                
+                IMPORTANT:
+
+                This editor belongs to the
+                backend calling current.
+
+                It does NOT edit the physical
+                platform athlete unless they are
+                the same athlete.
             ================================= */}
 
-            <div
-                className="current-platform-declaration"
-            >
+            {currentAthlete && (
 
                 <div
-                    className="current-platform-declaration-label"
-                >
-
-                    <label
-                        htmlFor="current-platform-declared-weight"
-                    >
-                        DECLARATION
-                    </label>
-
-
-                    <span>
-                        {
-                            declarationLocked
-                                ? "PHASE LOCKED"
-                                : `Edit ${formatPhase(
-                                    attemptPhase
-                                )} attempt ${attemptNo ?? "-"}`
-                        }
-                    </span>
-
-                </div>
-
-
-                <div
-                    className="current-platform-declaration-controls"
+                    className="current-platform-declaration"
                 >
 
                     <div
-                        className="current-platform-input-wrapper"
+                        className="current-platform-declaration-label"
                     >
 
-                        <input
-
-                            id="current-platform-declared-weight"
-
-                            type="number"
-
-                            min="1"
-
-                            step="1"
-
-                            value={
-                                editableDeclaredWeight
-                            }
-
-                            onChange={(event) => {
-
-                                if (
-                                    typeof setDeclaredWeight !==
-                                    "function"
-                                ) {
-
-                                    return;
-
-                                }
-
-
-                                setDeclaredWeight(
-                                    event.target.value
-                                );
-
-                            }}
-
-                            disabled={
-                                declarationLocked ||
-                                savingDeclaration ||
-                                processingLift
-                            }
-
-                            aria-label="Declared weight in kilograms"
-
-                        />
+                        <label
+                            htmlFor="current-platform-declared-weight"
+                        >
+                            DECLARATION
+                        </label>
 
 
                         <span>
-                            kg
+                            {
+                                declarationLocked
+                                    ? "PHASE LOCKED"
+                                    : `Edit ${formatPhase(
+                                        currentAthleteAttemptPhase
+                                    )} attempt ${
+                                        currentAthleteAttemptNo ??
+                                        "-"
+                                    }`
+                            }
                         </span>
 
                     </div>
 
 
-                    <button
-
-                        type="button"
-
-                        className="current-platform-save"
-
-                        onClick={
-                            handleSaveDeclaration
-                        }
-
-                        disabled={
-                            declarationLocked ||
-                            savingDeclaration ||
-                            processingLift ||
-                            !editableDeclaredWeight
-                        }
-
+                    <div
+                        className="current-platform-declaration-controls"
                     >
 
-                        {
-                            savingDeclaration
-                                ? "SAVING..."
-                                : "SAVE"
-                        }
+                        <div
+                            className="current-platform-input-wrapper"
+                        >
 
-                    </button>
+                            <input
+
+                                id="current-platform-declared-weight"
+
+                                type="number"
+
+                                min="1"
+
+                                step="1"
+
+                                value={
+                                    editableDeclaredWeight
+                                }
+
+                                onChange={(event) => {
+
+                                    if (
+                                        typeof setDeclaredWeight !==
+                                        "function"
+                                    ) {
+
+                                        return;
+
+                                    }
+
+
+                                    setDeclaredWeight(
+                                        event.target.value
+                                    );
+
+                                }}
+
+                                disabled={
+                                    declarationLocked ||
+                                    savingDeclaration ||
+                                    processingLift
+                                }
+
+                                aria-label="Declared weight in kilograms"
+
+                            />
+
+
+                            <span>
+                                kg
+                            </span>
+
+                        </div>
+
+
+                        <button
+
+                            type="button"
+
+                            className="current-platform-save"
+
+                            onClick={
+                                handleSaveDeclaration
+                            }
+
+                            disabled={
+                                declarationLocked ||
+                                savingDeclaration ||
+                                processingLift ||
+                                !editableDeclaredWeight
+                            }
+
+                        >
+
+                            {
+                                savingDeclaration
+                                    ? "SAVING..."
+                                    : "SAVE"
+                            }
+
+                        </button>
+
+                    </div>
+
+
+                    <small>
+                        {
+                            declarationLocked
+
+                                ? `Declaration is locked because the current attempt is outside the ${formatPhase(
+                                    currentPhase
+                                )} phase.`
+
+                                : `Declared weight for ${formatPhase(
+                                    currentAthleteAttemptPhase
+                                )} attempt ${
+                                    currentAthleteAttemptNo ??
+                                    "-"
+                                }.`
+                        }
+                    </small>
 
                 </div>
 
-
-                <small>
-                    {
-                        declarationLocked
-
-                            ? `Declaration is locked because the current attempt is outside the ${formatPhase(
-                                currentPhase
-                            )} phase.`
-
-                            : `Declared weight for ${formatPhase(
-                                attemptPhase
-                            )} attempt ${attemptNo ?? "-"}.`
-                    }
-                </small>
-
-            </div>
+            )}
 
 
             {/* =================================
                 LIFT DECISION
+                =================================
+
+                GOOD / NO LIFT belongs to the
+                PHYSICAL PLATFORM ATHLETE.
             ================================= */}
 
             <div
@@ -564,6 +770,44 @@ const CurrentPlatform = ({
                 </button>
 
             </div>
+
+
+            {/* =================================
+                STATE DIFFERENCE NOTICE
+            ================================= */}
+
+            {currentAthlete &&
+                currentAthlete.entryId !==
+                platformAthlete.entryId && (
+
+                <div
+                    className="current-platform-empty"
+                >
+
+                    Calling priority has changed.
+                    <br />
+
+                    <strong>
+                        Current Call:
+                    </strong>{" "}
+                    {
+                        currentAthlete.name ??
+                        "-"
+                    }
+
+                    <br />
+
+                    <strong>
+                        On Platform:
+                    </strong>{" "}
+                    {
+                        platformAthlete.name ??
+                        "-"
+                    }
+
+                </div>
+
+            )}
 
         </section>
 

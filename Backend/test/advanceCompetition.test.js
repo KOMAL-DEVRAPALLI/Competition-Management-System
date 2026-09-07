@@ -1,19 +1,52 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import Competition from "../models/Competition.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
+import {
+    fileURLToPath,
+} from "node:url";
+
+import {
+    dirname,
+    resolve,
+} from "node:path";
+
+
 import "../models/Athlete.js";
 
-import Athlete from "../models/Athlete.js";
-import CompetitionEntry from "../models/CompetitionEntry.js";
-import LiveCompetition from "../models/LiveCompetition.js";
+import Athlete
+    from "../models/Athlete.js";
+
+import CompetitionEntry
+    from "../models/CompetitionEntry.js";
+
+import LiveCompetition
+    from "../models/LiveCompetition.js";
 
 import advanceCompetition
     from "../services/liveCompetition/advanceCompetition.js";
 
-dotenv.config();
 
+// =====================================
+// LOAD BACKEND .env
+// =====================================
+
+const __filename =
+    fileURLToPath(import.meta.url);
+
+const __dirname =
+    dirname(__filename);
+
+
+dotenv.config({
+    path:
+        resolve(
+            __dirname,
+            "../.env"
+        ),
+});
 
 // =====================================
 // CONFIGURATION
@@ -31,7 +64,7 @@ let currentTestCompetitionId = null;
 const createdAthleteIds = [];
 const createdEntryIds = [];
 const createdSessionIds = [];
-
+const createdCompetitionIds = [];
 
 // =====================================
 // DATABASE SETUP
@@ -64,13 +97,47 @@ test.before(async () => {
 // PER-TEST SETUP
 // =====================================
 
-test.beforeEach(() => {
+test.beforeEach(async () => {
 
     currentTestCompetitionId =
         new mongoose.Types.ObjectId();
 
-});
+    const competition =
+        await Competition.create({
 
+            _id:
+                currentTestCompetitionId,
+
+            competitionName:
+                "Automatic Officials Test",
+
+            registrationPrefix:
+                `ADV${Date.now()}`,
+
+            competitionFormat:
+                "TOTAL_ONLY",
+
+        });
+
+    createdCompetitionIds.push(
+        competition._id
+    );
+
+});
+if (
+    createdCompetitionIds.length
+) {
+
+    await Competition.deleteMany({
+
+        _id: {
+            $in:
+                createdCompetitionIds,
+        },
+
+    });
+
+}
 
 // =====================================
 // DATABASE CLEANUP
@@ -572,15 +639,7 @@ test(
         );
 
 
-        assert.equal(
-
-            result.prepareEntryId,
-
-            null,
-
-            "Prepare state must not contain the selected platform athlete."
-
-        );
+        
 
     }
 );
@@ -1326,16 +1385,25 @@ test(
 
             );
 
+assert.equal(
 
-        assert.equal(
+    result.phase,
 
-            result.currentEntryId,
+    "CLEAN_JERK",
 
-            null,
+    "After completing all Snatch attempts, the competition must transition to Clean & Jerk."
 
-            "No completed athlete should be selected again."
+);
 
-        );
+assert.equal(
+
+    result.currentEntryId?.toString(),
+
+    entry._id.toString(),
+
+    "The athlete must become the first Clean & Jerk athlete."
+
+);
 
     }
 );

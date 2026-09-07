@@ -1,4 +1,7 @@
+import "./LiveScoreHeader.css"
+
 const LiveScoreHeader = ({
+    competitionName,
     competitionId,
     status,
     currentPhase,
@@ -20,7 +23,8 @@ const LiveScoreHeader = ({
 
                 <p>
                     Competition:{" "}
-                    {competitionId}
+                    {competitionName ||
+                        "Competition"}
                 </p>
 
             </div>

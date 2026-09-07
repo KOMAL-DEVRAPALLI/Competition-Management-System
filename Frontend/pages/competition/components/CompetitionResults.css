@@ -239,6 +239,98 @@
 
 
 /* =====================================
+   CURRENT ATHLETE BADGE
+===================================== */
+
+.scoreboard-current-badge {
+    display: inline-block;
+
+    margin-left: 8px;
+
+    padding: 3px 7px;
+
+    border-radius: 5px;
+
+    background: #122f52;
+
+    color: #ffffff !important;
+
+    font-size: 9px;
+    font-weight: 900;
+
+    letter-spacing: 0.05em;
+
+    vertical-align: middle;
+}
+
+
+/* =====================================
+   NEXT ATHLETE
+===================================== */
+
+.scoreboard-next-row td {
+    background: #e0f2fe;
+
+    color: #075985;
+
+    font-weight: 800;
+}
+
+
+.scoreboard-next-row td strong {
+    color: #075985;
+}
+
+
+.scoreboard-next-row:hover td {
+    background: #bae6fd;
+}
+
+
+/* =====================================
+   NEXT ATHLETE INDICATOR
+===================================== */
+
+.scoreboard-next-row td:first-child {
+    position: relative;
+
+    border-left: 4px solid #0284c7;
+}
+
+
+.scoreboard-next-row td:nth-child(2),
+.scoreboard-next-row td:nth-child(2) strong {
+    color: #075985;
+}
+
+
+/* =====================================
+   NEXT ATHLETE BADGE
+===================================== */
+
+.scoreboard-next-badge {
+    display: inline-block;
+
+    margin-left: 8px;
+
+    padding: 3px 7px;
+
+    border-radius: 5px;
+
+    background: #0284c7;
+
+    color: #ffffff !important;
+
+    font-size: 9px;
+    font-weight: 900;
+
+    letter-spacing: 0.05em;
+
+    vertical-align: middle;
+}
+
+
+/* =====================================
    COMPLETED ATHLETE
 ===================================== */
 
@@ -251,6 +343,21 @@
 
 .scoreboard-completed-row td strong {
     color: #475467;
+}
+
+
+/* =====================================
+   GOOD LIFT
+===================================== */
+
+.attempt-good {
+    display: inline-block;
+
+    color: #15803d;
+
+    font-weight: 900;
+
+    white-space: nowrap;
 }
 
 
@@ -271,6 +378,41 @@
 
 
 /* =====================================
+   COMPLETED ATTEMPT CELL ACTION
+===================================== */
+
+.scoreboard-attempt-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 42px;
+
+    padding: 4px 6px;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: transparent;
+
+    font: inherit;
+
+    cursor: pointer;
+}
+
+
+.scoreboard-attempt-button:hover {
+    background: #eef2f6;
+}
+
+
+.scoreboard-attempt-button:focus-visible {
+    outline: 2px solid #122f52;
+    outline-offset: 1px;
+}
+
+
+/* =====================================
    DECLARATION COLUMN
 ===================================== */
 
@@ -281,7 +423,29 @@
 
 
 /* =====================================
-   DECLARATION EDITOR
+   ACTION CELL
+===================================== */
+
+.scoreboard-action-cell {
+    vertical-align: middle;
+}
+
+
+.scoreboard-action-cell-editing {
+    min-width: 250px;
+}
+
+
+.scoreboard-action-empty {
+    color: #98a2b3;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* =====================================
+   PENDING DECLARATION EDITOR
 ===================================== */
 
 .scoreboard-declaration-editor {
@@ -360,7 +524,9 @@
 }
 
 
-/* Remove number spinners */
+/* =====================================
+   REMOVE NUMBER SPINNERS
+===================================== */
 
 .scoreboard-declaration-input-wrapper
 input::-webkit-outer-spin-button,
@@ -370,9 +536,6 @@ input::-webkit-inner-spin-button {
 
     -webkit-appearance: none;
 }
-
-
-
 
 
 /* =====================================
@@ -434,6 +597,328 @@ input::-webkit-inner-spin-button {
 }
 
 
+.scoreboard-declaration-cancel {
+    background: #667085 !important;
+}
+
+
+.scoreboard-declaration-cancel:hover:not(:disabled) {
+    background: #475467 !important;
+}
+
+
+/* =====================================
+   COMPLETED ATTEMPT ACTION PANEL
+===================================== */
+
+.scoreboard-attempt-panel-backdrop {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+    justify-content: flex-end;
+
+    background: rgba(15, 23, 42, 0.35);
+}
+
+
+.scoreboard-attempt-panel {
+    width: min(420px, 92vw);
+    height: 100%;
+
+    box-sizing: border-box;
+
+    padding: 22px;
+
+    overflow-y: auto;
+
+    background: #ffffff;
+
+    color: #172033;
+
+    box-shadow: -8px 0 24px rgba(15, 23, 42, 0.16);
+}
+
+
+.scoreboard-attempt-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid #e5e8ed;
+}
+
+
+.scoreboard-attempt-panel-eyebrow {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #687386;
+
+    font-size: 10px;
+    font-weight: 900;
+
+    letter-spacing: 0.08em;
+}
+
+
+.scoreboard-attempt-panel h3 {
+    margin: 0 0 5px;
+
+    color: #172033;
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+
+.scoreboard-attempt-panel-meta {
+    color: #667085;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.scoreboard-attempt-panel-close {
+    width: 34px;
+    height: 34px;
+
+    flex: 0 0 auto;
+
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #344054;
+
+    font-size: 22px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+
+.scoreboard-attempt-panel-close:hover:not(:disabled) {
+    background: #f2f4f7;
+}
+
+
+.scoreboard-attempt-panel-close:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================
+   ATTEMPT SUMMARY
+===================================== */
+
+.scoreboard-attempt-panel-summary {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 18px;
+}
+
+
+.scoreboard-attempt-panel-summary > div {
+    box-sizing: border-box;
+
+    padding: 12px;
+
+    border: 1px solid #e1e5eb;
+    border-radius: 7px;
+
+    background: #f8fafc;
+}
+
+
+.scoreboard-attempt-panel-summary span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #687386;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+
+.scoreboard-attempt-panel-summary strong {
+    color: #172033;
+
+    font-size: 16px;
+    font-weight: 850;
+}
+
+
+/* =====================================
+   PANEL ACTIONS
+===================================== */
+
+.scoreboard-attempt-panel-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+
+    margin-top: 20px;
+}
+
+
+/* =====================================
+   CORRECTION ACTION BUTTONS
+===================================== */
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-primary-action,
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-result-action {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+
+    border-radius: 7px;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
+}
+
+
+/* =====================================
+   CORRECT WEIGHT
+===================================== */
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-primary-action {
+    border: 1px solid #122f52;
+
+    background: #122f52;
+    color: #ffffff;
+}
+
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-primary-action:hover:not(:disabled) {
+    background: #0d243f;
+    border-color: #0d243f;
+}
+
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-primary-action:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+
+/* =====================================
+   CORRECT RESULT
+===================================== */
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-result-action {
+    border: 1px solid #cbd5e1;
+
+    background: #ffffff;
+    color: #122f52;
+}
+
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-result-action:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #122f52;
+}
+
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-result-action:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+
+/* =====================================
+   DISABLED
+===================================== */
+
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-primary-action:disabled,
+.scoreboard-attempt-panel-actions
+.scoreboard-attempt-result-action:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+.scoreboard-attempt-panel .scoreboard-declaration-editor {
+    justify-content: flex-start;
+
+    flex-wrap: wrap;
+
+    padding: 12px;
+
+    border: 1px solid #dfe3e9;
+    border-radius: 7px;
+
+    background: #f8fafc;
+}
+
+
+.scoreboard-attempt-panel .scoreboard-declaration-editor button {
+    flex: 0 0 auto;
+}
+
+
+/* =====================================
+   PANEL NOTE
+===================================== */
+
+.scoreboard-attempt-panel-note {
+    margin: 18px 0 0;
+
+    padding-top: 14px;
+
+    border-top: 1px solid #e5e8ed;
+
+    color: #667085;
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
 /* =====================================
    NO DECLARATION
 ===================================== */
@@ -463,6 +948,128 @@ input::-webkit-inner-spin-button {
 
 
 /* =====================================
+   ELIMINATED ATHLETE
+===================================== */
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row {
+    position: relative;
+
+    background: #fff1f2;
+
+    color: #7f1d1d;
+}
+
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row td {
+    position: relative;
+
+    background: #fff1f2;
+
+    color: #7f1d1d;
+}
+
+
+/* =====================================
+   RED STRIKE-THROUGH
+===================================== */
+
+/*
+ * The line is applied to every table cell
+ * instead of tr::after because pseudo-elements
+ * on table rows are not reliably rendered.
+ */
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row td::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+
+    top: 50%;
+
+    height: 3px;
+
+    background: #dc2626;
+
+    transform: translateY(-50%);
+
+    pointer-events: none;
+
+    z-index: 10;
+}
+
+
+/* Keep important eliminated text visible */
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row td strong {
+    color: #991b1b;
+}
+
+
+/* =====================================
+   ELIMINATED BADGE
+===================================== */
+
+.scoreboard-eliminated-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    margin-left: 10px;
+
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    background: #dc2626;
+
+    color: #ffffff !important;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.04em;
+
+    vertical-align: middle;
+}
+
+
+/* =====================================
+   ELIMINATION REASON
+===================================== */
+
+.scoreboard-elimination-reason {
+    margin-top: 5px;
+
+    color: #b91c1c;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.02em;
+}
+
+
+/* =====================================
+   ATHLETE NAME WRAPPER
+===================================== */
+
+.scoreboard-athlete-name {
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 4px;
+}
+
+
+/* =====================================
    RESPONSIVE
 ===================================== */
 
@@ -470,6 +1077,22 @@ input::-webkit-inner-spin-button {
 
     .scoreboard-table {
         min-width: 1050px;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .scoreboard-attempt-panel {
+        width: 100vw;
+
+        padding: 18px;
+    }
+
+
+    .scoreboard-attempt-panel-summary {
+        grid-template-columns: 1fr;
     }
 
 }

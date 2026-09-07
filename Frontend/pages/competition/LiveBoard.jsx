@@ -6,7 +6,10 @@ import React, {
 
 import { useParams } from "react-router-dom";
 
-import { apiRequest } from "../../api/axios";
+import {
+    apiRequest,
+    getCompetitionById,
+} from "../../api/axios";
 
 import "./LiveScoreBoard.css";
 
@@ -55,6 +58,10 @@ const LiveScoreBoard = () => {
     // =====================================
 
     const [liveCompetition, setLiveCompetition] =
+        useState(null);
+
+
+    const [competition, setCompetition] =
         useState(null);
 
 
@@ -170,6 +177,26 @@ const LiveScoreBoard = () => {
         }
 
 
+        getCompetitionById(
+            competitionId
+        )
+            .then((response) => {
+
+                setCompetition(
+                    response.data
+                );
+
+            })
+            .catch((error) => {
+
+                console.error(
+                    "Failed to load competition:",
+                    error
+                );
+
+            });
+
+
         loadScoreBoard();
         loadQueueState();
 
@@ -276,7 +303,7 @@ const LiveScoreBoard = () => {
         if (
             currentAthleteId &&
             currentAthleteId !==
-                previousCurrentAthleteIdRef.current
+            previousCurrentAthleteIdRef.current
         ) {
 
             requestAnimationFrame(() => {
@@ -301,6 +328,12 @@ const LiveScoreBoard = () => {
     }, [
         currentAthlete?.entryId,
     ]);
+
+
+    const competitionName =
+        competition?.competitionName ||
+        competition?.name ||
+        "Competition";
 
 
     // =====================================
@@ -444,15 +477,15 @@ const LiveScoreBoard = () => {
         return (
 
             athlete.entryId?.toString() ===
-                currentAthlete.entryId?.toString() &&
+            currentAthlete.entryId?.toString() &&
 
             currentAthlete.phase ===
-                phase &&
+            phase &&
 
             Number(
                 currentAthlete.attemptNo
             ) ===
-                Number(attemptNo)
+            Number(attemptNo)
 
         );
 
@@ -590,8 +623,12 @@ const LiveScoreBoard = () => {
 
                 <h1 className="competition-title">
 
-                    SDWA DISTRICT WEIGHTLIFTING
-                    CHAMPIONSHIP
+                    {competitionName} — {
+                        String(gender).toLowerCase() ===
+                        "female"
+                            ? "Women's Live Scoreboard"
+                            : "Men's Live Scoreboard"
+                    }
 
                 </h1>
 
@@ -667,6 +704,10 @@ const LiveScoreBoard = () => {
 
                             <col className="col-athlete" />
 
+                            {/* AGE CATEGORY */}
+
+                            <col className="col-age" />
+
                             <col className="col-attempt" />
                             <col className="col-attempt" />
                             <col className="col-attempt" />
@@ -698,6 +739,10 @@ const LiveScoreBoard = () => {
 
                                 <th rowSpan="2">
                                     Athlete
+                                </th>
+
+                                <th rowSpan="2">
+                                    Age
                                 </th>
 
                                 <th colSpan="4">
@@ -786,7 +831,7 @@ const LiveScoreBoard = () => {
                                             <tr className="category-row">
 
                                                 <td
-                                                    colSpan="12"
+                                                    colSpan="13"
                                                 >
 
                                                     <div className="category-header">
@@ -840,7 +885,7 @@ const LiveScoreBoard = () => {
                                                                 athleteId &&
                                                                 currentId &&
                                                                 athleteId ===
-                                                                    currentId
+                                                                currentId
                                                             );
 
 
@@ -849,8 +894,14 @@ const LiveScoreBoard = () => {
                                                                 athleteId &&
                                                                 nextId &&
                                                                 athleteId ===
-                                                                    nextId
+                                                                nextId
                                                             );
+
+
+                                                        const isEliminated =
+                                                            athlete.eliminated === true ||
+                                                            athlete.status ===
+                                                                "ELIMINATED";
 
 
                                                         return (
@@ -867,11 +918,13 @@ const LiveScoreBoard = () => {
                                                                 }
 
                                                                 className={
-                                                                    isCurrent
-                                                                        ? "current-athlete-row"
-                                                                        : isNext
-                                                                        ? "next-athlete-row"
-                                                                        : ""
+                                                                    isEliminated
+                                                                        ? "eliminated-athlete-row"
+                                                                        : isCurrent
+                                                                            ? "current-athlete-row"
+                                                                            : isNext
+                                                                                ? "next-athlete-row"
+                                                                                : ""
                                                                 }
                                                             >
 
@@ -898,6 +951,20 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         athlete.name
+                                                                    }
+
+                                                                </td>
+
+
+                                                                {/* AGE CATEGORY */}
+
+                                                                <td
+                                                                    className="athlete-age"
+                                                                >
+
+                                                                    {
+                                                                        athlete.ageCategory ||
+                                                                        "-"
                                                                     }
 
                                                                 </td>
@@ -975,7 +1042,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         athlete.bestSnatch >
-                                                                        0
+                                                                            0
                                                                             ? athlete.bestSnatch
                                                                             : "-"
                                                                     }
@@ -1055,7 +1122,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         athlete.bestCleanJerk >
-                                                                        0
+                                                                            0
                                                                             ? athlete.bestCleanJerk
                                                                             : "-"
                                                                     }
@@ -1069,7 +1136,7 @@ const LiveScoreBoard = () => {
 
                                                                     {
                                                                         athlete.total >
-                                                                        0
+                                                                            0
                                                                             ? athlete.total
                                                                             : "-"
                                                                     }
@@ -1113,7 +1180,7 @@ const LiveScoreBoard = () => {
                                     <tr>
 
                                         <td
-                                            colSpan="12"
+                                            colSpan="13"
                                         >
 
                                             No athlete data

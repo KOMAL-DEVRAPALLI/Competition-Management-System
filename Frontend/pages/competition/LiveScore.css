@@ -1,191 +1,470 @@
 /* =========================================================
-   LIVE SCORE PAGE
-========================================================= */
+   OFFICIALS CONTROL SCREEN
+   ========================================================= */
 
-.live-score-page {
+.officials-control-shell {
     width: 100%;
-    min-height: 100vh;
-
     box-sizing: border-box;
-
-    padding: 14px 18px 24px;
-
-    background: #081a33;
-    color: #ffffff;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
 }
 
 
 /* =========================================================
-   LOADING
-========================================================= */
+   NEXT ATTEMPT / JUST COMPLETED PANEL
+   ========================================================= */
 
-.live-score-loading {
-    min-height: 100vh;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
+.officials-control-just-completed {
+    width: 100%;
     box-sizing: border-box;
 
-    padding: 20px;
+    margin-top: 16px;
+    padding: 18px;
 
-    text-align: center;
-}
+    border: 1px solid rgba(96, 165, 250, 0.55);
+    border-radius: 12px;
 
-
-.live-score-loading h2 {
-    margin: 0;
+    background:
+        linear-gradient(
+            145deg,
+            #0d2a50 0%,
+            #0a2242 100%
+        );
 
     color: #ffffff;
 
-    font-size: 24px;
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+
+/* =========================================================
+   NEXT ATTEMPT HEADER
+   ========================================================= */
+
+.officials-control-just-completed h3 {
+    margin: 0;
+
+    color: #bfdbfe;
+
+    font-size: 14px;
+    line-height: 1.3;
+    font-weight: 800;
+
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   COMPLETED ATHLETE INFORMATION
+   ========================================================= */
+
+.completed-athlete-info {
+    width: 100%;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 11px 14px;
+
+    border: 1px solid #1e4675;
+    border-radius: 8px;
+
+    background: #081a33;
+}
+
+
+.completed-athlete-info .athlete-name {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #ffffff;
+
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 800;
+}
+
+
+.completed-athlete-info .athlete-lot {
+    flex-shrink: 0;
+
+    color: #93c5fd;
+
+    font-size: 12px;
+    line-height: 1.3;
+    font-weight: 800;
+
+    letter-spacing: 0.03em;
+}
+
+
+/* =========================================================
+   NEXT ATTEMPT DETAILS
+   ========================================================= */
+
+.next-attempt-details {
+    width: 100%;
+    box-sizing: border-box;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+}
+
+
+.next-attempt-detail {
+    min-width: 0;
+    box-sizing: border-box;
+
+    padding: 11px 13px;
+
+    border: 1px solid #1e4675;
+    border-radius: 8px;
+
+    background: #081a33;
+
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+
+.next-attempt-detail:hover {
+    border-color: #315f91;
+    background: #0a1f3b;
+}
+
+
+.next-attempt-detail-label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 800;
+
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+
+.next-attempt-detail-value {
+    display: block;
+
+    color: #ffffff;
+
+    font-size: 18px;
+    line-height: 1.25;
     font-weight: 800;
 }
 
 
 /* =========================================================
-   STATUS MESSAGE
-========================================================= */
+   NEXT ATTEMPT DECLARATION FORM
+   ========================================================= */
 
-.lift-status {
+.next-attempt-declaration {
     width: 100%;
-
     box-sizing: border-box;
 
-    margin: 0 0 10px;
-
-    padding: 9px 14px;
-
-    border-radius: 7px;
-
-    font-size: 13px;
-    font-weight: 700;
-
-    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 
-.lift-status-success {
-    background: #dcfce7;
+.next-attempt-declaration label {
+    color: #cbd5e1;
 
-    color: #166534;
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 800;
 
-    border: 1px solid #86efac;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
 }
 
 
-.lift-status-error {
-    background: #fee2e2;
+.next-attempt-declaration input {
+    width: 100%;
+    box-sizing: border-box;
 
-    color: #991b1b;
+    min-height: 46px;
 
-    border: 1px solid #fca5a5;
+    padding: 9px 13px;
+
+    border: 1px solid #64748b;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #111827;
+
+    font-size: 18px;
+    line-height: 1.2;
+    font-weight: 800;
+
+    outline: none;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+
+.next-attempt-declaration input:hover:not(:disabled) {
+    border-color: #94a3b8;
+}
+
+
+.next-attempt-declaration input:focus {
+    border-color: #60a5fa;
+
+    box-shadow:
+        0 0 0 3px rgba(96, 165, 250, 0.18);
+}
+
+
+.next-attempt-declaration input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 
 /* =========================================================
-   START COMPETITION
-========================================================= */
+   SAVE NEXT ATTEMPT BUTTON
+   ========================================================= */
 
-.live-score-start {
+.next-attempt-declaration button {
     width: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
     box-sizing: border-box;
 
-    margin-bottom: 14px;
-}
+    min-height: 44px;
 
+    margin-top: 2px;
+    padding: 9px 14px;
 
-.live-score-start button {
-    min-width: 210px;
-
-    padding: 11px 20px;
-
-    border: none;
-    border-radius: 7px;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
 
     background: #2563eb;
     color: #ffffff;
 
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.2;
     font-weight: 800;
 
     cursor: pointer;
 
+    box-shadow:
+        0 2px 5px rgba(0, 0, 0, 0.15);
+
     transition:
         background 0.15s ease,
-        transform 0.15s ease;
+        border-color 0.15s ease,
+        transform 0.1s ease,
+        box-shadow 0.15s ease,
+        opacity 0.15s ease;
 }
 
 
-.live-score-start button:hover:not(:disabled) {
+.next-attempt-declaration button:hover:not(:disabled) {
     background: #1d4ed8;
+    border-color: #60a5fa;
 
-    transform: translateY(-1px);
+    box-shadow:
+        0 4px 9px rgba(0, 0, 0, 0.18);
 }
 
 
-.live-score-start button:disabled {
-    opacity: 0.6;
+.next-attempt-declaration button:active:not(:disabled) {
+    transform: translateY(1px);
 
+    box-shadow:
+        0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+
+.next-attempt-declaration button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+
+.next-attempt-declaration button:disabled {
+    opacity: 0.55;
     cursor: not-allowed;
-
-    transform: none;
 }
 
 
 /* =========================================================
-   DESKTOP DENSITY
-========================================================= */
+   NEXT ATHLETE
+   ========================================================= */
 
-@media (min-width: 1400px) {
+.next-athlete-card {
+    box-sizing: border-box;
 
-    .live-score-page {
-        padding: 12px 18px 22px;
-    }
+    border: 1px solid rgba(37, 99, 235, 0.75);
+    border-radius: 9px;
 
+    background:
+        linear-gradient(
+            135deg,
+            #0d2a50 0%,
+            #0b2446 100%
+        );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+
+.next-athlete-card .next-athlete-name {
+    color: #60a5fa;
+
+    font-weight: 800;
 }
 
 
 /* =========================================================
-   LARGE LAPTOP / DESKTOP
-========================================================= */
+   UPCOMING ATHLETES
+   ========================================================= */
 
-@media (max-width: 1200px) {
+.upcoming-athletes-list {
+    width: 100%;
+    box-sizing: border-box;
 
-    .live-score-page {
-        padding: 12px 14px 20px;
-    }
+    display: flex;
+    flex-direction: column;
 
+    gap: 6px;
+}
+
+
+.upcoming-athlete-row {
+    width: 100%;
+    box-sizing: border-box;
+
+    display: grid;
+
+    grid-template-columns:
+        48px
+        minmax(0, 1fr)
+        80px;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 38px;
+
+    padding: 8px 11px;
+
+    border: 1px solid #1e3a5f;
+    border-radius: 7px;
+
+    background: #0d2a50;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+.upcoming-athlete-row:hover {
+    background: #10335e;
+    border-color: #315f91;
+}
+
+
+.upcoming-athlete-lot {
+    color: #60a5fa;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+.upcoming-athlete-name {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+.upcoming-athlete-weight {
+    text-align: right;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+    font-weight: 800;
 }
 
 
 /* =========================================================
-   TABLET
-========================================================= */
+   SMALL DESKTOP / TABLET
+   ========================================================= */
 
-@media (max-width: 1000px) {
+@media (max-width: 700px) {
 
-    .live-score-page {
-        padding: 12px;
+    .officials-control-just-completed {
+        padding: 14px;
+        margin-top: 12px;
+        border-radius: 10px;
     }
 
-    .lift-status {
-        margin-bottom: 9px;
 
-        padding: 8px 12px;
+    .next-attempt-details {
+        grid-template-columns: 1fr;
+    }
 
-        font-size: 12px;
+
+    .completed-athlete-info {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+
+    .completed-athlete-info .athlete-name {
+        white-space: normal;
+    }
+
+
+    .upcoming-athlete-row {
+        grid-template-columns:
+            42px
+            minmax(0, 1fr)
+            68px;
+
+        gap: 8px;
+        padding: 8px 9px;
     }
 
 }
@@ -193,33 +472,283 @@
 
 /* =========================================================
    MOBILE
-========================================================= */
+   ========================================================= */
 
-@media (max-width: 650px) {
+@media (max-width: 450px) {
 
-    .live-score-page {
-        padding: 8px;
+    .officials-control-just-completed {
+        padding: 12px;
+        border-radius: 9px;
+        gap: 12px;
     }
 
-    .lift-status {
-        margin-bottom: 8px;
 
-        padding: 8px 10px;
+    .officials-control-just-completed h3 {
+        font-size: 13px;
+    }
 
+
+    .completed-athlete-info {
+        padding: 10px 11px;
+    }
+
+
+    .completed-athlete-info .athlete-name {
+        font-size: 15px;
+    }
+
+
+    .completed-athlete-info .athlete-lot {
         font-size: 11px;
     }
 
-    .live-score-start {
-        margin-bottom: 10px;
+
+    .next-attempt-detail {
+        padding: 10px 11px;
     }
 
-    .live-score-start button {
-        width: 100%;
-        min-width: 0;
 
-        padding: 10px 16px;
+    .next-attempt-detail-value {
+        font-size: 17px;
+    }
 
-        font-size: 13px;
+
+    .next-attempt-declaration input {
+        min-height: 44px;
+        font-size: 17px;
+    }
+
+
+    .next-attempt-declaration button {
+        min-height: 43px;
+    }
+
+
+    .upcoming-athlete-row {
+        grid-template-columns:
+            38px
+            minmax(0, 1fr)
+            62px;
+
+        gap: 7px;
+        padding: 7px 8px;
+    }
+
+
+    .upcoming-athlete-lot,
+    .upcoming-athlete-weight {
+        font-size: 12px;
+    }
+
+
+    .upcoming-athlete-name {
+        font-size: 12px;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL SCREENS
+   ========================================================= */
+
+@media (max-width: 340px) {
+
+    .officials-control-just-completed {
+        padding: 10px;
+    }
+
+
+    .next-attempt-details {
+        gap: 7px;
+    }
+
+
+    .next-attempt-declaration {
+        gap: 6px;
+    }
+
+
+    .upcoming-athlete-row {
+        grid-template-columns:
+            34px
+            minmax(0, 1fr)
+            56px;
+
+        gap: 5px;
+    }
+
+}
+/* =========================================================
+   FINAL RESULT PDF ACTIONS
+   ========================================================= */
+
+.live-score-final-result {
+    width: 100%;
+    box-sizing: border-box;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-top: 18px;
+    padding: 14px;
+
+    border: 1px solid #1e3a5f;
+    border-radius: 10px;
+
+    background: #081a33;
+
+    box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.14);
+}
+
+
+/* =========================================================
+   FINAL RESULT BUTTON
+   ========================================================= */
+
+.live-score-final-result button {
+    position: relative;
+
+    width: 100%;
+    min-height: 48px;
+
+    box-sizing: border-box;
+
+    padding: 11px 18px;
+
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+
+    background: linear-gradient(
+        135deg,
+        #2563eb 0%,
+        #1d4ed8 100%
+    );
+
+    color: #ffffff;
+
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 800;
+
+    letter-spacing: 0.01em;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 3px 7px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.1s ease,
+        opacity 0.15s ease;
+}
+
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.live-score-final-result button:hover:not(:disabled) {
+    background: linear-gradient(
+        135deg,
+        #3b82f6 0%,
+        #2563eb 100%
+    );
+
+    border-color: #60a5fa;
+
+    box-shadow:
+        0 5px 12px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(96, 165, 250, 0.12);
+}
+
+
+/* =========================================================
+   ACTIVE
+   ========================================================= */
+
+.live-score-final-result button:active:not(:disabled) {
+    transform: translateY(1px);
+
+    box-shadow:
+        0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   KEYBOARD FOCUS
+   ========================================================= */
+
+.live-score-final-result button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px rgba(96, 165, 250, 0.25),
+        0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   DISABLED / GENERATING
+   ========================================================= */
+
+.live-score-final-result button:disabled {
+    opacity: 0.58;
+
+    cursor: not-allowed;
+
+    box-shadow:
+        none;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .live-score-final-result {
+        grid-template-columns: 1fr;
+
+        gap: 9px;
+
+        margin-top: 14px;
+        padding: 11px;
+    }
+
+
+    .live-score-final-result button {
+        min-height: 46px;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL SCREENS
+   ========================================================= */
+
+@media (max-width: 400px) {
+
+    .live-score-final-result {
+        padding: 9px;
+    }
+
+
+    .live-score-final-result button {
+        min-height: 44px;
+
+        padding: 9px 12px;
+
+        font-size: 12px;
     }
 
 }

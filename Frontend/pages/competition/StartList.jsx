@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiRequest } from "../../api/axios";
+import {
+    apiRequest,
+    getCompetitionById,
+} from "../../api/axios";
 
 import "./StartList.css";
 
@@ -12,6 +15,7 @@ const StartList = () => {
     } = useParams();
 
     const [entries, setEntries] = useState([]);
+    const [competition, setCompetition] = useState(null);
     const [loading, setLoading] = useState(true);
 
 
@@ -68,26 +72,41 @@ const StartList = () => {
 
     useEffect(() => {
 
-        fetchEntries();
+        fetchCompetitionAndEntries();
 
     }, []);
 
 
-    const fetchEntries = async () => {
+    const fetchCompetitionAndEntries = async () => {
 
         try {
 
-            const response =
-                await apiRequest(
+            const [
+                competitionResponse,
+                entriesResponse,
+            ] = await Promise.all([
+
+                getCompetitionById(
+                    competitionId
+                ),
+
+                apiRequest(
                     `/working-sheet/data/` +
                     `${competitionId}/` +
                     `${sessionGender}`,
                     "GET"
-                );
+                ),
+
+            ]);
+
+
+            setCompetition(
+                competitionResponse.data
+            );
 
 
             setEntries(
-                response.data
+                entriesResponse.data
             );
 
         } catch (error) {
@@ -113,35 +132,44 @@ const StartList = () => {
 
     }
 
-const openWorkingSheet = (
-    gender,
-    ageCategory
-) => {
 
-    const url =
-        `${import.meta.env.VITE_API_URL}` +
-        `/working-sheet/` +
-        `${competitionId}/` +
-        `${gender}/` +
-        `${ageCategory}`;
+    const openWorkingSheet = (
+        gender,
+        ageCategory
+    ) => {
+
+        const url =
+            `${import.meta.env.VITE_API_URL}` +
+            `/working-sheet/` +
+            `${competitionId}/` +
+            `${gender}/` +
+            `${ageCategory}`;
 
 
-    console.log(
-        "OPEN WORKING SHEET:",
-        {
-            gender,
-            ageCategory,
+        console.log(
+            "OPEN WORKING SHEET:",
+            {
+                gender,
+                ageCategory,
+                url,
+            }
+        );
+
+
+        window.open(
             url,
-        }
-    );
+            "_blank"
+        );
+
+    };
 
 
-    window.open(
-        url,
-        "_blank"
-    );
+    const competitionName =
+        competition?.competitionName ||
+        competition?.name ||
+        "Competition";
 
-};
+
     return (
 
         <div className="start-list-page">
@@ -152,9 +180,11 @@ const openWorkingSheet = (
 
                     <h1 className="page-title">
 
-                        {sessionGender === "female"
-                            ? "Women's Start List"
-                            : "Men's Start List"}
+                        {competitionName} — {
+                            sessionGender === "female"
+                                ? "Women's Start List"
+                                : "Men's Start List"
+                        }
 
                     </h1>
 
@@ -170,60 +200,60 @@ const openWorkingSheet = (
             </div>
 
 
-          <div className="start-list-actions">
+            <div className="start-list-actions">
 
-    <button
-        className="pdf-btn"
-        onClick={() =>
-            openWorkingSheet(
-                "male",
-                "U17"
-            )
-        }
-    >
-        📄 Men U-17
-    </button>
-
-
-    <button
-        className="pdf-btn"
-        onClick={() =>
-            openWorkingSheet(
-                "female",
-                "U17"
-            )
-        }
-    >
-        📄 Women U-17
-    </button>
+                <button
+                    className="pdf-btn"
+                    onClick={() =>
+                        openWorkingSheet(
+                            "male",
+                            "U17"
+                        )
+                    }
+                >
+                    📄 Men U-17
+                </button>
 
 
-    <button
-        className="pdf-btn"
-        onClick={() =>
-            openWorkingSheet(
-                "male",
-                "U19"
-            )
-        }
-    >
-        📄 Men U-19
-    </button>
+                <button
+                    className="pdf-btn"
+                    onClick={() =>
+                        openWorkingSheet(
+                            "female",
+                            "U17"
+                        )
+                    }
+                >
+                    📄 Women U-17
+                </button>
 
 
-    <button
-        className="pdf-btn"
-        onClick={() =>
-            openWorkingSheet(
-                "female",
-                "U19"
-            )
-        }
-    >
-        📄 Women U-19
-    </button>
+                <button
+                    className="pdf-btn"
+                    onClick={() =>
+                        openWorkingSheet(
+                            "male",
+                            "U19"
+                        )
+                    }
+                >
+                    📄 Men U-19
+                </button>
 
-</div>
+
+                <button
+                    className="pdf-btn"
+                    onClick={() =>
+                        openWorkingSheet(
+                            "female",
+                            "U19"
+                        )
+                    }
+                >
+                    📄 Women U-19
+                </button>
+
+            </div>
 
 
             <div className="table-wrapper">

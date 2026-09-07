@@ -43,7 +43,17 @@ const formatAttempt = (attempt) => {
 
 const OfficialsControlShell = ({
 
+    // =====================================
+    // BACKEND-AUTHORITATIVE CALLING CURRENT
+    // =====================================
+
     currentAthlete,
+
+    // =====================================
+    // PHYSICAL PLATFORM ATHLETE
+    // =====================================
+
+    platformAthlete,
 
     currentPhase,
 
@@ -76,6 +86,8 @@ const OfficialsControlShell = ({
 
     justCompleted,
 
+    nextAttemptDeclaration,
+
     nextAttemptDeclaredWeight,
 
     setNextAttemptDeclaredWeight,
@@ -98,13 +110,6 @@ const OfficialsControlShell = ({
 
     // =====================================
     // COMPLETED ATTEMPT
-    //
-    // IMPORTANT:
-    //
-    // The backend returns:
-    //
-    // justCompleted.completedAttempt
-    //
     // =====================================
 
     const completedAttempt =
@@ -115,33 +120,26 @@ const OfficialsControlShell = ({
     // =====================================
     // COMPLETED ATHLETE'S NEXT ATTEMPT
     //
-    // IMPORTANT:
+    // Explicit declaration state is preferred.
     //
-    // processLift.js returns:
-    //
-    // justCompleted.nextAttempt
-    //
-    // NOT:
-    //
-    // justCompleted.completedAthleteNextAttempt
+    // Compatibility fallback remains available
+    // for existing justCompleted data.
     // =====================================
 
     const completedAthleteNextAttempt =
+        nextAttemptDeclaration ??
         justCompleted?.nextAttempt ??
         null;
 
 
     // =====================================
     // COMPLETED ATHLETE'S NEXT WEIGHT
-    //
-    // Prefer the authoritative nextAttemptState
-    // returned by processLift().
-    //
-    // Fall back to the next attempt's existing
-    // declaredWeight if necessary.
     // =====================================
 
     const completedAthleteNextAttemptWeight =
+        nextAttemptDeclaration?.weight ??
+        nextAttemptDeclaration?.declaredWeight ??
+        nextAttemptDeclaration?.applicableWeight ??
         justCompleted?.nextAttemptState?.weight ??
         completedAthleteNextAttempt?.declaredWeight ??
         null;
@@ -152,6 +150,7 @@ const OfficialsControlShell = ({
     // =====================================
 
     const completedAthleteLotNumber =
+        nextAttemptDeclaration?.lotNumber ??
         justCompleted?.athlete?.official?.lotNumber ??
         null;
 
@@ -162,17 +161,13 @@ const OfficialsControlShell = ({
 
     const hasNextAttempt =
         Boolean(
+            nextAttemptDeclaration ??
             completedAthleteNextAttempt
         );
 
 
     // =====================================
     // CONTROLLED ALLOCATION VALUE
-    //
-    // The parent controls the editing value.
-    //
-    // If no local value has been initialized,
-    // use the authoritative backend value.
     // =====================================
 
     const allocationWeight =
@@ -197,7 +192,7 @@ const OfficialsControlShell = ({
 
 
                 {/* =================================
-                    CURRENT PLATFORM
+                    CURRENT PLATFORM / CALLING STATE
                 ================================= */}
 
                 <div
@@ -208,6 +203,10 @@ const OfficialsControlShell = ({
 
                         currentAthlete={
                             currentAthlete
+                        }
+
+                        platformAthlete={
+                            platformAthlete
                         }
 
                         currentPhase={
@@ -244,27 +243,27 @@ const OfficialsControlShell = ({
 
 
                 {/* =================================
-                    NEXT DECLARATION SIDE CARD
+                    NEXT ATTEMPT DECLARATION SIDE CARD
                 ================================= */}
 
-                <div
-                    className="officials-control-just-completed"
-                >
+                {hasNextAttempt && (
 
                     <div
-                        className="officials-control-title-row"
+                        className="officials-control-just-completed"
                     >
 
-                        <span
-                            className="officials-control-label"
+                        <div
+                            className="officials-control-title-row"
                         >
-                            NEXT DECLARATION
-                        </span>
 
-                    </div>
+                            <span
+                                className="officials-control-label"
+                            >
+                                NEXT ATTEMPT DECLARATION
+                            </span>
 
+                        </div>
 
-                    {justCompleted ? (
 
                         <div
                             className="officials-control-completed-content"
@@ -280,8 +279,10 @@ const OfficialsControlShell = ({
                             >
 
                                 {
-                                    justCompleted.athlete?.name ??
-                                    justCompleted.name ??
+                                    nextAttemptDeclaration?.name ??
+                                    nextAttemptDeclaration?.athlete?.name ??
+                                    justCompleted?.athlete?.name ??
+                                    justCompleted?.name ??
                                     "-"
                                 }
 
@@ -359,152 +360,110 @@ const OfficialsControlShell = ({
                                 NEXT ATTEMPT
                             ================================= */}
 
-                            {hasNextAttempt ? (
+                            <div
+                                className="officials-control-next-attempt"
+                            >
 
                                 <div
-                                    className="officials-control-next-attempt"
+                                    className="officials-control-next-attempt-label"
+                                >
+                                    NEXT ATTEMPT
+                                </div>
+
+
+                                <div
+                                    className="officials-control-next-attempt-name"
                                 >
 
+                                    {
+                                        formatAttempt(
+                                            completedAthleteNextAttempt
+                                        )
+                                    }
 
-                                    {/* =================================
-                                        NEXT ATTEMPT LABEL
-                                    ================================= */}
-
-                                    <div
-                                        className="officials-control-next-attempt-label"
-                                    >
-                                        NEXT ATTEMPT
-                                    </div>
+                                </div>
 
 
-                                    {/* =================================
-                                        NEXT ATTEMPT NUMBER
-                                    ================================= */}
+                                {/* =================================
+                                    DECLARATION EDITOR
+                                ================================= */}
 
-                                    <div
-                                        className="officials-control-next-attempt-name"
-                                    >
-
-                                        {
-                                            formatAttempt(
-                                                completedAthleteNextAttempt
-                                            )
-                                        }
-
-                                    </div>
-
-
-                                    {/* =================================
-                                        DECLARATION EDITOR
-                                    ================================= */}
+                                <div
+                                    className="officials-control-next-attempt-editor"
+                                >
 
                                     <div
-                                        className="officials-control-next-attempt-editor"
+                                        className="officials-control-next-attempt-input-wrapper"
                                     >
 
+                                        <input
 
-                                        {/* =================================
-                                            WEIGHT INPUT
-                                        ================================= */}
+                                            type="number"
 
-                                        <div
-                                            className="officials-control-next-attempt-input-wrapper"
-                                        >
+                                            min="1"
 
-                                            <input
+                                            step="1"
 
-                                                type="number"
+                                            value={
+                                                allocationWeight
+                                            }
 
-                                                min="1"
-
-                                                step="1"
-
-                                                value={
-                                                    allocationWeight
-                                                }
-
-                                                onChange={
-                                                    (event) =>
-                                                        setNextAttemptDeclaredWeight(
-                                                            event.target.value
-                                                        )
-                                                }
-
-                                                disabled={
-                                                    savingNextAttemptAllocation
-                                                }
-
-                                                aria-label="Next attempt declared weight"
-
-                                            />
-
-                                            <span>
-                                                kg
-                                            </span>
-
-                                        </div>
-
-
-                                        {/* =================================
-                                            SAVE DECLARATION
-                                        ================================= */}
-
-                                        <button
-
-                                            type="button"
-
-                                            onClick={
-                                                onSaveNextAttemptAllocation
+                                            onChange={
+                                                (event) =>
+                                                    setNextAttemptDeclaredWeight(
+                                                        event.target.value
+                                                    )
                                             }
 
                                             disabled={
-                                                savingNextAttemptAllocation ||
-                                                !allocationWeight
-                                            }
-
-                                        >
-
-                                            {
                                                 savingNextAttemptAllocation
-
-                                                    ? "SAVING..."
-
-                                                    : "SAVE DECLARATION"
                                             }
 
-                                        </button>
+                                            aria-label="Next attempt declared weight"
+
+                                        />
+
+                                        <span>
+                                            kg
+                                        </span>
 
                                     </div>
 
+
+                                    <button
+
+                                        type="button"
+
+                                        onClick={
+                                            onSaveNextAttemptAllocation
+                                        }
+
+                                        disabled={
+                                            savingNextAttemptAllocation ||
+                                            !allocationWeight
+                                        }
+
+                                    >
+
+                                        {
+                                            savingNextAttemptAllocation
+
+                                                ? "SAVING..."
+
+                                                : "SAVE DECLARATION"
+                                        }
+
+                                    </button>
+
                                 </div>
 
-                            ) : (
-
-                                <div
-                                    className="officials-control-next-attempt"
-                                >
-
-                                    <span>
-                                        No further attempt
-                                    </span>
-
-                                </div>
-
-                            )}
+                            </div>
 
                         </div>
 
-                    ) : (
+                    </div>
 
-                        <div
-                            className="officials-control-empty"
-                        >
-                            No completed lift yet
-                        </div>
-
-                    )}
-
-                </div>
+                )}
 
             </div>
 

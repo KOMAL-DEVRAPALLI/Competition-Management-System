@@ -4,6 +4,11 @@
     background: #f5f7fb;
 }
 
+
+/* =====================================
+   HEADER
+===================================== */
+
 .competition-management-header {
     max-width: 900px;
     margin: 0 auto 30px;
@@ -20,10 +25,188 @@
     color: #6b7280;
 }
 
-.competition-management-actions {
+
+/* =====================================
+   MESSAGES
+===================================== */
+
+.competition-management-message {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.competition-management-message.error {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.competition-management-message.success {
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+
+/* =====================================
+   COMPETITION FORMAT
+===================================== */
+
+.competition-format-section {
+    max-width: 900px;
+    margin: 0 auto 30px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+}
+
+.competition-format-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #1f2937;
+}
+
+.competition-format-header p {
+    margin-top: 8px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+
+/* =====================================
+   FORMAT CONTENT
+===================================== */
+
+.competition-format-content {
+    margin-top: 24px;
+}
+
+.competition-format-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 500px;
+}
+
+.competition-format-field label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.competition-format-field select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 15px;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.competition-format-field select:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+}
+
+
+/* =====================================
+   FORMAT DESCRIPTION
+===================================== */
+
+.competition-format-description {
+    max-width: 700px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #4b5563;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.competition-format-description p {
+    margin: 0;
+}
+
+
+/* =====================================
+   FORMAT ACTIONS
+===================================== */
+
+.competition-format-actions {
+    margin-top: 20px;
+}
+
+.competition-format-save-btn {
+    padding: 12px 20px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #1f2937;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.competition-format-save-btn:hover:not(:disabled) {
+    background: #111827;
+}
+
+.competition-format-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* =====================================
+   FORMAT LOADING
+===================================== */
+
+.competition-format-loading {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #6b7280;
+}
+
+
+/* =====================================
+   ATHLETE SESSIONS
+===================================== */
+
+.competition-sessions-section {
     max-width: 900px;
     margin: 0 auto;
+}
 
+.competition-sessions-header {
+    margin-bottom: 16px;
+}
+
+.competition-sessions-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #1f2937;
+}
+
+.competition-sessions-header p {
+    margin-top: 8px;
+    color: #6b7280;
+}
+
+
+/* =====================================
+   SESSION ACTIONS
+===================================== */
+
+.competition-management-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
@@ -31,18 +214,122 @@
 
 .competition-management-actions button {
     padding: 24px;
-
     border: 1px solid #d1d5db;
     border-radius: 10px;
-
     background: #ffffff;
-
     font-size: 18px;
     font-weight: 600;
-
     cursor: pointer;
 }
 
 .competition-management-actions button:hover {
     background: #f9fafb;
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 700px) {
+    .competition-management-page {
+        padding: 24px;
+    }
+
+    .competition-management-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =====================================
+   ELIMINATED ATHLETE
+   Used by CompetitionResults table
+===================================== */
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row {
+    position: relative;
+    background: #fff1f2;
+    color: #7f1d1d;
+}
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row td {
+    position: relative;
+    background: #fff1f2;
+    color: #7f1d1d;
+}
+
+
+/* =====================================
+   RED STRIKE-THROUGH
+===================================== */
+
+/*
+ * Apply the line to each table cell rather than
+ * tr::after because pseudo-elements on table rows
+ * are not reliably rendered across browsers.
+ */
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row td::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 3px;
+    background: #dc2626;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+
+/* Keep important eliminated text visible */
+
+.scoreboard-table tbody tr.scoreboard-eliminated-row td strong {
+    color: #991b1b;
+}
+
+
+/* =====================================
+   ELIMINATED BADGE
+===================================== */
+
+.scoreboard-eliminated-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff !important;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}
+
+
+/* =====================================
+   ELIMINATION REASON
+===================================== */
+
+.scoreboard-elimination-reason {
+    margin-top: 5px;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+
+/* =====================================
+   ATHLETE NAME WRAPPER
+===================================== */
+
+.scoreboard-athlete-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
 }

@@ -57,16 +57,15 @@ ${workingSheetData.map(section => `
             <h2>
                 ${competitionName}
             </h2>
-<h3>
-    WEIGHTLIFTING
-</h3>
+
 
             <h3>
                 ${sessionTitle}
             </h3>
 
+
             <p>
-                Venue : ${competition?.venue ?? ""}
+                Venue : Surat Weightlifting Club Bhatha , Surat
                 <br>
                 Date : ${new Date().toLocaleDateString("en-IN")}
             </p>
@@ -97,8 +96,6 @@ ${workingSheetData.map(section => `
                         Name of Competitor
                     </th>
 
-                  
-
                     <th class="snatch-group" colspan="3">
                         Snatch
                     </th>
@@ -120,6 +117,8 @@ ${workingSheetData.map(section => `
                     </th>
 
                 </tr>
+
+                <tr>
 
                     <th class="attempt-col">
                         1
@@ -175,7 +174,6 @@ ${workingSheetData.map(section => `
                             ${athlete.name ?? ""}
                         </td>
 
-                     
                         <td class="attempt-col">
                             ${athlete.openingSnatch ?? ""}
                         </td>

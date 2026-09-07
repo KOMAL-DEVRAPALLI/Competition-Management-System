@@ -148,28 +148,119 @@ const normalizeCategory = (
 
 
 // =====================================
-// CHECK THREE FAILED SNATCHES
+// GET EXACT ATTEMPT BY NUMBER
+//
+// IMPORTANT:
+//
+// Calling-order / phase-transition logic
+// must never assume that three records
+// automatically mean attempts 1, 2 and 3.
+//
+// Each authoritative attempt number is
+// checked explicitly.
+//
 // =====================================
 
-const hasThreeFailedSnatches = (
-    competitionEntry
+const getAttemptByNumber = (
+    attempts,
+    attemptNo
 ) => {
 
-    const attempts =
-        competitionEntry?.snatchAttempts;
+    if (
+        !Array.isArray(
+            attempts
+        )
+    ) {
+
+        return null;
+
+    }
 
 
-    if (!Array.isArray(attempts)) {
+    return (
+        attempts.find(
+            (attempt) =>
+                Number(
+                    attempt?.attemptNo
+                ) ===
+                Number(
+                    attemptNo
+                )
+        ) ??
+        null
+    );
+
+};
+
+
+// =====================================
+// GET EXACT FIRST THREE ATTEMPTS
+//
+// Returns attempts 1, 2 and 3 only when
+// all three exist exactly once.
+//
+// Duplicate attempt numbers are treated
+// as integrity errors.
+//
+// =====================================
+
+const getFirstThreeAttempts = (
+    attempts,
+    phaseName
+) => {
+
+    if (
+        !Array.isArray(
+            attempts
+        )
+    ) {
 
         throw createError(
-            "Snatch attempt history is missing.",
+            `${phaseName} attempt history is missing.`,
             "QUEUE_INTEGRITY_ERROR"
         );
 
     }
 
 
-    const firstThreeAttempts =
+    const attempt1 =
+        getAttemptByNumber(
+            attempts,
+            1
+        );
+
+    const attempt2 =
+        getAttemptByNumber(
+            attempts,
+            2
+        );
+
+    const attempt3 =
+        getAttemptByNumber(
+            attempts,
+            3
+        );
+
+
+    if (
+        !attempt1 ||
+        !attempt2 ||
+        !attempt3
+    ) {
+
+        throw createError(
+            `Authoritative ${phaseName} attempt history must contain attempts 1, 2 and 3.`,
+            "QUEUE_INTEGRITY_ERROR"
+        );
+
+    }
+
+
+    // =====================================
+    // DUPLICATE ATTEMPT NUMBER CHECK
+    // =====================================
+
+    const attemptNumbers =
         attempts.filter(
             (attempt) =>
                 Number.isInteger(
@@ -181,15 +272,43 @@ const hasThreeFailedSnatches = (
 
 
     if (
-        firstThreeAttempts.length !== 3
+        attemptNumbers.length !== 3
     ) {
 
         throw createError(
-            "Authoritative Snatch attempt history is incomplete.",
+            `Authoritative ${phaseName} attempt history must contain exactly attempts 1, 2 and 3.`,
             "QUEUE_INTEGRITY_ERROR"
         );
 
     }
+
+
+    return [
+        attempt1,
+        attempt2,
+        attempt3,
+    ];
+
+};
+
+
+// =====================================
+// CHECK THREE FAILED SNATCHES
+// =====================================
+
+const hasThreeFailedSnatches = (
+    competitionEntry
+) => {
+
+    const attempts =
+        competitionEntry?.snatchAttempts;
+
+
+    const firstThreeAttempts =
+        getFirstThreeAttempts(
+            attempts,
+            "Snatch"
+        );
 
 
     return firstThreeAttempts.every(
@@ -213,37 +332,11 @@ const hasPendingCleanJerkAttempt = (
         competitionEntry?.cleanJerkAttempts;
 
 
-    if (!Array.isArray(attempts)) {
-
-        throw createError(
-            "Clean & Jerk attempt history is missing.",
-            "QUEUE_INTEGRITY_ERROR"
-        );
-
-    }
-
-
     const firstThreeAttempts =
-        attempts.filter(
-            (attempt) =>
-                Number.isInteger(
-                    attempt?.attemptNo
-                ) &&
-                attempt.attemptNo >= 1 &&
-                attempt.attemptNo <= 3
+        getFirstThreeAttempts(
+            attempts,
+            "Clean & Jerk"
         );
-
-
-    if (
-        firstThreeAttempts.length !== 3
-    ) {
-
-        throw createError(
-            "Authoritative Clean & Jerk attempt history is incomplete.",
-            "QUEUE_INTEGRITY_ERROR"
-        );
-
-    }
 
 
     return firstThreeAttempts.some(
@@ -353,37 +446,11 @@ const isSnatchExhausted = (
             entry.snatchAttempts;
 
 
-        if (!Array.isArray(attempts)) {
-
-            throw createError(
-                "Snatch attempt history is missing.",
-                "QUEUE_INTEGRITY_ERROR"
-            );
-
-        }
-
-
         const firstThreeAttempts =
-            attempts.filter(
-                (attempt) =>
-                    Number.isInteger(
-                        attempt?.attemptNo
-                    ) &&
-                    attempt.attemptNo >= 1 &&
-                    attempt.attemptNo <= 3
+            getFirstThreeAttempts(
+                attempts,
+                "Snatch"
             );
-
-
-        if (
-            firstThreeAttempts.length !== 3
-        ) {
-
-            throw createError(
-                "Authoritative Snatch attempt history is incomplete.",
-                "QUEUE_INTEGRITY_ERROR"
-            );
-
-        }
 
 
         const hasPendingAttempt =

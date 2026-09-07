@@ -1,5 +1,8 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
 
+import Competition
+    from "../../models/Competition.js";
+
 import buildWorkingSheetData
     from "../pdf/workingSheet/buildWorkingSheetData.js";
 
@@ -18,22 +21,261 @@ import {
 
 
 // =====================================
+// COMPETITION FORMAT
+// =====================================
+
+const TOTAL_ONLY =
+    "TOTAL_ONLY";
+
+
+// =====================================
+// GET ATTEMPT BY NUMBER
+//
+// Uses the authoritative attempt number,
+// not array position.
+// =====================================
+
+const getAttemptByNumber = (
+    attempts,
+    attemptNo
+) => {
+
+    if (
+        !Array.isArray(
+            attempts
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    return (
+        attempts.find(
+            (attempt) =>
+                Number(
+                    attempt?.attemptNo
+                ) === attemptNo
+        ) ??
+        null
+    );
+
+};
+
+
+// =====================================
+// GET SNATCH BOMB-OUT STATE
+//
+// Presentation state is derived here from
+// authoritative CompetitionEntry state.
+//
+// IMPORTANT:
+//
+// This does NOT determine queue order.
+//
+// Queue eligibility remains handled by:
+//     getEligibleQueueCandidates()
+//     recalculateQueue()
+//
+// This function only exposes the already
+// applicable competition state to the UI.
+//
+// IMPORTANT:
+//
+// Do NOT require CLEAN_JERK here.
+//
+// Once attempts 1, 2 and 3 are all
+// authoritative NO_LIFT results, the athlete
+// is already in the three-failed-Snatch state.
+//
+// The competition transition service remains
+// responsible for the actual SNATCH ->
+// CLEAN_JERK / COMPLETED transition.
+//
+// This mapper simply exposes the state so the
+// Officials/Results UI can immediately show:
+//
+//     ELIMINATED
+//     SNATCH_BOMB_OUT
+//
+// even if a read occurs immediately before
+// the phase transition is reflected.
+// =====================================
+
+export const getSnatchBombOutState = (
+    entry,
+    competitionFormat
+) => {
+
+    // =====================================
+    // Bomb-out applies only to TOTAL_ONLY.
+    // =====================================
+
+    if (
+        competitionFormat !==
+        TOTAL_ONLY
+    ) {
+
+        return {
+
+            eliminated:
+                false,
+
+            eliminationReason:
+                null,
+
+        };
+
+    }
+
+
+    const competitionEntry =
+        entry?.competitionEntry;
+
+
+    const snatchAttempts =
+        competitionEntry
+            ?.snatchAttempts;
+
+
+    if (
+        !Array.isArray(
+            snatchAttempts
+        )
+    ) {
+
+        return {
+
+            eliminated:
+                false,
+
+            eliminationReason:
+                null,
+
+        };
+
+    }
+
+
+    // =====================================
+    // REQUIRE EXACT ATTEMPTS 1, 2, 3
+    //
+    // Do not rely on array indexes.
+    // =====================================
+
+    const snatch1 =
+        getAttemptByNumber(
+            snatchAttempts,
+            1
+        );
+
+
+    const snatch2 =
+        getAttemptByNumber(
+            snatchAttempts,
+            2
+        );
+
+
+    const snatch3 =
+        getAttemptByNumber(
+            snatchAttempts,
+            3
+        );
+
+
+    if (
+        !snatch1 ||
+        !snatch2 ||
+        !snatch3
+    ) {
+
+        return {
+
+            eliminated:
+                false,
+
+            eliminationReason:
+                null,
+
+        };
+
+    }
+
+
+    // =====================================
+    // THREE FAILED SNATCHES
+    // =====================================
+
+    const threeFailedSnatches =
+        snatch1.result === "NO_LIFT" &&
+        snatch2.result === "NO_LIFT" &&
+        snatch3.result === "NO_LIFT";
+
+
+    if (
+        !threeFailedSnatches
+    ) {
+
+        return {
+
+            eliminated:
+                false,
+
+            eliminationReason:
+                null,
+
+        };
+
+    }
+
+
+    return {
+
+        eliminated:
+            true,
+
+        eliminationReason:
+            "SNATCH_BOMB_OUT",
+
+    };
+
+};
+
+
+// =====================================
 // MAP QUEUE ATHLETE
 // =====================================
 //
 // IMPORTANT:
 // phase is passed explicitly.
 // Do NOT access `session` from here.
+//
+// This mapper is used for:
+// - calling current
+// - physical platform
+// - next
+// - upcoming
+// - queue
+// - all-athlete state
+//
+// Elimination state is presentation state
+// derived from the authoritative competition
+// configuration and CompetitionEntry history.
 // =====================================
 
 const mapQueueAthlete = (
     entry,
     phase,
-    status
+    status,
+    competitionFormat
 ) => {
 
     if (!entry) {
+
         return null;
+
     }
 
 
@@ -42,6 +284,19 @@ const mapQueueAthlete = (
             entry.competitionEntry,
             phase
         );
+
+
+    const bombOutState =
+        getSnatchBombOutState(
+            entry,
+            competitionFormat
+        );
+
+
+    const resolvedStatus =
+        bombOutState.eliminated
+            ? "ELIMINATED"
+            : status;
 
 
     return {
@@ -60,7 +315,8 @@ const mapQueueAthlete = (
 
         lotNumber:
             entry.lotNumber,
-
+        ageCategory:
+            entry.ageCategory,
         bodyWeight:
             entry.bodyWeight,
 
@@ -125,7 +381,18 @@ const mapQueueAthlete = (
         competitionEntry:
             entry.competitionEntry,
 
-        status,
+        status:
+            resolvedStatus,
+
+        // =================================
+        // AUTHORITATIVE ELIMINATION STATE
+        // =================================
+
+        eliminated:
+            bombOutState.eliminated,
+
+        eliminationReason:
+            bombOutState.eliminationReason,
 
     };
 
@@ -135,16 +402,26 @@ const mapQueueAthlete = (
 // =====================================
 // GET LIVE COMPETITION
 //
-// Feature 3.4
-//
 // READ ONLY.
 //
-// Does NOT:
-// - select athlete
-// - change currentEntryId
-// - modify attempts
-// - modify declarations
-// - increment stateVersion
+// IMPORTANT STATE CONTRACT:
+//
+// currentEntryId:
+//     Calling-order current athlete.
+//
+// platformEntryId:
+//     Physical athlete currently on platform.
+//
+// These are intentionally separate.
+//
+// A declaration correction can therefore
+// produce:
+//
+// current = B
+// platform = C
+//
+// without losing the physical platform
+// state.
 // =====================================
 
 const getLiveCompetition = async (
@@ -194,33 +471,7 @@ const getLiveCompetition = async (
 
         });
 
-console.log("===== LIVE SESSION DEBUG =====");
 
-console.log({
-    requestedCompetitionId: String(competitionId),
-    requestedGender: normalizedGender,
-
-    sessionId: session?._id?.toString() ?? null,
-    sessionCompetitionId:
-        session?.competitionId?.toString() ?? null,
-
-    sessionGender: session?.gender ?? null,
-    sessionStatus: session?.status ?? null,
-    sessionIntegrityStatus:
-        session?.integrity?.status ?? null,
-
-    sessionIntegrityReason:
-        session?.integrity?.reason ?? null,
-
-    currentPhase:
-        session?.currentPhase ?? null,
-
-    currentEntryId:
-        session?.currentEntryId?.toString() ?? null,
-
-    stateVersion:
-        session?.stateVersion ?? null,
-});
     if (!session) {
 
         throw new Error(
@@ -228,6 +479,46 @@ console.log({
         );
 
     }
+
+
+    // =================================
+    // LOAD COMPETITION FORMAT
+    //
+    // Competition.competitionFormat is
+    // the authoritative source.
+    // =================================
+
+    const competition =
+        await Competition.findById(
+            competitionId
+        )
+            .select(
+                "competitionFormat"
+            )
+            .lean();
+
+
+    if (!competition) {
+
+        const error =
+            new Error(
+                "Competition not found."
+            );
+
+        error.code =
+            "COMPETITION_NOT_FOUND";
+
+        error.statusCode =
+            404;
+
+        throw error;
+
+    }
+
+
+    const competitionFormat =
+        competition.competitionFormat ??
+        null;
 
 
     // =================================
@@ -311,6 +602,12 @@ console.log({
 
         return {
 
+            competitionId:
+                session.competitionId,
+
+            gender:
+                session.gender,
+
             status:
                 session.status,
 
@@ -324,6 +621,9 @@ console.log({
                 session.currentPhase,
 
             currentAthlete:
+                null,
+
+            platformAthlete:
                 null,
 
             canSelectAnotherAthlete:
@@ -355,6 +655,230 @@ console.log({
 
             currentEntryId:
                 session.currentEntryId ?? null,
+
+            platformEntryId:
+                session.platformEntryId ?? null,
+
+            stateVersion:
+                session.stateVersion ?? 0,
+
+            integrity:
+                session.integrity,
+
+            competitionFormat,
+
+        };
+
+    }
+
+
+    // =====================================
+    // COMPLETED COMPETITION
+    //
+    // IMPORTANT:
+    //
+    // A completed competition has no active
+    // calling queue.
+    //
+    // Do NOT call:
+    //
+    // - getCurrentAttempt()
+    // - getEligibleQueueCandidates()
+    // - recalculateQueue()
+    //
+    // The result rows remain available for:
+    //
+    // - Officials Screen
+    // - Public Scoreboard
+    // - Final Result PDF
+    //
+    // This prevents the queue engine from
+    // receiving the unsupported COMPLETED
+    // phase.
+    // =====================================
+
+    if (
+        session.currentPhase ===
+        "COMPLETED"
+    ) {
+
+        const competitionResults =
+            entries.map(
+                (entry) => {
+
+                    const bombOutState =
+                        getSnatchBombOutState(
+                            entry,
+                            competitionFormat
+                        );
+
+
+                    return {
+
+                        entryId:
+                            entry.entryId,
+
+                        athleteId:
+                            entry.athleteId,
+
+                        name:
+                            entry.name,
+
+                        registrationNo:
+                            entry.registrationNo,
+
+                        lotNumber:
+                            entry.lotNumber,
+
+                        bodyWeight:
+                            entry.bodyWeight,
+
+                        weightCategory:
+                            entry.weightCategory,
+
+                        displayWeightCategory:
+                            entry.displayWeightCategory,
+
+                        openingSnatch:
+                            entry.openingSnatch,
+
+                        openingCleanJerk:
+                            entry.openingCleanJerk,
+
+                        bestSnatch:
+                            entry.bestSnatch,
+
+                        bestCleanJerk:
+                            entry.bestCleanJerk,
+
+                        total:
+                            entry.total,
+
+                        place:
+                            entry.place,
+
+                        // No active attempt exists
+                        // after competition completion.
+
+                        phase:
+                            null,
+
+                        attemptNo:
+                            null,
+
+                        declaredWeight:
+                            null,
+
+                        applicableWeight:
+                            null,
+
+                        result:
+                            null,
+
+                        completed:
+                            true,
+
+                        currentAttempt:
+                            null,
+
+                        snatchAttempts:
+                            entry
+                                .competitionEntry
+                                ?.snatchAttempts ?? [],
+
+                        cleanJerkAttempts:
+                            entry
+                                .competitionEntry
+                                ?.cleanJerkAttempts ?? [],
+
+                        competitionEntry:
+                            entry.competitionEntry,
+
+                        status:
+                            bombOutState.eliminated
+                                ? "ELIMINATED"
+                                : "COMPLETED",
+
+                        eliminated:
+                            bombOutState.eliminated,
+
+                        eliminationReason:
+                            bombOutState
+                                .eliminationReason,
+
+                    };
+
+                }
+            );
+
+
+        return {
+
+            competitionId:
+                session.competitionId,
+
+            gender:
+                session.gender,
+
+            status:
+                session.status,
+
+            sessionName:
+                session.sessionName,
+
+            selectedWeightCategories:
+                session.selectedWeightCategories,
+
+            currentPhase:
+                session.currentPhase,
+
+            competitionFormat,
+
+            // =================================
+            // NO ACTIVE CALLING STATE
+            // =================================
+
+            currentEntryId:
+                null,
+
+            platformEntryId:
+                null,
+
+            currentAthlete:
+                null,
+
+            platformAthlete:
+                null,
+
+            canSelectAnotherAthlete:
+                false,
+
+            nextAthlete:
+                null,
+
+            upcomingAthletes:
+                [],
+
+            queue:
+                [],
+
+            queueCount:
+                0,
+
+            // =================================
+            // FINAL RESULT DATA
+            // =================================
+
+            athletes:
+                competitionResults,
+
+            competitionResults,
+
+            declarationQueue:
+                [],
+
+            totalAthletes:
+                competitionResults.length,
 
             stateVersion:
                 session.stateVersion ?? 0,
@@ -390,7 +914,15 @@ console.log({
 
 
     // =================================
-    // CURRENT ATHLETE
+    // CALLING CURRENT ATHLETE
+    // =================================
+    //
+    // currentEntryId means:
+    //
+    // "current according to calling order"
+    //
+    // It does NOT necessarily mean the
+    // physical platform athlete.
     // =================================
 
     let currentAthlete =
@@ -415,7 +947,7 @@ console.log({
 
             const error =
                 new Error(
-                    "Current platform athlete is not present in the active competition scope."
+                    "Current calling athlete is not present in the active competition scope."
                 );
 
             error.code =
@@ -436,7 +968,9 @@ console.log({
 
                 session.currentPhase,
 
-                "ON_PLATFORM"
+                "CURRENT",
+
+                competitionFormat
 
             );
 
@@ -444,13 +978,108 @@ console.log({
 
 
     // =================================
+    // PHYSICAL PLATFORM ATHLETE
+    // =================================
+    //
+    // IMPORTANT:
+    //
+    // platformEntryId identifies the athlete
+    // who is physically on the platform.
+    //
+    // It can differ from currentEntryId.
+    //
+    // Example:
+    //
+    // currentEntryId  = B
+    // platformEntryId = C
+    //
+    // This state is valid during an
+    // authoritative declaration correction.
+    // =================================
+
+    let platformAthlete =
+        null;
+
+
+    if (
+        session.platformEntryId
+    ) {
+
+        const platformEntry =
+            entryMap.get(
+
+                String(
+                    session.platformEntryId
+                )
+
+            );
+
+
+        if (!platformEntry) {
+
+            const error =
+                new Error(
+                    "Physical platform athlete is not present in the active competition scope."
+                );
+
+            error.code =
+                "QUEUE_INTEGRITY_ERROR";
+
+            error.statusCode =
+                409;
+
+            throw error;
+
+        }
+
+
+        platformAthlete =
+            mapQueueAthlete(
+
+                platformEntry,
+
+                session.currentPhase,
+
+                "ON_PLATFORM",
+
+                competitionFormat
+
+            );
+
+    }
+
+
+    // =================================
+    // BACKWARD COMPATIBILITY
+    //
+    // Older sessions may not have
+    // platformEntryId populated.
+    //
+    // In that case, currentEntryId remains
+    // the only available platform reference.
+    //
+    // Do NOT overwrite the database here.
+    // This is read-only recovery behavior.
+    // =================================
+
+    if (
+        !platformAthlete &&
+        session.currentEntryId
+    ) {
+
+        platformAthlete =
+            currentAthlete
+                ? {
+                    ...currentAthlete,
+                    status: "ON_PLATFORM",
+                }
+                : null;
+
+    }
+
+
+    // =================================
     // GET ELIGIBLE CANDIDATES
-    //
-    // Feature 3.1
-    //
-    // We call this explicitly here so
-    // GET /live-competition also exposes
-    // the authoritative queue.
     // =================================
 
     const candidateResult =
@@ -485,35 +1114,10 @@ console.log({
 
 
     // =================================
-    // ORDER QUEUE
+    // CENTRAL QUEUE ENGINE
     //
-    // Feature 3.2
-    // =================================
-
-    const orderedCandidates =
-        [...candidates].sort(
-
-            (a, b) => {
-
-                // ---------------------------------
-                // IMPORTANT:
-                //
-                // orderQueue() is authoritative.
-                // ---------------------------------
-
-                return 0;
-
-            }
-
-        );
-
-
-    // =================================
-    // USE CENTRAL ORDERING ENGINE
-    //
-    // Import dynamically avoided.
-    // Instead use recalculateQueue below,
-    // which already owns the ordering.
+    // DO NOT implement ordering here.
+    // recalculateQueue remains authoritative.
     // =================================
 
     const recalculated =
@@ -564,7 +1168,9 @@ console.log({
 
                 session.currentPhase,
 
-                "NEXT"
+                "NEXT",
+
+                competitionFormat
 
             )
 
@@ -585,7 +1191,9 @@ console.log({
 
                     session.currentPhase,
 
-                    "UPCOMING"
+                    "UPCOMING",
+
+                    competitionFormat
 
                 )
 
@@ -606,7 +1214,9 @@ console.log({
 
                     session.currentPhase,
 
-                    "QUEUED"
+                    "QUEUED",
+
+                    competitionFormat
 
                 )
 
@@ -637,13 +1247,23 @@ console.log({
 
 
                 if (
+                    session.platformEntryId &&
+                    String(entry.entryId) ===
+                    String(session.platformEntryId)
+                ) {
+
+                    status =
+                        "ON_PLATFORM";
+
+                }
+                else if (
                     session.currentEntryId &&
                     String(entry.entryId) ===
                     String(session.currentEntryId)
                 ) {
 
                     status =
-                        "ON_PLATFORM";
+                        "CURRENT";
 
                 }
                 else if (
@@ -672,7 +1292,9 @@ console.log({
 
                     session.currentPhase,
 
-                    status
+                    status,
+
+                    competitionFormat
 
                 );
 
@@ -683,9 +1305,6 @@ console.log({
 
     // =================================
     // COMPETITION RESULTS
-    //
-    // Keep same athlete information
-    // for existing frontend compatibility.
     // =================================
 
     const competitionResults =
@@ -707,11 +1326,11 @@ console.log({
 
 
     if (
-        currentAthlete
+        platformAthlete
     ) {
 
         const attempt =
-            currentAthlete.currentAttempt;
+            platformAthlete.currentAttempt;
 
 
         if (
@@ -770,6 +1389,8 @@ console.log({
         gender:
             normalizedGender,
 
+        competitionFormat,
+
         currentPhase:
             session.currentPhase,
 
@@ -779,6 +1400,16 @@ console.log({
         currentEntryId:
             session.currentEntryId
                 ?.toString() ?? null,
+
+        platformEntryId:
+            session.platformEntryId
+                ?.toString() ?? null,
+
+        currentAthlete:
+            currentAthlete?.name ?? null,
+
+        platformAthlete:
+            platformAthlete?.name ?? null,
 
         eligibleCandidates:
             candidates.length,
@@ -819,16 +1450,29 @@ console.log({
         currentPhase:
             session.currentPhase,
 
+        // =================================
+        // COMPETITION FORMAT
+        // =================================
+
+        competitionFormat,
+
+        // =================================
+        // SEPARATED STATE
+        // =================================
+
         currentEntryId:
             session.currentEntryId ?? null,
 
-        stateVersion:
-            session.stateVersion ?? 0,
-
-        integrity:
-            session.integrity,
+        platformEntryId:
+            session.platformEntryId ?? null,
 
         currentAthlete,
+
+        platformAthlete,
+
+        // =================================
+        // EXISTING CONTRACT
+        // =================================
 
         canSelectAnotherAthlete,
 
@@ -852,85 +1496,15 @@ console.log({
         totalAthletes:
             athletes.length,
 
-    };
-
-};
-
-
-// =====================================
-// QUEUE STATE
-//
-// Used by:
-// GET /:competitionId/:gender/queue
-//
-// Kept in this file so both endpoints
-// use the same authoritative logic.
-// =====================================
-
-const getQueueState = async ({
-    competitionId,
-    gender,
-}) => {
-
-    const result =
-        await getLiveCompetition(
-            competitionId,
-            gender
-        );
-
-
-    return {
-
-        competitionId:
-            result.competitionId,
-
-        gender:
-            result.gender,
-
-        sessionName:
-            result.sessionName,
-
-        selectedWeightCategories:
-            result.selectedWeightCategories,
-
-        currentPhase:
-            result.currentPhase,
-
-        status:
-            result.status,
-
         stateVersion:
-            result.stateVersion,
+            session.stateVersion ?? 0,
 
         integrity:
-            result.integrity,
-
-        current:
-            result.currentAthlete,
-
-        next:
-            result.nextAthlete,
-
-        upcoming:
-            result.upcomingAthletes,
-
-        queue:
-            result.queue,
-
-        queueCount:
-            result.queueCount,
+            session.integrity,
 
     };
 
 };
 
-
-// =====================================
-// EXPORTS
-// =====================================
-
-export {
-    getQueueState,
-};
 
 export default getLiveCompetition;

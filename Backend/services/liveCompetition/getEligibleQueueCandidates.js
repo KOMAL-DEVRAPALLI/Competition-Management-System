@@ -1,4 +1,5 @@
 import LiveCompetition from "../../models/LiveCompetition.js";
+import Competition from "../../models/Competition.js";
 
 import buildWorkingSheetData
     from "../pdf/workingSheet/buildWorkingSheetData.js";
@@ -260,6 +261,101 @@ const isPhaseCompleted = (
 
 
 // =====================================
+// CHECK THREE FAILED SNATCHES
+//
+// This is only used for the TOTAL_ONLY
+// competition format.
+//
+// CompetitionEntry remains authoritative.
+//
+// Attempts 1, 2 and 3 must all exist.
+// Missing attempt history is an integrity
+// error rather than an assumption.
+//
+// =====================================
+
+const hasThreeFailedSnatches = (
+    competitionEntry
+) => {
+
+    const attempts =
+        competitionEntry?.snatchAttempts;
+
+
+    if (
+        !Array.isArray(
+            attempts
+        )
+    ) {
+
+        return {
+
+            failed: false,
+
+            integrityError:
+                "SNATCH attempt history is missing.",
+
+        };
+
+    }
+
+
+    const attempt1 =
+        getAttemptByNumber(
+            attempts,
+            1
+        );
+
+    const attempt2 =
+        getAttemptByNumber(
+            attempts,
+            2
+        );
+
+    const attempt3 =
+        getAttemptByNumber(
+            attempts,
+            3
+        );
+
+
+    if (
+        !attempt1 ||
+        !attempt2 ||
+        !attempt3
+    ) {
+
+        return {
+
+            failed: false,
+
+            integrityError:
+                "SNATCH attempt history must contain attempts 1, 2 and 3.",
+
+        };
+
+    }
+
+
+    return {
+
+        failed:
+            attempt1.result === "NO_LIFT" &&
+            attempt2.result === "NO_LIFT" &&
+            attempt3.result === "NO_LIFT",
+
+        attempts: [
+            attempt1,
+            attempt2,
+            attempt3,
+        ],
+
+    };
+
+};
+
+
+// =====================================
 // GET COMPETITION ENTRY
 //
 // Candidate contract:
@@ -395,6 +491,7 @@ export const evaluateQueueCandidateEligibility = ({
     entry,
     session,
     normalizedGender,
+    competitionFormat,
     allowCurrentEntry = false,
 }) => {
 
@@ -654,6 +751,81 @@ export const evaluateQueueCandidateEligibility = ({
                 "ATHLETE_COMPLETED",
 
         };
+
+    }
+
+
+    // =====================================
+    // SNATCH BOMB-OUT
+    //
+    // Under TOTAL_ONLY:
+    //
+    // Snatch attempt 1 = NO_LIFT
+    // Snatch attempt 2 = NO_LIFT
+    // Snatch attempt 3 = NO_LIFT
+    //
+    // => athlete is not eligible for
+    //    any Clean & Jerk queue position.
+    //
+    // IMPORTANT:
+    //
+    // Do NOT apply this rule to
+    // SEPARATE_LIFT_CLASSIFICATION.
+    //
+    // Competition format is therefore
+    // explicitly required here.
+    // =====================================
+
+    if (
+        activePhase === "CLEAN_JERK" &&
+        competitionFormat === "TOTAL_ONLY"
+    ) {
+
+        const snatchFailure =
+            hasThreeFailedSnatches(
+                competitionEntry
+            );
+
+
+        if (
+            snatchFailure.integrityError
+        ) {
+
+            return {
+
+                eligible: false,
+
+                reason:
+                    "ATTEMPT_HISTORY_INTEGRITY_ERROR",
+
+                integrityError:
+                    snatchFailure.integrityError,
+
+            };
+
+        }
+
+
+        if (
+            snatchFailure.failed
+        ) {
+
+            return {
+
+                eligible: false,
+
+                reason:
+                    "SNATCH_BOMB_OUT",
+
+                currentAttempt:
+                    null,
+
+                phaseAttempts:
+                    snatchFailure.attempts,
+
+            };
+
+        }
 
     }
 
@@ -1226,6 +1398,94 @@ const getEligibleQueueCandidates = async ({
 
 
     // =====================================
+    // LOAD COMPETITION FORMAT
+    //
+    // Competition is the authoritative
+    // source for the competition format.
+    //
+    // dbSession MUST be passed through so
+    // this read remains inside the same
+    // transaction when applicable.
+    // =====================================
+
+    let competitionQuery =
+        Competition.findById(
+            competitionId
+        ).select(
+            "competitionFormat"
+        );
+
+
+    if (
+        dbSession
+    ) {
+
+        competitionQuery =
+            competitionQuery.session(
+                dbSession
+            );
+
+    }
+
+
+    const competition =
+        await competitionQuery;
+
+
+    if (
+        !competition
+    ) {
+
+        const error =
+            new Error(
+                "Competition not found."
+            );
+
+        error.code =
+            "COMPETITION_NOT_FOUND";
+
+        error.statusCode =
+            404;
+
+        throw error;
+
+    }
+
+
+    const competitionFormat =
+        competition.competitionFormat;
+
+
+    // =====================================
+    // COMPETITION FORMAT VALIDATION
+    //
+    // Do not guess a format.
+    // =====================================
+
+    if (
+        competitionFormat !==
+            "TOTAL_ONLY" &&
+        competitionFormat !==
+            "SEPARATE_LIFT_CLASSIFICATION"
+    ) {
+
+        const error =
+            new Error(
+                "Competition format is missing or invalid. Automatic queue progression has been stopped."
+            );
+
+        error.code =
+            "COMPETITION_FORMAT_REQUIRED";
+
+        error.statusCode =
+            409;
+
+        throw error;
+
+    }
+
+
+    // =====================================
     // LOAD COMPETITION ENTRIES
     //
     // CompetitionEntry remains the only
@@ -1317,6 +1577,8 @@ const getEligibleQueueCandidates = async ({
                 session,
 
                 normalizedGender,
+
+                competitionFormat,
 
                 allowCurrentEntry,
 
@@ -1516,6 +1778,8 @@ const getEligibleQueueCandidates = async ({
 
                     activePhase,
 
+                    competitionFormat,
+
                     currentEntryId:
                         session.currentEntryId
                             ?.toString() ??
@@ -1575,6 +1839,8 @@ const getEligibleQueueCandidates = async ({
 
         phase:
             activePhase,
+
+        competitionFormat,
 
         selectedWeightCategories:
             session.selectedWeightCategories,

@@ -1,5 +1,5 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
@@ -11,7 +11,9 @@ import LiveCompetition from "../models/LiveCompetition.js";
 import processLift
     from "../services/liveCompetition/processLift.js";
 
-dotenv.config();
+dotenv.config({
+    path: "../.env",
+});
 
 
 // =====================================
@@ -1263,18 +1265,22 @@ test(
             },
 
             {
-                $set: {
+               $set: {
+    "snatchAttempts.0.result": "GOOD",
+    "snatchAttempts.0.performedAt":
+        new Date("2026-08-01T10:00:00.000Z"),
+    "snatchAttempts.0.performedSequence": 1,
 
-                    "snatchAttempts.0.result":
-                        "GOOD",
+    "snatchAttempts.1.result": "GOOD",
+    "snatchAttempts.1.performedAt":
+        new Date("2026-08-01T10:01:00.000Z"),
+    "snatchAttempts.1.performedSequence": 2,
 
-                    "snatchAttempts.0.performedSequence":
-                        1,
-
-                    "snatchAttempts.1.declaredWeight":
-                        65,
-
-                },
+    "snatchAttempts.2.result": "GOOD",
+    "snatchAttempts.2.performedAt":
+        new Date("2026-08-01T10:02:00.000Z"),
+    "snatchAttempts.2.performedSequence": 3,
+}
 
             }
 
@@ -1420,10 +1426,13 @@ test(
                 $set: {
 
                     "snatchAttempts.0.result":
-                        "GOOD",
+    "GOOD",
 
-                    "snatchAttempts.0.performedSequence":
-                        10,
+"snatchAttempts.0.performedAt":
+    new Date("2026-08-01T10:00:00.000Z"),
+
+"snatchAttempts.0.performedSequence":
+    10,
 
                     "snatchAttempts.1.declaredWeight":
                         65,
@@ -1523,16 +1532,22 @@ test(
                 $set: {
 
                     "snatchAttempts.0.result":
-                        "GOOD",
+    "GOOD",
 
-                    "snatchAttempts.0.performedSequence":
-                        1,
+"snatchAttempts.0.performedAt":
+    new Date("2026-08-01T10:00:00.000Z"),
 
-                    "snatchAttempts.1.result":
-                        "GOOD",
+"snatchAttempts.0.performedSequence":
+    1,
 
-                    "snatchAttempts.1.performedSequence":
-                        2,
+"snatchAttempts.1.result":
+    "GOOD",
+
+"snatchAttempts.1.performedAt":
+    new Date("2026-08-01T10:01:00.000Z"),
+
+"snatchAttempts.1.performedSequence":
+    2,
 
                     "snatchAttempts.2.declaredWeight":
                         65,

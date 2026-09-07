@@ -98,24 +98,26 @@ const buildWorkingSheetData = async (
             .find({
                 competitionId,
             })
-            .select(
-                [
-                    "_id",
-                    "athleteId",
-                    "competitionCategory.ageCategory",
-                    "official.bodyWeight",
-                    "official.finalWeightCategory",
-                    "official.lotNumber",
-                    "opening.snatch",
-                    "opening.cleanJerk",
-                    "results.bestSnatch",
-                    "results.bestCleanJerk",
-                    "results.total",
-                    "results.rank",
-                    "snatchAttempts",
-                    "cleanJerkAttempts",
-                ].join(" ")
-            )
+           .select(
+    [
+        "_id",
+        "athleteId",
+        "competitionCategory.ageCategory",
+        "official.bodyWeight",
+        "official.finalWeightCategory",
+        "official.lotNumber",
+        "opening.snatch",
+        "opening.cleanJerk",
+        "results.bestSnatch",
+        "results.bestCleanJerk",
+        "results.total",
+        "results.rank",
+        "snatchAttempts",
+        "cleanJerkAttempts",
+        "status",
+        "eliminated",
+    ].join(" ")
+)
             .populate({
                 path: "athleteId",
                 select:

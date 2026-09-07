@@ -6,96 +6,166 @@ import CompetitionEntry
 import LiveCompetition
     from "../../models/LiveCompetition.js";
 
-import getCurrentAttempt
-    from "./getCurrentAttempt.js";
+import updateCompetitionResults
+    from "../calculations/updateCompetitionResults.js";
 
 import recalculateQueue
     from "./recalculateQueue.js";
 
 
 // =====================================
-// SAVE / UPDATE ATHLETE DECLARATION
+// CORRECT COMPLETED ATTEMPT WEIGHT
 //
-// AUTHORITATIVE STATE TRANSITION
+// FEATURE 1
 //
-// A declaration change can change the
-// athlete's calling priority.
+// Responsibility:
 //
-// IMPORTANT STATE SEPARATION:
+// 1. Validate live competition state.
+// 2. Validate optimistic stateVersion.
+// 3. Find the requested CompetitionEntry.
+// 4. Validate requested phase/attempt.
+// 5. Require the attempt to already be
+//    completed.
+// 6. Correct ONLY the recorded weight.
+// 7. Recalculate athlete results.
+// 8. Recalculate authoritative queue.
+// 9. Increment stateVersion.
+// 10. Return authoritative state.
 //
-// currentEntryId
-//     = authoritative calling-current athlete
+// IMPORTANT:
 //
-// platformEntryId
-//     = athlete physically being processed
+// This is NOT a normal declaration change.
 //
-// Therefore a declaration correction may
-// produce:
+// Normal declaration editing:
+//     PENDING attempt
 //
-//     currentEntryId  = B
-//     platformEntryId = C
+// This service:
+//     GOOD / NO_LIFT attempt
 //
-// without moving C off the platform.
+// It does NOT:
+// - create an attempt
+// - consume an attempt
+// - change result
+// - change performedAt
+// - change performedSequence
+// - advance competition
+// - move platform athlete
+// - manually reorder queue
 //
-// Queue calculation remains entirely
-// backend authoritative.
 // =====================================
 
 
-const saveDeclaration = async ({
+const correctCompletedAttemptWeight = async ({
     entryId,
     competitionId,
     gender,
-    declaredWeight,
+    phase,
+    attemptNo,
+    correctedWeight,
     expectedStateVersion,
 }) => {
 
     // =====================================
-    // VALIDATE REQUIRED DATA
+    // REQUIRED INPUT
     // =====================================
 
     if (!entryId) {
+
         throw new Error(
             "Competition entry ID is required."
         );
+
     }
 
+
     if (!competitionId) {
+
         throw new Error(
             "Competition ID is required."
         );
+
     }
 
+
     if (!gender) {
+
         throw new Error(
             "Gender is required."
         );
+
     }
 
+
     if (
-        !Number.isInteger(expectedStateVersion) ||
+        !Number.isInteger(
+            expectedStateVersion
+        ) ||
         expectedStateVersion < 0
     ) {
+
         throw new Error(
             "expectedStateVersion must be a non-negative integer."
         );
+
     }
 
 
     // =====================================
-    // VALIDATE DECLARED WEIGHT
+    // PHASE VALIDATION
+    // =====================================
+
+    if (
+        phase !== "SNATCH" &&
+        phase !== "CLEAN_JERK"
+    ) {
+
+        throw new Error(
+            "A valid competition phase is required: SNATCH or CLEAN_JERK."
+        );
+
+    }
+
+
+    // =====================================
+    // ATTEMPT NUMBER
+    // =====================================
+
+    const numericAttemptNo =
+        Number(attemptNo);
+
+
+    if (
+        !Number.isInteger(
+            numericAttemptNo
+        ) ||
+        numericAttemptNo < 1 ||
+        numericAttemptNo > 3
+    ) {
+
+        throw new Error(
+            "Attempt number must be 1, 2 or 3."
+        );
+
+    }
+
+
+    // =====================================
+    // WEIGHT VALIDATION
     // =====================================
 
     const weight =
-        Number(declaredWeight);
+        Number(correctedWeight);
+
 
     if (
         !Number.isFinite(weight) ||
         weight <= 0
     ) {
+
         throw new Error(
-            "Invalid declared weight."
+            "Invalid corrected weight."
         );
+
     }
 
 
@@ -110,7 +180,7 @@ const saveDeclaration = async ({
 
 
     // =====================================
-    // START TRANSACTION
+    // TRANSACTION
     // =====================================
 
     const mongoSession =
@@ -155,11 +225,12 @@ const saveDeclaration = async ({
                         404;
 
                     throw error;
+
                 }
 
 
                 // =================================
-                // SESSION MUST BE RUNNING
+                // RUNNING STATE
                 // =================================
 
                 if (
@@ -170,6 +241,7 @@ const saveDeclaration = async ({
                     throw new Error(
                         "Live competition is not currently running."
                     );
+
                 }
 
 
@@ -178,33 +250,13 @@ const saveDeclaration = async ({
                 // =================================
 
                 if (
-                    liveCompetition.status ===
-                    "RECOVERY_REQUIRED"
-                ) {
-
-                    const error =
-                        new Error(
-                            "Live competition requires recovery. Declaration changes are stopped."
-                        );
-
-                    error.code =
-                        "RECOVERY_REQUIRED";
-
-                    error.statusCode =
-                        409;
-
-                    throw error;
-                }
-
-
-                if (
                     liveCompetition.integrity?.status ===
                     "RECOVERY_REQUIRED"
                 ) {
 
                     const error =
                         new Error(
-                            "Live competition integrity requires recovery. Declaration changes are stopped."
+                            "Live competition integrity requires recovery. Attempt correction is stopped."
                         );
 
                     error.code =
@@ -214,39 +266,12 @@ const saveDeclaration = async ({
                         409;
 
                     throw error;
+
                 }
 
 
                 // =================================
-                // VALIDATE CURRENT PHASE
-                // =================================
-
-                const currentPhase =
-                    liveCompetition.currentPhase;
-
-
-                if (
-                    currentPhase !== "SNATCH" &&
-                    currentPhase !== "CLEAN_JERK"
-                ) {
-
-                    const error =
-                        new Error(
-                            "Live competition current phase is invalid."
-                        );
-
-                    error.code =
-                        "QUEUE_INTEGRITY_ERROR";
-
-                    error.statusCode =
-                        409;
-
-                    throw error;
-                }
-
-
-                // =================================
-                // VALIDATE STATE VERSION
+                // STATE VERSION
                 // =================================
 
                 if (
@@ -268,6 +293,7 @@ const saveDeclaration = async ({
                         409;
 
                     throw error;
+
                 }
 
 
@@ -278,7 +304,7 @@ const saveDeclaration = async ({
 
                     const error =
                         new Error(
-                            "Live competition state has changed. Refresh before changing the declaration."
+                            "Live competition state has changed. Refresh before correcting the attempt."
                         );
 
                     error.code =
@@ -294,20 +320,8 @@ const saveDeclaration = async ({
                         liveCompetition.stateVersion;
 
                     throw error;
+
                 }
-
-
-                // =================================
-                // CAPTURE STATE BEFORE MUTATION
-                // =================================
-
-                const previousCurrentEntryId =
-                    liveCompetition.currentEntryId ??
-                    null;
-
-                const previousPlatformEntryId =
-                    liveCompetition.platformEntryId ??
-                    null;
 
 
                 // =================================
@@ -328,115 +342,64 @@ const saveDeclaration = async ({
 
 
                 if (!competitionEntry) {
-                    throw new Error(
-                        "Competition entry not found."
-                    );
-                }
-
-
-                // =================================
-                // RESOLVE ATHLETE'S NEXT ATTEMPT
-                // =================================
-
-                const currentAttempt =
-                    getCurrentAttempt(
-                        competitionEntry,
-                        currentPhase
-                    );
-
-
-                if (
-                    currentAttempt?.integrityError
-                ) {
 
                     const error =
                         new Error(
-                            `Athlete attempt history integrity check failed: ${currentAttempt.integrityError}`
+                            "Competition entry not found."
                         );
 
                     error.code =
-                        "QUEUE_INTEGRITY_ERROR";
+                        "ENTRY_NOT_FOUND";
 
                     error.statusCode =
-                        409;
+                        404;
 
                     throw error;
-                }
 
-
-                if (
-                    !currentAttempt ||
-                    currentAttempt.completed
-                ) {
-
-                    throw new Error(
-                        `Athlete has no remaining ${currentPhase} attempts.`
-                    );
-                }
-
-
-                if (
-                    currentAttempt.phase !==
-                    currentPhase
-                ) {
-
-                    const error =
-                        new Error(
-                            `Athlete's next attempt is ${currentAttempt.phase}, but the live session is currently in ${currentPhase}.`
-                        );
-
-                    error.code =
-                        "QUEUE_INTEGRITY_ERROR";
-
-                    error.statusCode =
-                        409;
-
-                    throw error;
                 }
 
 
                 // =================================
-                // VALIDATE ATTEMPT NUMBER
-                // =================================
-
-                if (
-                    !Number.isInteger(
-                        currentAttempt.attemptNo
-                    ) ||
-                    currentAttempt.attemptNo < 1 ||
-                    currentAttempt.attemptNo > 3
-                ) {
-
-                    const error =
-                        new Error(
-                            "Athlete's next attempt number is invalid."
-                        );
-
-                    error.code =
-                        "QUEUE_INTEGRITY_ERROR";
-
-                    error.statusCode =
-                        409;
-
-                    throw error;
-                }
-
-
-                // =================================
-                // SELECT ATTEMPT ARRAY
+                // SELECT AUTHORITATIVE HISTORY
                 // =================================
 
                 const attempts =
-                    currentPhase === "SNATCH"
+                    phase === "SNATCH"
                         ? competitionEntry.snatchAttempts
                         : competitionEntry.cleanJerkAttempts;
 
 
+                if (
+                    !Array.isArray(attempts)
+                ) {
+
+                    const error =
+                        new Error(
+                            `${phase} attempt history is missing.`
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // FIND EXACT ATTEMPT
+                // =================================
+
                 const attempt =
                     attempts.find(
                         (item) =>
-                            item.attemptNo ===
-                            currentAttempt.attemptNo
+                            Number(
+                                item?.attemptNo
+                            ) ===
+                            numericAttemptNo
                     );
 
 
@@ -444,7 +407,7 @@ const saveDeclaration = async ({
 
                     const error =
                         new Error(
-                            `Authoritative ${currentPhase} attempt ${currentAttempt.attemptNo} was not found.`
+                            `Authoritative ${phase} attempt ${numericAttemptNo} was not found.`
                         );
 
                     error.code =
@@ -454,52 +417,164 @@ const saveDeclaration = async ({
                         409;
 
                     throw error;
+
                 }
 
 
                 // =================================
-                // ATTEMPT MUST BE PENDING
+                // MUST BE COMPLETED
                 // =================================
 
                 if (
-                    attempt.result !==
-                    "PENDING"
+                    attempt.result !== "GOOD" &&
+                    attempt.result !== "NO_LIFT"
                 ) {
 
+                    if (
+                        attempt.result ===
+                        "PENDING"
+                    ) {
+
+                        throw new Error(
+                            "Only completed attempts can use the completed-attempt weight correction."
+                        );
+
+                    }
+
+
                     throw new Error(
-                        "This attempt has already been completed."
+                        "Attempt does not contain a valid completed result."
                     );
+
                 }
 
 
                 // =================================
-                // SAVE DECLARATION
+                // EXECUTION HISTORY REQUIRED
+                // =================================
+
+                if (
+                    !attempt.performedAt
+                ) {
+
+                    const error =
+                        new Error(
+                            "Completed attempt is missing performedAt. Recovery required."
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                if (
+                    !Number.isInteger(
+                        attempt.performedSequence
+                    ) ||
+                    attempt.performedSequence < 1
+                ) {
+
+                    const error =
+                        new Error(
+                            "Completed attempt is missing a valid performedSequence. Recovery required."
+                        );
+
+                    error.code =
+                        "QUEUE_INTEGRITY_ERROR";
+
+                    error.statusCode =
+                        409;
+
+                    throw error;
+
+                }
+
+
+                // =================================
+                // CAPTURE ORIGINAL DATA
+                // =================================
+
+                const previousWeight =
+                    attempt.declaredWeight ??
+                    null;
+
+                const previousResult =
+                    attempt.result;
+
+                const performedAt =
+                    attempt.performedAt;
+
+                const performedSequence =
+                    attempt.performedSequence;
+
+
+                // =================================
+                // APPLY WEIGHT CORRECTION
+                //
+                // IMPORTANT:
+                //
+                // Only the recorded weight changes.
+                //
+                // Result and execution history
+                // remain untouched.
                 // =================================
 
                 attempt.declaredWeight =
                     weight;
 
-                attempt.declaredAt =
-                    new Date();
 
+                // A correction is not a new declaration
+                // event for a pending attempt.
+                //
+                // Do not modify declaredAt here.
+                // The original declaration history is
+                // preserved.
+
+
+                // =================================
+                // SAVE CORRECTED COMPETITION ENTRY
+                //
+                // IMPORTANT:
+                //
+                // The completed attempt was modified
+                // above. Explicitly persist that
+                // CompetitionEntry inside the same
+                // transaction before recalculating
+                // dependent state.
+                // =================================
 
                 await competitionEntry.save({
+
                     session:
                         mongoSession,
+
                 });
 
 
                 // =================================
-                // IMPORTANT
+                // RECALCULATE RESULTS
+                // =================================
+
+                await updateCompetitionResults(
+                    competitionEntry,
+                    mongoSession
+                );
+
+
+                // =================================
+                // RECALCULATE QUEUE
                 //
-                // EVERY VALID DECLARATION CHANGE
-                // MUST RECALCULATE CALLING PRIORITY.
+                // Read-only.
                 //
-                // The edited athlete does NOT need
-                // to be the previous current athlete.
-                //
-                // The physical platform athlete is
-                // preserved separately.
+                // Do NOT advance competition.
+                // Do NOT assign currentEntryId.
+                // Do NOT move platform athlete.
                 // =================================
 
                 const queueState =
@@ -513,93 +588,27 @@ const saveDeclaration = async ({
                         dbSession:
                             mongoSession,
 
-                        // Include current calling athlete
-                        // in candidate evaluation.
-                        //
-                        // recalculateQueue remains read-only.
                         allowCurrentEntry:
-                            true,
+                            false,
 
                     });
 
 
-                const nextAthlete =
-                    queueState?.nextAthlete ??
+                // =================================
+                // PRESERVE CURRENT PLATFORM STATE
+                // =================================
+
+                const currentEntryId =
+                    liveCompetition.currentEntryId ??
+                    null;
+
+                const platformEntryId =
+                    liveCompetition.platformEntryId ??
                     null;
 
 
                 // =================================
-                // VALIDATE RESULT OF QUEUE ENGINE
-                // =================================
-
-                if (!nextAthlete) {
-
-                    const error =
-                        new Error(
-                            "No eligible athlete is available after the declaration change."
-                        );
-
-                    error.code =
-                        "QUEUE_INTEGRITY_ERROR";
-
-                    error.statusCode =
-                        409;
-
-                    throw error;
-                }
-
-
-                if (!nextAthlete.entryId) {
-
-                    const error =
-                        new Error(
-                            "Queue returned an athlete without a valid competition entry ID."
-                        );
-
-                    error.code =
-                        "QUEUE_INTEGRITY_ERROR";
-
-                    error.statusCode =
-                        409;
-
-                    throw error;
-                }
-
-
-                // =================================
-                // UPDATE CALLING CURRENT
-                //
-                // IMPORTANT:
-                //
-                // This does NOT modify platformEntryId.
-                //
-                // Example:
-                //
-                //     previous current = C
-                //     platform          = C
-                //
-                //     B: 48 -> 47
-                //
-                //     current = B
-                //     platform = C
-                // =================================
-
-                liveCompetition.currentEntryId =
-                    nextAthlete.entryId;
-
-
-                // =================================
-                // PRESERVE PLATFORM ATHLETE
-                // =================================
-
-                liveCompetition.platformEntryId =
-                    previousPlatformEntryId ??
-                    previousCurrentEntryId ??
-                    null;
-
-
-                // =================================
-                // STATE VERSION
+                // INCREMENT STATE VERSION
                 // =================================
 
                 liveCompetition.stateVersion =
@@ -607,17 +616,19 @@ const saveDeclaration = async ({
 
 
                 // =================================
-                // SAVE LIVE STATE
+                // SAVE LIVE SESSION
                 // =================================
 
                 await liveCompetition.save({
+
                     session:
                         mongoSession,
+
                 });
 
 
                 // =================================
-                // RETURN AUTHORITATIVE RESULT
+                // RESULT
                 // =================================
 
                 result = {
@@ -626,40 +637,46 @@ const saveDeclaration = async ({
 
                     liveCompetition,
 
-                    stateVersion:
-                        liveCompetition.stateVersion,
+                    competitionId,
 
-                    phase:
-                        currentPhase,
+                    gender:
+                        normalizedGender,
+
+                    phase,
 
                     attemptNo:
-                        currentAttempt.attemptNo,
+                        numericAttemptNo,
 
-                    declaredWeight:
-                        attempt.declaredWeight,
+                    previousWeight,
 
-                    declaredAt:
-                        attempt.declaredAt,
+                    correctedWeight:
+                        weight,
 
-                    editedAthleteIsCurrent:
-                        String(
-                            previousCurrentEntryId ?? ""
-                        ) ===
-                        String(entryId),
+                    result:
+                        previousResult,
 
-                    previousCurrentEntryId,
+                    performedAt,
 
-                    currentEntryId:
-                        liveCompetition.currentEntryId ??
+                    performedSequence,
+
+                    currentEntryId,
+
+                    platformEntryId,
+
+                    nextAthlete:
+                        queueState?.nextAthlete ??
                         null,
 
-                    previousPlatformEntryId,
+                    upcoming:
+                        queueState?.upcoming ??
+                        [],
 
-                    platformEntryId:
-                        liveCompetition.platformEntryId ??
-                        null,
+                    queue:
+                        queueState?.queue ??
+                        [],
 
-                    queueState,
+                    stateVersion:
+                        liveCompetition.stateVersion,
 
                 };
 
@@ -676,7 +693,7 @@ const saveDeclaration = async ({
         );
 
         console.log(
-            "SAVE DECLARATION"
+            "CORRECT COMPLETED ATTEMPT WEIGHT"
         );
 
         console.log(
@@ -705,29 +722,18 @@ const saveDeclaration = async ({
         );
 
         console.log(
-            "Declared Weight:",
-            result.declaredWeight
+            "Previous Weight:",
+            result.previousWeight
         );
 
         console.log(
-            "Previous Current:",
-            result.previousCurrentEntryId
-                ?.toString() ??
-            "NONE"
+            "Corrected Weight:",
+            result.correctedWeight
         );
 
         console.log(
-            "New Current:",
-            result.currentEntryId
-                ?.toString() ??
-            "NONE"
-        );
-
-        console.log(
-            "Platform:",
-            result.platformEntryId
-                ?.toString() ??
-            "NONE"
+            "Result:",
+            result.result
         );
 
         console.log(
@@ -751,4 +757,4 @@ const saveDeclaration = async ({
 };
 
 
-export default saveDeclaration;
+export default correctCompletedAttemptWeight;

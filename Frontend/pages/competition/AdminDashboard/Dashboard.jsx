@@ -47,9 +47,15 @@ const Dashboard = () => {
     return (
         <div className="dashboard-page">
 
+            {/* ============================= */}
+            {/* HEADER */}
+            {/* ============================= */}
+
             <div className="dashboard-header">
+
                 <div>
                     <h1>Admin Dashboard</h1>
+
                     <p>
                         Competition Management System
                     </p>
@@ -63,152 +69,155 @@ const Dashboard = () => {
                 >
                     + Create Competition
                 </button>
+
             </div>
 
-            {/* Statistics */}
 
-            {/* Competition Summary */}
+            {/* ============================= */}
+            {/* COMPETITION SUMMARY */}
+            {/* ============================= */}
 
-<div className="dashboard-section">
+            <div className="dashboard-section">
 
-    <h2>Competition Summary</h2>
+                <h2>Competition Summary</h2>
 
-    <div className="summary-info">
+                <div className="summary-info">
 
-        <div className="summary-item">
-            <span>Total Athletes</span>
-            <strong>{dashboard.totalAthletes}</strong>
-        </div>
+                    <div className="summary-item">
 
-        <div className="summary-item">
-            <span>Male Athletes</span>
-            <strong>{dashboard.maleAthletes}</strong>
-        </div>
+                        <span>
+                            Total Athletes
+                        </span>
 
-        <div className="summary-item">
-            <span>Female Athletes</span>
-            <strong>{dashboard.femaleAthletes}</strong>
-        </div>
+                        <strong>
+                            {dashboard.totalAthletes}
+                        </strong>
 
-    </div>
-
-</div>
+                    </div>
 
 
-            {/* Quick Actions */}
+                    <div className="summary-item">
 
-<div className="dashboard-section">
+                        <span>
+                            Male Athletes
+                        </span>
 
-    <h2>Quick Actions</h2>
+                        <strong>
+                            {dashboard.maleAthletes}
+                        </strong>
 
-    {dashboard.recentCompetitions.length === 0 ? (
+                    </div>
 
-        <p>No competition available.</p>
 
-    ) : (
+                    <div className="summary-item">
 
-        <div className="dashboard-actions">
+                        <span>
+                            Female Athletes
+                        </span>
 
-            <button
-                onClick={() =>
-                    navigate(
-                        `/admin/competition/${dashboard.recentCompetitions[0]._id}/athletes/male`
-                    )
-                }
-            >
-                Men's Session
-            </button>
+                        <strong>
+                            {dashboard.femaleAthletes}
+                        </strong>
 
-            <button
-                onClick={() =>
-                    navigate(
-                        `/admin/competition/${dashboard.recentCompetitions[0]._id}/athletes/female`
-                    )
-                }
-            >
-                Women's Session
-            </button>
+                    </div>
 
-            <button
-                onClick={() =>
-                    navigate(
-                        `/admin/competition/${dashboard.recentCompetitions[0]._id}/start-list/male`
-                    )
-                }
-            >
-                Men's Start List
-            </button>
+                </div>
 
-            <button
-                onClick={() =>
-                    navigate(
-                        `/admin/competition/${dashboard.recentCompetitions[0]._id}/start-list/female`
-                    )
-                }
-            >
-                Women's Start List
-            </button>
+            </div>
 
-        </div>
 
-    )}
+            {/* ============================= */}
+            {/* QUICK ACTIONS */}
+            {/* ============================= */}
 
-</div>
+            
 
-            {/* Recent Competitions */}
+
+            {/* ============================= */}
+            {/* RECENT COMPETITIONS */}
+            {/* ============================= */}
 
             <div className="dashboard-section">
 
                 <h2>Recent Competitions</h2>
 
-                <table className="dashboard-table">
+                {dashboard.recentCompetitions.length === 0 ? (
 
-                    <thead>
+                    <p>
+                        No competitions found.
+                    </p>
 
-                        <tr>
+                ) : (
 
-                            <th>Name</th>
-                            <th>Venue</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                    <table className="dashboard-table">
 
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {dashboard.recentCompetitions.length === 0 ? (
+                        <thead>
 
                             <tr>
 
-                                <td colSpan="5">
-                                    No competitions found.
-                                </td>
+                                <th>
+                                    Name
+                                </th>
+
+                                <th>
+                                    Venue
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
 
                             </tr>
 
-                        ) : (
+                        </thead>
 
-                            dashboard.recentCompetitions.map(
+
+                        <tbody>
+
+                            {dashboard.recentCompetitions.map(
                                 (competition) => (
 
-                                    <tr key={competition._id}>
-
-                                        <td>{competition.name}</td>
-
-                                        <td>{competition.venue}</td>
+                                    <tr
+                                        key={competition._id}
+                                    >
 
                                         <td>
-                                            {new Date(
-                                                competition.startDate
-                                            ).toLocaleDateString()}
+                                            {competition.name ||
+                                                competition.competitionName ||
+                                                "Unnamed Competition"}
                                         </td>
 
+
                                         <td>
-                                            {competition.status}
+                                            {competition.venue ||
+                                                "-"}
                                         </td>
+
+
+                                        <td>
+
+                                            {competition.startDate
+                                                ? new Date(
+                                                    competition.startDate
+                                                ).toLocaleDateString()
+                                                : "-"}
+
+                                        </td>
+
+
+                                        <td>
+                                            {competition.status ||
+                                                "-"}
+                                        </td>
+
 
                                         <td>
 
@@ -227,13 +236,13 @@ const Dashboard = () => {
                                     </tr>
 
                                 )
-                            )
+                            )}
 
-                        )}
+                        </tbody>
 
-                    </tbody>
+                    </table>
 
-                </table>
+                )}
 
             </div>
 

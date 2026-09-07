@@ -330,6 +330,89 @@ export const setCompetitionFormat = async (
     );
 
 };
+// -------------------------------------
+// DOWNLOAD FINAL RESULT PDF
+// -------------------------------------
+
+export const downloadFinalResultPdf = async (
+    competitionId,
+    gender,
+    ageCategory
+) => {
+
+    const response =
+        await axios({
+
+            url:
+                `${BASE_URL}/live-competition/` +
+                `${competitionId}/` +
+                `${gender}/final-result-pdf` +
+                `?ageCategory=${encodeURIComponent(
+                    ageCategory
+                )}`,
+
+            method:
+                "GET",
+
+            responseType:
+                "blob",
+
+            withCredentials:
+                true,
+
+        });
+
+
+    const blob =
+        new Blob(
+            [response.data],
+            {
+                type:
+                    "application/pdf",
+            }
+        );
+
+
+    const url =
+        window.URL.createObjectURL(
+            blob
+        );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+
+    link.download =
+        `final-result-${String(
+            gender
+        ).toLowerCase()}-${String(
+            ageCategory
+        ).toLowerCase()}.pdf`;
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    window.URL.revokeObjectURL(
+        url
+    );
+
+};
 export const getEligibleWeightCategories = async ({
     competitionEntryId,
     bodyWeight,
