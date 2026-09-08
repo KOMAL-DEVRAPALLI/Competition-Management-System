@@ -404,7 +404,8 @@ const advanceCompetition = async (
 
             allowCurrentEntry:
                 false,
-
+            liveSession:
+    session,
         });
 
 
