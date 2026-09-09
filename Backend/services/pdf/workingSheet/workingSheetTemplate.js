@@ -55,7 +55,7 @@ ${workingSheetData.map(section => `
         <div class="header">
 
             <h2>
-                ${competitionName}
+                સુરત શહેર કક્ષાની વેઈટલિફ્ટિંગ ભાઈઓ-બહેનોની સ્પર્ધા-૨૦૨૬
             </h2>
 
 
