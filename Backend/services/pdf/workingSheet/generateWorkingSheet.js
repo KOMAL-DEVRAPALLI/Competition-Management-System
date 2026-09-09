@@ -61,14 +61,13 @@ export const generateWorkingSheet =
                 );
 
 
-            await page.setContent(
-                html,
-                {
-                    waitUntil:
-                        "networkidle0",
-                }
-            );
-
+await page.setContent(
+    html,
+    {
+        waitUntil:
+            "domcontentloaded",
+    }
+);
 
             return await page.pdf({
 
