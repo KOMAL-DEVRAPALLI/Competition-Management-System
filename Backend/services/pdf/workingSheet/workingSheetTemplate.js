@@ -55,7 +55,7 @@ ${workingSheetData.map(section => `
         <div class="header">
 
             <h2>
-                સુરત શહેર કક્ષાની વેઈટલિફ્ટિંગ ભાઈઓ-બહેનોની સ્પર્ધા-૨૦૨૬
+                SURAT CITY WEIGHTLIFTING CHAMPIONSHIP -2026
             </h2>
 
 
